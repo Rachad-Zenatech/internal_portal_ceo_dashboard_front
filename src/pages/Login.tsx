@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -119,7 +119,7 @@ export default function Login() {
             <p className="text-sm text-slate-500 dark:text-zinc-400">
               Having trouble?{" "}
               <a href="#" className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
-                Contact your administrator
+                Contact system administrator
               </a>
             </p>
           </CardFooter>

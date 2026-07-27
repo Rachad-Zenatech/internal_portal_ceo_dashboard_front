@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+﻿import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
 import { apiClient } from "@/services/apiClient";
@@ -79,8 +79,8 @@ export default function Dashboard() {
       
       <Card className="flex-1 min-h-0 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm flex flex-col">
         <CardHeader className="bg-slate-50/50 dark:bg-zinc-950/50 border-b">
-          <CardTitle>Admin Portal Activity</CardTitle>
-          <CardDescription>Recent login activities from the Admin Portal.</CardDescription>
+          <CardTitle>CEO Portal Activity</CardTitle>
+          <CardDescription>Recent login activities from the CEO Portal.</CardDescription>
         </CardHeader>
         <CardContent className="p-6 overflow-auto flex-1 flex flex-col min-h-[500px]">
           <DataTable columns={loginColumns} data={loginActivities} isLoading={isLoginLoading} />

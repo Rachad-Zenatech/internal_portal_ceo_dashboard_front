@@ -19,7 +19,6 @@ Lean rules for this enterprise internal portal.
 ## Backend
 
 - Keep explicit request/response schemas aligned with frontend `src/types`.
-- Preserve route groups: `/accounting`, `/bank_statement`, `/dashboard`, `/reports`, `/upload-files`.
 - Uploads use multipart form data, stable IDs/metadata, and S3-swappable local storage.
 - Avoid destructive accounting operations unless route and UI explicitly say replace.
 

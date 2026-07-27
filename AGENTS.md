@@ -13,7 +13,6 @@ Lean rules for this enterprise internal portal.
 - Put reusable backend shapes in `src/types`; use `import type`.
 - Keep one-off prop types beside their component.
 - Prefer shadcn components from `src/components/ui`.
-- Services are API wrappers only, grouped by domain: bank, chart of accounts, GL, upload archive, dashboard.
 - Hooks handle React Query orchestration; keep components thin.
 - Use theme tokens and shadcn variants for dark mode.
 - Preserve accounting math: bank/income add; expenses/credit cards subtract; liability increases are negative.
@@ -22,7 +21,6 @@ Lean rules for this enterprise internal portal.
 ## Backend
 
 - Keep explicit request/response schemas aligned with frontend `src/types`.
-- Preserve route groups: `/accounting/*`, `/bank_statement/*`, `/dashboard/*`, `/reports/*`, `/upload-files/*`.
 - Uploads accept multipart form data and return stable IDs/metadata; local storage should remain S3-swappable.
 - Do not silently delete or replace accounting data; use merge/update unless the endpoint and UI say replace.
 
