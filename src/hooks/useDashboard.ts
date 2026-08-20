@@ -10,17 +10,18 @@ export type DashboardFilters = {
 };
 
 function buildParams(endpoint: string, filters: DashboardFilters) {
-  const url = new URL(endpoint, "http://localhost"); // Dummy base for URL API
+  const params = new URLSearchParams();
   if (filters.companyId) {
-    url.searchParams.set("company_id", String(filters.companyId));
+    params.set("company_id", String(filters.companyId));
   }
   if (filters.dateRange?.from) {
-    url.searchParams.set("start_date", format(filters.dateRange.from, "yyyy-MM-dd"));
+    params.set("start_date", format(filters.dateRange.from, "yyyy-MM-dd"));
   }
   if (filters.dateRange?.to) {
-    url.searchParams.set("end_date", format(filters.dateRange.to, "yyyy-MM-dd"));
+    params.set("end_date", format(filters.dateRange.to, "yyyy-MM-dd"));
   }
-  return `${url.pathname}${url.search}`;
+  const qs = params.toString();
+  return qs ? `${endpoint}?${qs}` : endpoint;
 }
 
 async function fetcher<T>(endpoint: string, filters: DashboardFilters) {

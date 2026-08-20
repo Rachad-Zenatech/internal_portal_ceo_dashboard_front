@@ -49,5 +49,15 @@ export function getApiBaseUrl(): string {
   if (envUrl) {
     return envUrl.endsWith("/") ? envUrl.slice(0, -1) : envUrl;
   }
+  // In production browser environments, use window.location.origin
+  if (
+    typeof window !== "undefined" &&
+    window.location &&
+    window.location.origin &&
+    !window.location.hostname.includes("localhost") &&
+    !window.location.hostname.includes("127.0.0.1")
+  ) {
+    return window.location.origin;
+  }
   return "http://localhost:8005";
 }

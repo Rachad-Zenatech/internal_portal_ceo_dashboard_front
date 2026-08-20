@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { appStorage } from "@/lib/storage";
-import { getEnv } from "@/lib/env";
+import { getApiBaseUrl } from "@/lib/env";
 
 export type ChatMessage = {
   role: "user" | "assistant";
@@ -58,18 +58,27 @@ export function useStreamingChat() {
 
       try {
         const token = appStorage.getItem("token");
-        const rawBaseUrl = getEnv("VITE_API_BASE_URL", "");
-        const res = await fetch(`${rawBaseUrl}/ai/chat`, {
+        const baseUrl = getApiBaseUrl();
+
+        // Sanitize history to ensure every item satisfies backend Pydantic minLength >= 1
+        const validHistory = messages
+          .filter((m) => m && typeof m.content === "string" && m.content.trim().length > 0)
+          .map((m) => ({
+            role: m.role === "user" ? "user" : "assistant",
+            content: m.content.trim(),
+          }));
+
+        const res = await fetch(`${baseUrl}/ai/chat`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify({
             message: question,
-            history: messages,
-            file_data: fileData,
-            mime_type: mimeType,
+            history: validHistory,
+            file_data: fileData || null,
+            mime_type: mimeType || null,
           }),
           signal: abortController.signal,
         });

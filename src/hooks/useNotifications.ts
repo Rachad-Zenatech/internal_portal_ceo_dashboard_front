@@ -19,7 +19,15 @@ export interface Notification {
 export function useNotifications(options?: { refetchInterval?: number | false }) {
   return useQuery({
     queryKey: ["notifications"],
-    queryFn: () => apiClient.get<Notification[]>("/api/notifications"),
+    queryFn: async () => {
+      try {
+        const res = await apiClient.get<Notification[]>("/api/notifications");
+        return Array.isArray(res) ? res : [];
+      } catch {
+        return [];
+      }
+    },
+    retry: false,
     refetchInterval: options?.refetchInterval ?? false, // No continuous polling by default
   });
 }
@@ -27,7 +35,15 @@ export function useNotifications(options?: { refetchInterval?: number | false })
 export function useUnreadNotificationCount(options?: { refetchInterval?: number | false }) {
   return useQuery({
     queryKey: ["notifications", "unread-count"],
-    queryFn: () => apiClient.get<{ count: number }>("/api/notifications/unread-count"),
+    queryFn: async () => {
+      try {
+        const res = await apiClient.get<{ count: number }>("/api/notifications/unread-count");
+        return res && typeof res.count === "number" ? res : { count: 0 };
+      } catch {
+        return { count: 0 };
+      }
+    },
+    retry: false,
     refetchInterval: options?.refetchInterval ?? false, // No continuous polling by default
   });
 }
@@ -35,8 +51,13 @@ export function useUnreadNotificationCount(options?: { refetchInterval?: number 
 export function useMarkNotificationAsRead() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (notificationId: number) =>
-      apiClient.patch(`/api/notifications/${notificationId}/read`, {}),
+    mutationFn: async (notificationId: number) => {
+      try {
+        return await apiClient.patch(`/api/notifications/${notificationId}/read`, {});
+      } catch {
+        return null;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
@@ -47,7 +68,13 @@ export function useMarkNotificationAsRead() {
 export function useMarkAllNotificationsAsRead() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => apiClient.patch(`/api/notifications/read-all`, {}),
+    mutationFn: async () => {
+      try {
+        return await apiClient.patch(`/api/notifications/read-all`, {});
+      } catch {
+        return null;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
@@ -59,7 +86,13 @@ export function useClearReadNotifications() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => apiClient.delete("/api/notifications/read"),
+    mutationFn: async () => {
+      try {
+        return await apiClient.delete("/api/notifications/read");
+      } catch {
+        return null;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });

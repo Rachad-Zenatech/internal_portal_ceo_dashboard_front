@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
-import { getApiBaseUrl } from "@/lib/env";
+import { getApiBaseUrl, getEnv } from "@/lib/env";
 import { appStorage } from "@/lib/storage";
 import {
   View,
@@ -58,8 +58,13 @@ export default function Login() {
           if (token) {
             const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             if (isMobile) {
-              const expoDeepLink = `exp://localhost:8090/--/login?status=success&token=${encodeURIComponent(token)}`;
-              // Immediately redirect browser to Expo mobile app
+              const defaultDeepLinkBase =
+                window.location.hostname.includes("localhost") || window.location.hostname.includes("127.0.0.1")
+                  ? "exp://localhost:8090"
+                  : "zenadashboard://";
+              const deepLinkBase = getEnv("VITE_MOBILE_APP_URL", defaultDeepLinkBase);
+              const expoDeepLink = `${deepLinkBase.replace(/\/$/, "")}/--/login?status=success&token=${encodeURIComponent(token)}`;
+              // Immediately redirect browser to mobile app
               window.location.replace(expoDeepLink);
               return;
             }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Alert, View, Text, StyleSheet } from "react-native";
+import { Alert, View, Text, StyleSheet, Platform } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import {
@@ -29,7 +29,11 @@ export default function Login() {
         const token = decodeURIComponent(match[1]);
         appStorage.setItem("token", token);
         await refreshPermissions();
-        WebBrowser.dismissAuthSession();
+        if (Platform.OS === "ios") {
+          try {
+            WebBrowser.dismissAuthSession();
+          } catch {}
+        }
       }
     };
 

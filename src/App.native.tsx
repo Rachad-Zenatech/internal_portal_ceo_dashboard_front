@@ -47,11 +47,7 @@ function NavigationContent() {
           name="Dashboard"
           component={Dashboard}
           options={{
-            headerShown: true,
-            title: "CEO Dashboard",
-            headerStyle: { backgroundColor: "#ffffff" },
-            headerTintColor: "#0f172a",
-            headerTitleStyle: { fontWeight: "700" },
+            headerShown: false,
           }}
         />
       )}
