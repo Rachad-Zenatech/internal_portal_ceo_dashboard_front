@@ -5,25 +5,7 @@ import { useState } from "react";
 import zenatechLogo from "@/assets/zenatech_logo.png";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "../../lib/AuthContext";
-import type { LucideIcon } from "lucide-react";
-
-interface SidebarUser {
-  is_super_admin?: boolean;
-  assigned_roles?: Array<{ code: string }>;
-}
-
-interface SidebarNavigationItem {
-  label: string;
-  path?: string;
-  icon: LucideIcon;
-  section?: string;
-  navigationCode?: string;
-  subItems?: Array<{
-    label: string;
-    path: string;
-    navigationCode?: string;
-  }>;
-}
+import type { NavigationItem } from "./Navigation";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -37,15 +19,14 @@ export default function Sidebar({
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const location = useLocation();
 
-  const { hasPermission, hasRole, user } = useAuth();
-  const isSuperAdmin = hasRole("SUPER_ADMIN") || user?.is_super_admin;
+  const { hasPermission } = useAuth();
 
 
   const toggleExpand = (label: string) => {
     setExpandedItems(prev => ({ ...prev, [label]: !prev[label] }));
   };
 
-  const groupedNavigation = navigation.reduce<Record<string, SidebarNavigationItem[]>>((acc, item) => {
+  const groupedNavigation = navigation.reduce<Record<string, NavigationItem[]>>((acc, item) => {
     if (item.navigationCode && !hasPermission(`${item.navigationCode}_READ`)) return acc;
 
     const filteredSubItems = item.subItems 

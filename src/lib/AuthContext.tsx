@@ -1,5 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState, useRef } from 'react';
 import { apiClient } from '../services/apiClient';
+import { appStorage } from './storage';
+import { getEnv } from './env';
 
 export interface User {
   id: string;
@@ -45,12 +47,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [permissions, setPermissions] = useState<PermissionsData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !!appStorage.getItem('token'));
 
   const fetchRequestId = useRef(0);
 
   const fetchPermissions = useCallback(async () => {
     const requestId = ++fetchRequestId.current;
+    const token = appStorage.getItem('token');
+    if (!token) {
+      setPermissions(null);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const data = await apiClient.get<PermissionsData>('/api/me/permissions');
@@ -60,10 +68,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       if (requestId === fetchRequestId.current) {
         setPermissions(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('ms_id_token');
-        sessionStorage.clear();
+        appStorage.removeItem('token');
+        appStorage.removeItem('user');
+        appStorage.removeItem('ms_id_token');
+        appStorage.clear();
       }
     } finally {
       if (requestId === fetchRequestId.current) {
@@ -75,21 +83,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     fetchPermissions();
 
-    const handleBeforeUnload = () => {
-      const token = sessionStorage.getItem('token');
-      if (token) {
-        const data = new FormData();
-        data.append('token', token);
-        const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
-        const url = `${baseUrl.replace(/\/$/, '')}/api/auth/logout`;
-        navigator.sendBeacon(url, data);
-      }
-    };
+    if (typeof window !== "undefined" && window.addEventListener) {
+      const handleBeforeUnload = () => {
+        const token = appStorage.getItem('token');
+        if (token && typeof navigator !== "undefined" && navigator.sendBeacon) {
+          const data = new FormData();
+          data.append('token', token);
+          const rawBaseUrl = getEnv("VITE_API_BASE_URL", "");
+          const url = `${rawBaseUrl.replace(/\/$/, '')}/api/auth/logout`;
+          navigator.sendBeacon(url, data);
+        }
+      };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
+    }
   }, [fetchPermissions]);
 
 
@@ -158,20 +168,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Failed to logout on backend', e);
     }
     
-    const authProvider = sessionStorage.getItem('auth_provider');
+    const authProvider = appStorage.getItem('auth_provider');
     
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
-    sessionStorage.removeItem('ms_id_token');
-    sessionStorage.removeItem('auth_provider');
+    appStorage.removeItem('token');
+    appStorage.removeItem('user');
+    appStorage.removeItem('ms_id_token');
+    appStorage.removeItem('auth_provider');
     setPermissions(null);
     
-    if (authProvider === 'local') {
-      window.location.href = '/login';
-    } else {
-      // Redirect to Microsoft SSO logout to clear the Azure AD session.
-      const postLogoutUri = encodeURIComponent(window.location.origin + '/login');
-      window.location.href = `https://login.microsoftonline.com/common/oauth2/v2.0/logout?post_logout_redirect_uri=${postLogoutUri}`;
+    if (typeof window !== "undefined" && window.location) {
+      if (authProvider === 'local') {
+        window.location.href = '/login';
+      } else {
+        const postLogoutUri = encodeURIComponent(window.location.origin + '/login');
+        window.location.href = `https://login.microsoftonline.com/common/oauth2/v2.0/logout?post_logout_redirect_uri=${postLogoutUri}`;
+      }
     }
   };
 

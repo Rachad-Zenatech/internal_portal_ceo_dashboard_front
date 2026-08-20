@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "CEO Dashboard",
+    "slug": "ceo-dashboard",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/zenatech_logo.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./src/assets/zenatech_logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/zenatech_logo.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.zenatech.ceodashboard"
+    },
+    "web": {
+      "favicon": "./src/assets/zenatech_logo.png"
+    }
+  }
+}

@@ -14,7 +14,7 @@ import {
   NativeCardContent,
   NativeBadge,
 } from "@/components/native";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { Ionicons } from "@expo/vector-icons";
 
 interface LoginActivity {
   id?: string;
@@ -82,7 +82,7 @@ export default function Dashboard() {
                 >
                   <View style={[styles.cell, { flex: 2 }]}>
                     <Text style={styles.cellDate}>
-                      {new Date(item.created_at).toLocaleString()}
+                      {new Date(item.created_at).toLocaleDateString()}
                     </Text>
                   </View>
 
@@ -93,13 +93,9 @@ export default function Dashboard() {
 
                   <View style={[styles.cell, { flex: 1.5 }]}>
                     {item.success ? (
-                      <NativeBadge
-                        variant="success"
-                        leftIcon={<CheckCircle2 size={12} color="#16a34a" />}
-                        style={styles.badge}
-                      >
+                      <NativeBadge variant="success" style={styles.badge}>
                         <View style={styles.badgeRow}>
-                          <CheckCircle2 size={12} color="#16a34a" />
+                          <Ionicons name="checkmark-circle" size={12} color="#16a34a" />
                           <Text style={styles.badgeTextSuccess}>Success</Text>
                         </View>
                       </NativeBadge>
@@ -107,7 +103,7 @@ export default function Dashboard() {
                       <View style={styles.failedStatusContainer}>
                         <NativeBadge variant="destructive" style={styles.badge}>
                           <View style={styles.badgeRow}>
-                            <XCircle size={12} color="#dc2626" />
+                            <Ionicons name="close-circle" size={12} color="#dc2626" />
                             <Text style={styles.badgeTextDestructive}>Failed</Text>
                           </View>
                         </NativeBadge>
@@ -136,30 +132,28 @@ export default function Dashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: "#f8fafc",
   },
   contentContainer: {
-    padding: 24,
-    maxWidth: 1600,
+    padding: 16,
     width: "100%",
-    alignSelf: "center",
   },
   header: {
-    marginBottom: 24,
-    paddingBottom: 20,
+    marginBottom: 20,
+    paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(226, 232, 240, 0.8)",
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "700",
     color: "#0f172a",
     letterSpacing: -0.5,
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#64748b",
-    marginTop: 6,
+    marginTop: 4,
   },
   card: {
     backgroundColor: "#ffffff",
@@ -168,17 +162,17 @@ const styles = StyleSheet.create({
     borderColor: "#e2e8f0",
   },
   cardHeader: {
-    padding: 20,
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#f1f5f9",
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "600",
     color: "#0f172a",
   },
   cardDescription: {
-    fontSize: 13,
+    fontSize: 12,
     color: "#64748b",
     marginTop: 2,
   },
@@ -186,22 +180,22 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   loadingContainer: {
-    padding: 48,
+    padding: 36,
     alignItems: "center",
     justifyContent: "center",
   },
   loadingText: {
     marginTop: 12,
-    fontSize: 14,
+    fontSize: 13,
     color: "#64748b",
   },
   emptyContainer: {
-    padding: 48,
+    padding: 36,
     alignItems: "center",
     justifyContent: "center",
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#94a3b8",
   },
   tableContainer: {
@@ -209,14 +203,14 @@ const styles = StyleSheet.create({
   },
   tableHeaderRow: {
     flexDirection: "row",
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     backgroundColor: "#f8fafc",
     borderBottomWidth: 1,
     borderBottomColor: "#e2e8f0",
   },
   tableHeaderCell: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
     color: "#64748b",
     textTransform: "uppercase",
@@ -224,8 +218,8 @@ const styles = StyleSheet.create({
   },
   tableRow: {
     flexDirection: "row",
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#f1f5f9",
     alignItems: "center",
@@ -237,22 +231,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   cellDate: {
-    fontSize: 13,
+    fontSize: 12,
     color: "#334155",
     fontWeight: "500",
   },
   cellName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
     color: "#0f172a",
   },
   cellEmail: {
-    fontSize: 12,
+    fontSize: 11,
     color: "#64748b",
-    marginTop: 2,
+    marginTop: 1,
   },
   cellIp: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: "monospace",
     color: "#475569",
   },
@@ -262,24 +256,24 @@ const styles = StyleSheet.create({
   badgeRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 4,
   },
   badgeTextSuccess: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
     color: "#16a34a",
   },
   badgeTextDestructive: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
     color: "#dc2626",
   },
   failedStatusContainer: {
-    gap: 4,
+    gap: 2,
   },
   failureReason: {
-    fontSize: 11,
+    fontSize: 10,
     color: "#ef4444",
-    maxWidth: 180,
+    maxWidth: 120,
   },
 });

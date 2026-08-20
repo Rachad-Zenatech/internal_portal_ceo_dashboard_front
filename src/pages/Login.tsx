@@ -1,9 +1,21 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Loader2 } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/env";
+import { appStorage } from "@/lib/storage";
+import {
+  View,
+  Text,
+  StyleSheet,
+  NativeCard,
+  NativeCardHeader,
+  NativeCardTitle,
+  NativeCardDescription,
+  NativeCardContent,
+  NativeCardFooter,
+  NativeButton,
+} from "@/components/native";
+import { Building2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Login() {
@@ -42,12 +54,20 @@ export default function Login() {
         hasProcessedLogin.current = true;
         setIsLoading(true);
         try {
-          sessionStorage.removeItem("token");
-          sessionStorage.removeItem("user");
-          sessionStorage.removeItem("ms_id_token");
           const token = searchParams.get("token");
           if (token) {
-            sessionStorage.setItem("token", token);
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) {
+              const expoDeepLink = `exp://localhost:8090/--/login?status=success&token=${encodeURIComponent(token)}`;
+              // Immediately redirect browser to Expo mobile app
+              window.location.replace(expoDeepLink);
+              return;
+            }
+
+            appStorage.removeItem("token");
+            appStorage.removeItem("user");
+            appStorage.removeItem("ms_id_token");
+            appStorage.setItem("token", token);
           }
           await refreshPermissions();
           toast.success("Successfully logged in");
@@ -60,71 +80,130 @@ export default function Login() {
           setIsLoading(false);
         }
       }
-
     };
 
     handleSsoCallback();
   }, [searchParams, navigate, refreshPermissions]);
 
   const handleLogin = () => {
-    // Redirect to backend Microsoft SSO endpoint
-    const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || "";
-    const baseUrl = rawBaseUrl.endsWith("/") ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
+    const baseUrl = getApiBaseUrl();
     window.location.href = `${baseUrl}/api/auth/microsoft/login`;
   };
 
-
   return (
-    <div className="min-h-screen w-full bg-slate-50 dark:bg-zinc-950 flex flex-col justify-center items-center p-4 relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-blue-600/20 to-transparent dark:from-blue-900/20 pointer-events-none" />
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-400/20 dark:bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-400/20 dark:bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+    <View style={styles.container}>
+      <View style={styles.cardWrapper}>
+        <View style={styles.iconContainer}>
+          <View style={styles.iconBox}>
+            <Building2 size={32} color="#2563eb" />
+          </View>
+        </View>
 
-      <div className="w-full max-w-md z-10 animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out">
-        <div className="flex justify-center mb-8">
-          <div className="h-16 w-16 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl flex items-center justify-center border border-slate-200 dark:border-zinc-800">
-            <Building2 className="h-8 w-8 text-blue-600 dark:text-blue-500" />
-          </div>
-        </div>
-
-        <Card className="border-slate-200/60 dark:border-zinc-800/60 shadow-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-[24px] overflow-hidden">
-          <CardHeader className="space-y-2 text-center pt-8 pb-6">
-            <CardTitle className="text-3xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
-              Welcome
-            </CardTitle>
-            <CardDescription className="text-slate-500 dark:text-zinc-400 font-medium">
+        <NativeCard style={styles.card}>
+          <NativeCardHeader style={styles.header}>
+            <NativeCardTitle style={styles.title}>Welcome</NativeCardTitle>
+            <NativeCardDescription style={styles.description}>
               Sign in with your @zenatech.com account
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              onClick={handleLogin}
-              className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md hover:shadow-lg transition-all mb-3"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                "Sign in with Microsoft"
-              )}
-            </Button>
+            </NativeCardDescription>
+          </NativeCardHeader>
 
+          <NativeCardContent style={styles.content}>
+            <NativeButton
+              title="Sign in with Microsoft"
+              onPress={handleLogin}
+              isLoading={isLoading}
+              size="lg"
+              style={styles.loginButton}
+            />
+          </NativeCardContent>
 
-          </CardContent>
-          <CardFooter className="flex justify-center pb-8 pt-4 border-t border-slate-100 dark:border-zinc-800/50 mt-2 bg-slate-50/50 dark:bg-zinc-950/30">
-            <p className="text-sm text-slate-500 dark:text-zinc-400">
+          <NativeCardFooter style={styles.footer}>
+            <Text style={styles.footerText}>
               Having trouble?{" "}
-              <a href="#" className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
-                Contact system administrator
-              </a>
-            </p>
-          </CardFooter>
-        </Card>
-      </div>
-    </div>
+              <Text style={styles.footerLink}>Contact system administrator</Text>
+            </Text>
+          </NativeCardFooter>
+        </NativeCard>
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    minHeight: "100vh" as unknown as number,
+    backgroundColor: "#f8fafc",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  cardWrapper: {
+    width: "100%",
+    maxWidth: 440,
+  },
+  iconContainer: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  iconBox: {
+    width: 64,
+    height: 64,
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+  },
+  card: {
+    backgroundColor: "#ffffff",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(226, 232, 240, 0.8)",
+  },
+  header: {
+    alignItems: "center",
+    paddingTop: 32,
+    paddingBottom: 16,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#0f172a",
+    letterSpacing: -0.5,
+  },
+  description: {
+    fontSize: 15,
+    color: "#64748b",
+    marginTop: 6,
+    textAlign: "center",
+  },
+  content: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+  },
+  loginButton: {
+    backgroundColor: "#2563eb",
+    borderRadius: 14,
+  },
+  footer: {
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 20,
+    backgroundColor: "rgba(248, 250, 252, 0.6)",
+  },
+  footerText: {
+    fontSize: 14,
+    color: "#64748b",
+    textAlign: "center",
+  },
+  footerLink: {
+    color: "#2563eb",
+    fontWeight: "600",
+  },
+});

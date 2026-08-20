@@ -206,4 +206,11 @@
   .animate-pop-in {
     animation: pop-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
+
+  /* React Native Web support */
+  #root {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
 }

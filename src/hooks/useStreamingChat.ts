@@ -1,4 +1,6 @@
 import { useState, useRef, useCallback } from "react";
+import { appStorage } from "@/lib/storage";
+import { getEnv } from "@/lib/env";
 
 export type ChatMessage = {
   role: "user" | "assistant";
@@ -55,8 +57,9 @@ export function useStreamingChat() {
       abortControllerRef.current = abortController;
 
       try {
-        const token = sessionStorage.getItem("token");
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ""}/ai/chat`, {
+        const token = appStorage.getItem("token");
+        const rawBaseUrl = getEnv("VITE_API_BASE_URL", "");
+        const res = await fetch(`${rawBaseUrl}/ai/chat`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

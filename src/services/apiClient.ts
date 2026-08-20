@@ -1,14 +1,15 @@
 import { handleResponse } from "./helper";
+import { appStorage } from "../lib/storage";
+import { getEnv, getApiBaseUrl } from "../lib/env";
 
-const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || "";
-export const BASE_URL = rawBaseUrl.endsWith("/") ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
+export const BASE_URL = getApiBaseUrl();
 
 const getAuthHeaders = (): Record<string, string> => {
-  const token = sessionStorage.getItem("token");
+  const token = appStorage.getItem("token");
   return token ? { "Authorization": `Bearer ${token}` } : {};
 };
 
-const configuredSlowRequestMs = Number(import.meta.env.VITE_SLOW_REQUEST_MS ?? 2000);
+const configuredSlowRequestMs = Number(getEnv("VITE_SLOW_REQUEST_MS", "2000"));
 const SLOW_REQUEST_MS = Number.isFinite(configuredSlowRequestMs)
   ? Math.max(250, configuredSlowRequestMs)
   : 2000;

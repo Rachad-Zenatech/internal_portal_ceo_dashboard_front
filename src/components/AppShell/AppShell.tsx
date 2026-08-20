@@ -1,12 +1,11 @@
 import type { ReactNode } from "react";
 import { useState, useEffect } from "react";
+import { View, StyleSheet } from "@/components/native";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import FloatingChat from "./FloatingChat";
 import Breadcrumbs from "./Breadcrumbs";
 import SessionTimeout from "./SessionTimeout";
-
-
 
 interface Props {
   children: ReactNode;
@@ -23,36 +22,61 @@ export default function AppShell({ children }: Props) {
         setIsSidebarOpen(true);
       }
     };
-    
-    // Set initial state
-    handleResize();
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
-    <div className="flex h-screen min-w-[375px] min-h-[400px] overflow-hidden bg-background text-foreground">
+    <View style={styles.root}>
       <Sidebar
         isOpen={isSidebarOpen}
         onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+      <View style={styles.mainContainer}>
         <TopBar />
-        <main
-          className="flex-1 overflow-auto p-8 bg-background flex flex-col min-h-0"
-        >
+        <View style={styles.contentArea}>
           <Breadcrumbs />
-          <div className="flex-1 flex flex-col min-h-0">
+          <View style={styles.childContainer}>
             {children}
-          </div>
-        </main>
+          </View>
+        </View>
         <FloatingChat />
-
-      </div>
+      </View>
 
       <SessionTimeout />
-    </div>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flexDirection: "row",
+    height: "100vh" as unknown as number,
+    minHeight: 400,
+    minWidth: 375,
+    overflow: "hidden",
+    backgroundColor: "#ffffff",
+  },
+  mainContainer: {
+    flex: 1,
+    flexDirection: "column",
+    minWidth: 0,
+    overflow: "hidden",
+    position: "relative",
+  },
+  contentArea: {
+    flex: 1,
+    flexDirection: "column",
+    padding: 24,
+    backgroundColor: "#f8fafc",
+    overflow: "auto" as unknown as "hidden",
+  },
+  childContainer: {
+    flex: 1,
+    flexDirection: "column",
+    minHeight: 0,
+  },
+});

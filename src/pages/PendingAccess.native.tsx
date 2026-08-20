@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import {
   View,
@@ -13,24 +11,17 @@ import {
   NativeCardFooter,
   NativeButton,
 } from "@/components/native";
-import { Building2, LogOut } from "lucide-react";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function PendingAccess() {
-  const { logout, hasRole } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!hasRole("PENDING_USER") && hasRole("SUPER_ADMIN")) {
-      navigate("/");
-    }
-  }, [hasRole, navigate]);
+  const { logout } = useAuth();
 
   return (
     <View style={styles.container}>
       <View style={styles.cardWrapper}>
         <View style={styles.iconContainer}>
           <View style={styles.iconBox}>
-            <Building2 size={32} color="#2563eb" />
+            <MaterialCommunityIcons name="office-building" size={32} color="#2563eb" />
           </View>
         </View>
 
@@ -52,12 +43,11 @@ export default function PendingAccess() {
             <NativeButton
               variant="outline"
               title="Sign out"
-              leftIcon={<LogOut size={16} color="#334155" />}
+              leftIcon={<MaterialCommunityIcons name="logout" size={16} color="#334155" />}
               size="lg"
               style={styles.logoutButton}
               onPress={() => {
                 logout();
-                navigate("/login");
               }}
             />
           </NativeCardFooter>
@@ -70,7 +60,6 @@ export default function PendingAccess() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    minHeight: "100vh" as unknown as number,
     backgroundColor: "#f8fafc",
     justifyContent: "center",
     alignItems: "center",
@@ -93,10 +82,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#e2e8f0",
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.08)",
   },
   card: {
     backgroundColor: "#ffffff",

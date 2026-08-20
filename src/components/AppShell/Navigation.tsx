@@ -1,11 +1,24 @@
 import {
   LayoutDashboard,
   Upload,
-  ShieldCheck,
   FileClock,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
-export const navigation = [
+export interface NavigationItem {
+  label: string;
+  path?: string;
+  icon: LucideIcon;
+  section?: string;
+  navigationCode?: string;
+  subItems?: Array<{
+    label: string;
+    path: string;
+    navigationCode?: string;
+  }>;
+}
+
+export const navigation: NavigationItem[] = [
   {
     label: "Dashboard",
     path: "/",
@@ -20,7 +33,6 @@ export const navigation = [
     section: "MAIN",
     navigationCode: "UPLOAD_FILES",
   },
-
   {
     label: "Audit Log",
     path: "/log/audit-log",
@@ -28,4 +40,4 @@ export const navigation = [
     section: "ADMIN PORTAL",
     navigationCode: "AUDIT_LOG",
   },
-]
+];
