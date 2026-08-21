@@ -16,7 +16,6 @@ import {
   Check,
   X,
   Server,
-  Network,
   Search,
   FileSpreadsheet,
   FileText,
@@ -215,6 +214,59 @@ export default function Dashboard() {
     toast.info("Refreshed all executive data feeds");
   };
 
+  const [approvalViewMode, setApprovalViewMode] = useState<"pending" | "approved">("pending");
+
+  const approvedRequests = useMemo(() => {
+    const list: Array<{
+      id: string;
+      department: string;
+      requester_name: string;
+      amount: number;
+      description: string;
+      status: string;
+      approved_at: string;
+      note: string;
+      vendor?: string;
+      rawReq?: any;
+    }> = [];
+
+    const seenIds = new Set<string>();
+
+    auditLogs.forEach((log) => {
+      if (log.action === "PURCHASE_APPROVE" && (log.result === "SUCCESS" || log.details?.response?.success)) {
+        const reqData = log.details?.response?.data?.request || {};
+        const poData = log.details?.response?.data?.purchase_order || {};
+        const id = String(reqData.id || log.target_entity || log.id);
+        if (!seenIds.has(id)) {
+          seenIds.add(id);
+          list.push({
+            id,
+            department: reqData.department || "Executive Operations",
+            requester_name: reqData.requester || log.requested_by || "Staff Requester",
+            amount: Number(reqData.amount || poData.amount || 0),
+            description: reqData.title || reqData.description || poData.item || `Executive Approved Request #${id}`,
+            status: "APPROVED",
+            approved_at: log.created_at,
+            note: log.details?.note || "Executive approval granted.",
+            vendor: poData.vendor || "Verified Vendor",
+            rawReq: {
+              id,
+              department: reqData.department || "Executive Operations",
+              requester_name: reqData.requester || log.requested_by || "Staff Requester",
+              amount: Number(reqData.amount || poData.amount || 0),
+              description: reqData.title || reqData.description || poData.item || `Executive Approved Request #${id}`,
+              status: "APPROVED",
+              created_at: log.created_at,
+              vendor: poData.vendor || "Verified Vendor",
+            },
+          });
+        }
+      }
+    });
+
+    return list;
+  }, [auditLogs]);
+
   // Filtered requests
   const filteredApprovals = useMemo(() => {
     return pendingApprovals.filter((req) => {
@@ -235,7 +287,20 @@ export default function Dashboard() {
     });
   }, [pendingApprovals, searchTerm, statusFilter]);
 
+  const filteredApproved = useMemo(() => {
+    return approvedRequests.filter((req) => {
+      return (
+        (req.description || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (req.department || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (req.requester_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (req.vendor || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        req.id.includes(searchTerm)
+      );
+    });
+  }, [approvedRequests, searchTerm]);
+
   const totalPendingAmount = pendingApprovals.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+  const totalApprovedAmount = approvedRequests.reduce((acc, curr) => acc + (curr.amount || 0), 0);
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8 max-w-[1600px] mx-auto bg-slate-50/50 min-h-screen">
@@ -251,7 +316,7 @@ export default function Dashboard() {
             </Badge>
           </div>
           <p className="text-sm text-slate-500 mt-1">
-            Welcome back, <span className="font-semibold text-slate-800">{user?.full_name || "Chief Executive Officer"}</span>. Real-time telemetry, multi-portal approvals, and financial overview.
+            Welcome back, <span className="font-semibold text-slate-800">{user?.full_name || "Chief Executive Officer"}</span>. Real-time multi-portal orchestration, synchronized delegation, and organizational telemetry.
           </p>
         </div>
         
@@ -260,10 +325,10 @@ export default function Dashboard() {
             variant="outline"
             size="sm"
             onClick={refreshAll}
-            className="flex items-center gap-2 text-slate-700 border-slate-200 hover:bg-slate-50"
+            className="text-slate-600 hover:text-slate-900 border-slate-200 shadow-sm flex items-center gap-2"
           >
-            <RefreshCw className="h-4 w-4 text-slate-500" />
-            Refresh Data
+            <RefreshCw className="h-4 w-4" />
+            Sync All Feeds
           </Button>
           <Button
             size="sm"
@@ -368,40 +433,43 @@ export default function Dashboard() {
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold text-slate-900">{pendingApprovals.length}</span>
                 <span className="text-sm font-semibold text-amber-700">
-                  (${totalPendingAmount.toLocaleString()})
+                  (${totalPendingAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })})
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-1">Requiring Executive Action</p>
+              <p className="text-xs text-slate-500 mt-1">Requires CEO sign-off</p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Connected Systems */}
+        {/* CEO Approved Requests Metric */}
         <Card className="border border-slate-200 shadow-sm bg-white">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Connected Services</span>
-              <div className="p-2 rounded-lg bg-purple-50 text-purple-600">
-                <Network className="h-4 w-4" />
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">CEO Approved Decisions</span>
+              <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
+                <CheckCircle2 className="h-4 w-4" />
               </div>
             </div>
             <div className="mt-3">
-              <div className="text-2xl font-bold text-slate-900">4 / 4 Active</div>
-              <p className="text-xs text-emerald-600 font-medium mt-1 flex items-center gap-1">
-                <CheckCircle2 className="h-3.5 w-3.5" /> All systems nominal
-              </p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-emerald-600">{approvedRequests.length}</span>
+                <span className="text-sm font-semibold text-emerald-700">
+                  (${totalApprovedAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })})
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">Approved & synced to audit trail</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="approvals" className="w-full space-y-6">
+      {/* Main Tabs Container */}
+      <Tabs defaultValue="approvals" className="space-y-6">
         <div className="flex items-center justify-between border-b border-slate-200 pb-2">
           <TabsList className="bg-slate-100 p-1 rounded-xl">
             <TabsTrigger value="approvals" className="gap-2 rounded-lg font-medium text-xs sm:text-sm">
               <ShieldCheck className="h-4 w-4" />
-              Executive Approvals ({pendingApprovals.length})
+              Executive Approvals ({pendingApprovals.length} pending / {approvedRequests.length} approved)
             </TabsTrigger>
             <TabsTrigger value="financials" className="gap-2 rounded-lg font-medium text-xs sm:text-sm">
               <TrendingUp className="h-4 w-4" />
@@ -423,14 +491,33 @@ export default function Dashboard() {
           <Card className="border border-slate-200 shadow-sm bg-white">
             <CardHeader className="border-b border-slate-100 pb-4">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                <div>
-                  <CardTitle className="text-lg font-bold text-slate-900">
-                    Purchase Requests Requiring Approval
-                  </CardTitle>
-                  <CardDescription className="text-xs text-slate-500 mt-0.5">
-                    Synchronous two-way delegation to Admin Portal API. Target application validates business logic.
-                  </CardDescription>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center bg-slate-100 p-1 rounded-lg">
+                    <button
+                      onClick={() => setApprovalViewMode("pending")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                        approvalViewMode === "pending"
+                          ? "bg-white text-slate-900 shadow-sm"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <Clock className="h-3.5 w-3.5 text-amber-600" />
+                      <span>Pending Approvals ({pendingApprovals.length})</span>
+                    </button>
+                    <button
+                      onClick={() => setApprovalViewMode("approved")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                        approvalViewMode === "approved"
+                          ? "bg-emerald-600 text-white shadow-sm"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      <span>Approved by CEO ({approvedRequests.length})</span>
+                    </button>
+                  </div>
                 </div>
+
                 <div className="flex items-center gap-2">
                   <div className="relative w-48 sm:w-64">
                     <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
@@ -441,111 +528,181 @@ export default function Dashboard() {
                       className="pl-8 text-xs h-8 bg-slate-50"
                     />
                   </div>
-                  <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-xs">
-                    {(["ALL", "WAITING_APPROVAL", "UNDER_REVIEW", "NEW"] as const).map((filter) => (
-                      <button
-                        key={filter}
-                        onClick={() => setStatusFilter(filter)}
-                        className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-                          statusFilter === filter
-                            ? "bg-white text-slate-900 shadow-sm font-semibold"
-                            : "text-slate-600 hover:text-slate-900"
-                        }`}
-                      >
-                        {filter === "ALL" ? "All" : filter.replace("_", " ")}
-                      </button>
-                    ))}
-                  </div>
+                  {approvalViewMode === "pending" && (
+                    <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-xs">
+                      {(["ALL", "WAITING_APPROVAL", "UNDER_REVIEW", "NEW"] as const).map((filter) => (
+                        <button
+                          key={filter}
+                          onClick={() => setStatusFilter(filter)}
+                          className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                            statusFilter === filter
+                              ? "bg-white text-slate-900 shadow-sm font-semibold"
+                              : "text-slate-600 hover:text-slate-900"
+                          }`}
+                        >
+                          {filter === "ALL" ? "All" : filter.replace("_", " ")}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {isApprovalsLoading ? (
-                <div className="p-8 text-center text-slate-400">Loading pending requests...</div>
-              ) : filteredApprovals.length === 0 ? (
-                <div className="p-12 text-center">
-                  <div className="mx-auto w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-3">
-                    <CheckCircle2 className="h-6 w-6" />
+              {approvalViewMode === "pending" ? (
+                isApprovalsLoading ? (
+                  <div className="p-8 text-center text-slate-400">Loading pending requests...</div>
+                ) : filteredApprovals.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <div className="mx-auto w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-3">
+                      <CheckCircle2 className="h-6 w-6" />
+                    </div>
+                    <h3 className="font-semibold text-slate-800 text-sm">No Pending Approvals</h3>
+                    <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                      All purchase requests matching the active filter are up to date.
+                    </p>
                   </div>
-                  <h3 className="font-semibold text-slate-800 text-sm">No Pending Approvals</h3>
-                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                    All purchase requests matching the active filter are up to date.
-                  </p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-50 text-slate-600 font-medium text-xs border-b border-slate-100">
-                      <tr>
-                        <th className="py-3 px-4">Request ID</th>
-                        <th className="py-3 px-4">Department / Requester</th>
-                        <th className="py-3 px-4">Amount</th>
-                        <th className="py-3 px-4">Description</th>
-                        <th className="py-3 px-4">Status</th>
-                        <th className="py-3 px-4 text-right">Executive Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {filteredApprovals.map((req) => (
-                        <tr
-                          key={req.id}
-                          className="hover:bg-blue-50/40 transition-colors cursor-pointer group"
-                          onClick={() => setDetailedRequest(req)}
-                        >
-                          <td className="py-3.5 px-4 font-mono font-medium text-slate-900">
-                            <div className="flex items-center gap-1.5 text-blue-600 group-hover:underline">
-                              <span>#{req.id}</span>
-                              <Eye className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </div>
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <div className="font-medium text-slate-800">{req.department || "Operations"}</div>
-                            <div className="text-xs text-slate-400">{req.requester_name || "Staff"}</div>
-                          </td>
-                          <td className="py-3.5 px-4 font-semibold text-slate-900">
-                            ${(req.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </td>
-                          <td className="py-3.5 px-4 text-slate-600 max-w-xs truncate">
-                            {req.description || "Purchase Order Request"}
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <Badge
-                              variant="outline"
-                              className={`text-[11px] font-semibold px-2 py-0.5 ${
-                                (req.status || "").toUpperCase().includes("WAITING")
-                                  ? "bg-amber-50 text-amber-700 border-amber-200"
-                                  : (req.status || "").toUpperCase().includes("REVIEW")
-                                  ? "bg-blue-50 text-blue-700 border-blue-200"
-                                  : "bg-slate-50 text-slate-700 border-slate-200"
-                              }`}
-                            >
-                              {req.status || "WAITING_APPROVAL"}
-                            </Badge>
-                          </td>
-                          <td className="py-3.5 px-4 text-right space-x-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-slate-700 border-slate-200 hover:bg-slate-100 text-xs h-8 px-2.5"
-                              onClick={() => setDetailedRequest(req)}
-                            >
-                              <Eye className="h-3.5 w-3.5 mr-1 text-slate-500" />
-                              Details
-                            </Button>
-                            <Button
-                              size="sm"
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3"
-                              onClick={() => handleOpenAction(req, "APPROVE")}
-                            >
-                              <Check className="h-3.5 w-3.5 mr-1" />
-                              Approve
-                            </Button>
-                          </td>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-slate-600 font-medium text-xs border-b border-slate-100">
+                        <tr>
+                          <th className="py-3 px-4">Request ID</th>
+                          <th className="py-3 px-4">Department / Requester</th>
+                          <th className="py-3 px-4">Amount</th>
+                          <th className="py-3 px-4">Description</th>
+                          <th className="py-3 px-4">Status</th>
+                          <th className="py-3 px-4 text-right">Executive Action</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {filteredApprovals.map((req) => (
+                          <tr
+                            key={req.id}
+                            className="hover:bg-blue-50/40 transition-colors cursor-pointer group"
+                            onClick={() => setDetailedRequest(req)}
+                          >
+                            <td className="py-3.5 px-4 font-mono font-medium text-slate-900">
+                              <div className="flex items-center gap-1.5 text-blue-600 group-hover:underline">
+                                <span>#{req.id}</span>
+                                <Eye className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <div className="font-medium text-slate-800">{req.department || "Operations"}</div>
+                              <div className="text-xs text-slate-400">{req.requester_name || "Staff"}</div>
+                            </td>
+                            <td className="py-3.5 px-4 font-semibold text-slate-900">
+                              ${(req.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                            <td className="py-3.5 px-4 text-slate-600 max-w-xs truncate">
+                              {req.description || "Purchase Order Request"}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <Badge
+                                variant="outline"
+                                className={`text-[11px] font-semibold px-2 py-0.5 ${
+                                  (req.status || "").toUpperCase().includes("WAITING")
+                                    ? "bg-amber-50 text-amber-700 border-amber-200"
+                                    : (req.status || "").toUpperCase().includes("REVIEW")
+                                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                                    : "bg-slate-50 text-slate-700 border-slate-200"
+                                }`}
+                              >
+                                {req.status || "WAITING_APPROVAL"}
+                              </Badge>
+                            </td>
+                            <td className="py-3.5 px-4 text-right space-x-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-slate-700 border-slate-200 hover:bg-slate-100 text-xs h-8 px-2.5"
+                                onClick={() => setDetailedRequest(req)}
+                              >
+                                <Eye className="h-3.5 w-3.5 mr-1 text-slate-500" />
+                                Details
+                              </Button>
+                              <Button
+                                size="sm"
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3"
+                                onClick={() => handleOpenAction(req, "APPROVE")}
+                              >
+                                <Check className="h-3.5 w-3.5 mr-1" />
+                                Approve
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )
+              ) : (
+                /* APPROVED BY CEO VIEW */
+                filteredApproved.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <div className="mx-auto w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
+                      <CheckCircle2 className="h-6 w-6" />
+                    </div>
+                    <h3 className="font-semibold text-slate-800 text-sm">No Approved Requests Found</h3>
+                    <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                      No purchase requests have been approved by the CEO yet.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-emerald-50/70 text-emerald-950 font-medium text-xs border-b border-emerald-100">
+                        <tr>
+                          <th className="py-3 px-4">Request ID</th>
+                          <th className="py-3 px-4">Department / Requester</th>
+                          <th className="py-3 px-4">Approved Amount</th>
+                          <th className="py-3 px-4">Description / Scope</th>
+                          <th className="py-3 px-4">Approval Decision & Date</th>
+                          <th className="py-3 px-4 text-right">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {filteredApproved.map((req) => (
+                          <tr
+                            key={req.id}
+                            className="hover:bg-emerald-50/30 transition-colors cursor-pointer group"
+                            onClick={() => setDetailedRequest(req.rawReq || req)}
+                          >
+                            <td className="py-3.5 px-4 font-mono font-medium text-slate-900">
+                              <div className="flex items-center gap-1.5 text-emerald-700 font-bold group-hover:underline">
+                                <span>#{req.id}</span>
+                                <Eye className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <div className="font-semibold text-slate-900">{req.department}</div>
+                              <div className="text-xs text-slate-500">{req.requester_name}</div>
+                            </td>
+                            <td className="py-3.5 px-4 font-bold text-emerald-700">
+                              ${req.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                            <td className="py-3.5 px-4 text-slate-600 max-w-xs truncate">
+                              {req.description}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <div className="text-xs font-medium text-slate-700 truncate max-w-xs">{req.note}</div>
+                              <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                                {new Date(req.approved_at).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 font-bold text-[11px] px-2.5 py-0.5">
+                                <Check className="h-3 w-3 mr-1" />
+                                Approved
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )
               )}
             </CardContent>
           </Card>

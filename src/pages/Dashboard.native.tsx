@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
 import { apiClient } from "@/services/apiClient";
@@ -179,8 +179,70 @@ export default function Dashboard() {
     refetchInterval: 10000,
   });
 
+  const {
+    data: auditLogs = [],
+    refetch: refetchAudit,
+  } = useQuery<any[]>({
+    queryKey: ["ceoAuditLogs"],
+    queryFn: () => apiClient.get<any[]>("/api/v1/ceo/audit-logs"),
+    refetchInterval: 10000,
+  });
+
+  const [approvalsSubTab, setApprovalsSubTab] = useState<"pending" | "approved">("pending");
+
   const pendingApprovals = (rawApprovals || []).filter((r) => !processedIds.includes(r.id));
   const displayApprovals = pendingApprovals;
+
+  const approvedRequests = useMemo(() => {
+    const list: Array<{
+      id: string;
+      department: string;
+      requester_name: string;
+      amount: number;
+      description: string;
+      status: string;
+      approved_at: string;
+      note: string;
+      vendor?: string;
+      rawReq?: any;
+    }> = [];
+
+    const seenIds = new Set<string>();
+
+    auditLogs.forEach((log) => {
+      if (log.action === "PURCHASE_APPROVE" && (log.result === "SUCCESS" || log.details?.response?.success)) {
+        const reqData = log.details?.response?.data?.request || {};
+        const poData = log.details?.response?.data?.purchase_order || {};
+        const id = String(reqData.id || log.target_entity || log.id);
+        if (!seenIds.has(id)) {
+          seenIds.add(id);
+          list.push({
+            id,
+            department: reqData.department || "Executive Operations",
+            requester_name: reqData.requester || log.requested_by || "Staff Requester",
+            amount: Number(reqData.amount || poData.amount || 0),
+            description: reqData.title || reqData.description || poData.item || `Executive Approved Request #${id}`,
+            status: "APPROVED",
+            approved_at: log.created_at,
+            note: log.details?.note || "Executive approval granted.",
+            vendor: poData.vendor || "Verified Vendor",
+            rawReq: {
+              id,
+              department: reqData.department || "Executive Operations",
+              requester_name: reqData.requester || log.requested_by || "Staff Requester",
+              amount: Number(reqData.amount || poData.amount || 0),
+              description: reqData.title || reqData.description || poData.item || `Executive Approved Request #${id}`,
+              status: "APPROVED",
+              created_at: log.created_at,
+              vendor: poData.vendor || "Verified Vendor",
+            },
+          });
+        }
+      }
+    });
+
+    return list;
+  }, [auditLogs]);
 
   const {
     data: portals = [],
@@ -243,6 +305,7 @@ export default function Dashboard() {
       setActionNote("");
       queryClient.invalidateQueries({ queryKey: ["pendingApprovals"] });
       queryClient.invalidateQueries({ queryKey: ["ceoEvents"] });
+      queryClient.invalidateQueries({ queryKey: ["ceoAuditLogs"] });
     },
     onError: (err: any) => {
       const msg =
@@ -277,6 +340,7 @@ export default function Dashboard() {
     setRefreshing(true);
     await Promise.all([
       refetchApprovals(),
+      refetchAudit(),
       refetchPortals(),
       refetchEvents(),
       refetchLogins(),
@@ -485,7 +549,7 @@ export default function Dashboard() {
         </View>
 
         {/* ========================================================= */}
-        {/* TAB 1: PENDING APPROVALS                                 */}
+        {/* TAB 1: EXECUTIVE APPROVALS & DECISIONS                   */}
         {/* ========================================================= */}
         {activeTab === "approvals" && (
           <View style={styles.tabContent}>
@@ -493,135 +557,249 @@ export default function Dashboard() {
               <View>
                 <Text style={styles.sectionTitle}>Executive Approvals</Text>
                 <Text style={styles.sectionSubtitle}>
-                  Purchase requests awaiting executive decision.
+                  Purchase requests awaiting decision and approved history.
                 </Text>
               </View>
-              {pendingApprovals.length > 0 && (
-                <NativeBadge variant="outline" style={styles.alertBadge}>
-                  <Text style={styles.alertBadgeText}>
-                    {pendingApprovals.length} Action Required
-                  </Text>
-                </NativeBadge>
-              )}
             </View>
 
-            {isApprovalsLoading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#2563eb" />
-                <Text style={styles.loadingText}>Loading pending approvals...</Text>
-              </View>
-            ) : pendingApprovals.length === 0 ? (
-              <NativeCard style={styles.emptyCard}>
-                <NativeCardContent style={styles.emptyContent}>
-                  <MaterialCommunityIcons
-                    name="check-decagram-outline"
-                    size={48}
-                    color="#10b981"
-                  />
-                  <Text style={styles.emptyTitle}>All Caught Up!</Text>
-                  <Text style={styles.emptySubtitle}>
-                    There are currently no purchase requests awaiting executive approval.
-                  </Text>
-                </NativeCardContent>
-              </NativeCard>
+            {/* Sub-Tab Selector: Pending vs Approved */}
+            <View style={{ flexDirection: "row", backgroundColor: "#f1f5f9", padding: 4, borderRadius: 12, marginBottom: 16, gap: 4 }}>
+              <TouchableOpacity
+                onPress={() => setApprovalsSubTab("pending")}
+                style={{
+                  flex: 1,
+                  paddingVertical: 8,
+                  paddingHorizontal: 12,
+                  borderRadius: 8,
+                  backgroundColor: approvalsSubTab === "pending" ? "#ffffff" : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "row",
+                  gap: 6,
+                  shadowColor: approvalsSubTab === "pending" ? "#000" : "transparent",
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: approvalsSubTab === "pending" ? 0.1 : 0,
+                  shadowRadius: 2,
+                  elevation: approvalsSubTab === "pending" ? 1 : 0,
+                }}
+              >
+                <Ionicons name="time-outline" size={15} color={approvalsSubTab === "pending" ? "#d97706" : "#64748b"} />
+                <Text style={{ fontSize: 12, fontWeight: "700", color: approvalsSubTab === "pending" ? "#0f172a" : "#64748b" }}>
+                  Pending ({pendingApprovals.length})
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setApprovalsSubTab("approved")}
+                style={{
+                  flex: 1,
+                  paddingVertical: 8,
+                  paddingHorizontal: 12,
+                  borderRadius: 8,
+                  backgroundColor: approvalsSubTab === "approved" ? "#059669" : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "row",
+                  gap: 6,
+                }}
+              >
+                <Ionicons name="checkmark-circle" size={15} color={approvalsSubTab === "approved" ? "#ffffff" : "#64748b"} />
+                <Text style={{ fontSize: 12, fontWeight: "700", color: approvalsSubTab === "approved" ? "#ffffff" : "#64748b" }}>
+                  Approved ({approvedRequests.length})
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {approvalsSubTab === "pending" ? (
+              isApprovalsLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#2563eb" />
+                  <Text style={styles.loadingText}>Loading pending approvals...</Text>
+                </View>
+              ) : pendingApprovals.length === 0 ? (
+                <NativeCard style={styles.emptyCard}>
+                  <NativeCardContent style={styles.emptyContent}>
+                    <MaterialCommunityIcons
+                      name="check-decagram-outline"
+                      size={48}
+                      color="#10b981"
+                    />
+                    <Text style={styles.emptyTitle}>All Caught Up!</Text>
+                    <Text style={styles.emptySubtitle}>
+                      There are currently no purchase requests awaiting executive approval.
+                    </Text>
+                  </NativeCardContent>
+                </NativeCard>
+              ) : (
+                displayApprovals.map((req) => (
+                  <TouchableOpacity
+                    key={req.id}
+                    activeOpacity={0.88}
+                    onPress={() => setDetailedRequest(req)}
+                  >
+                    <NativeCard style={styles.approvalCard}>
+                      <NativeCardHeader style={styles.approvalCardHeader}>
+                        <View style={styles.approvalCardHeaderTop}>
+                          <View style={styles.reqIdBox}>
+                            <Text style={styles.reqIdText}>#{req.id}</Text>
+                            <Text style={styles.reqDeptText}>{req.department}</Text>
+                          </View>
+                          <NativeBadge
+                            variant={
+                              req.priority?.toLowerCase() === "high"
+                                ? "destructive"
+                                : req.priority?.toLowerCase() === "medium"
+                                ? "warning"
+                                : "secondary"
+                            }
+                          >
+                            <Text style={styles.badgeTextSmall}>
+                              {req.priority || "Normal"} Priority
+                            </Text>
+                          </NativeBadge>
+                        </View>
+
+                        <View style={styles.amountRow}>
+                          <Text style={styles.amountValue}>
+                            ${Number(req.amount || 0).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </Text>
+                          {req.vendor && (
+                            <Text style={styles.vendorText}>Vendor: {req.vendor}</Text>
+                          )}
+                        </View>
+                      </NativeCardHeader>
+
+                      <NativeCardContent style={styles.approvalCardContent}>
+                        {req.description ? (
+                          <Text style={styles.reqDescText} numberOfLines={2}>
+                            {req.description}
+                          </Text>
+                        ) : null}
+
+                        <View style={styles.reqMetaRow}>
+                          <View style={styles.reqMetaItem}>
+                            <Ionicons name="person-outline" size={13} color="#64748b" />
+                            <Text style={styles.reqMetaText}>
+                              {req.requester_name || "Finance Admin"}
+                            </Text>
+                          </View>
+                          <View style={styles.reqMetaItem}>
+                            <Ionicons name="time-outline" size={13} color="#64748b" />
+                            <Text style={styles.reqMetaText}>
+                              {new Date(req.created_at).toLocaleDateString()}
+                            </Text>
+                          </View>
+                        </View>
+
+                        {/* View full details indicator banner */}
+                        <View style={styles.tapDetailsBanner}>
+                          <Text style={styles.tapDetailsText}>Tap card to inspect full details</Text>
+                          <Ionicons name="chevron-forward" size={14} color="#2563eb" />
+                        </View>
+
+                        {/* Approve / Reject Action Buttons */}
+                        <View style={styles.actionButtonsRow}>
+                          <TouchableOpacity
+                            style={[styles.actionBtn, styles.approveBtn]}
+                            onPress={(e) => {
+                              e.stopPropagation?.();
+                              handleOpenAction(req, "APPROVE");
+                            }}
+                          >
+                            <Ionicons name="checkmark-circle" size={16} color="#ffffff" />
+                            <Text style={styles.approveBtnText}>Approve</Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            style={[styles.actionBtn, styles.rejectBtn]}
+                            onPress={(e) => {
+                              e.stopPropagation?.();
+                              handleOpenAction(req, "REJECT");
+                            }}
+                          >
+                            <Ionicons name="close-circle" size={16} color="#ffffff" />
+                            <Text style={styles.rejectBtnText}>Reject</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </NativeCardContent>
+                    </NativeCard>
+                  </TouchableOpacity>
+                ))
+              )
             ) : (
-              displayApprovals.map((req) => (
-                <TouchableOpacity
-                  key={req.id}
-                  activeOpacity={0.88}
-                  onPress={() => setDetailedRequest(req)}
-                >
-                  <NativeCard style={styles.approvalCard}>
-                    <NativeCardHeader style={styles.approvalCardHeader}>
-                      <View style={styles.approvalCardHeaderTop}>
-                        <View style={styles.reqIdBox}>
-                          <Text style={styles.reqIdText}>#{req.id}</Text>
-                          <Text style={styles.reqDeptText}>{req.department}</Text>
+              /* APPROVED BY CEO LIST */
+              approvedRequests.length === 0 ? (
+                <NativeCard style={styles.emptyCard}>
+                  <NativeCardContent style={styles.emptyContent}>
+                    <Ionicons name="documents-outline" size={48} color="#94a3b8" />
+                    <Text style={styles.emptyTitle}>No Approved Requests</Text>
+                    <Text style={styles.emptySubtitle}>
+                      No purchase requests have been approved by the CEO yet.
+                    </Text>
+                  </NativeCardContent>
+                </NativeCard>
+              ) : (
+                approvedRequests.map((req) => (
+                  <TouchableOpacity
+                    key={req.id}
+                    activeOpacity={0.88}
+                    onPress={() => setDetailedRequest(req.rawReq || req)}
+                  >
+                    <NativeCard style={[styles.approvalCard, { borderColor: "#bbf7d0", borderWidth: 1.5 }]}>
+                      <NativeCardHeader style={[styles.approvalCardHeader, { backgroundColor: "#f0fdf4" }]}>
+                        <View style={styles.approvalCardHeaderTop}>
+                          <View style={styles.reqIdBox}>
+                            <Text style={[styles.reqIdText, { color: "#15803d" }]}>#{req.id}</Text>
+                            <Text style={styles.reqDeptText}>{req.department}</Text>
+                          </View>
+                          <NativeBadge style={{ backgroundColor: "#dcfce7", borderColor: "#86efac" }}>
+                            <Text style={{ fontSize: 10, fontWeight: "700", color: "#166534" }}>
+                              ✓ Approved
+                            </Text>
+                          </NativeBadge>
                         </View>
-                        <NativeBadge
-                          variant={
-                            req.priority?.toLowerCase() === "high"
-                              ? "destructive"
-                              : req.priority?.toLowerCase() === "medium"
-                              ? "warning"
-                              : "secondary"
-                          }
-                        >
-                          <Text style={styles.badgeTextSmall}>
-                            {req.priority || "Normal"} Priority
+
+                        <View style={styles.amountRow}>
+                          <Text style={[styles.amountValue, { color: "#15803d" }]}>
+                            ${Number(req.amount || 0).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
                           </Text>
-                        </NativeBadge>
-                      </View>
+                          {req.vendor && (
+                            <Text style={styles.vendorText}>Vendor: {req.vendor}</Text>
+                          )}
+                        </View>
+                      </NativeCardHeader>
 
-                      <View style={styles.amountRow}>
-                        <Text style={styles.amountValue}>
-                          ${Number(req.amount || 0).toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </Text>
-                        {req.vendor && (
-                          <Text style={styles.vendorText}>Vendor: {req.vendor}</Text>
-                        )}
-                      </View>
-                    </NativeCardHeader>
+                      <NativeCardContent style={styles.approvalCardContent}>
+                        {req.description ? (
+                          <Text style={styles.reqDescText} numberOfLines={2}>
+                            {req.description}
+                          </Text>
+                        ) : null}
 
-                    <NativeCardContent style={styles.approvalCardContent}>
-                      {req.description ? (
-                        <Text style={styles.reqDescText} numberOfLines={2}>
-                          {req.description}
-                        </Text>
-                      ) : null}
-
-                      <View style={styles.reqMetaRow}>
-                        <View style={styles.reqMetaItem}>
-                          <Ionicons name="person-outline" size={13} color="#64748b" />
-                          <Text style={styles.reqMetaText}>
-                            {req.requester_name || "Finance Admin"}
+                        <View style={{ backgroundColor: "#f8fafc", padding: 8, borderRadius: 8, marginTop: 6, marginBottom: 8, borderWidth: 1, borderColor: "#e2e8f0" }}>
+                          <Text style={{ fontSize: 11, color: "#334155", fontWeight: "600" }}>
+                            CEO Note: {req.note}
+                          </Text>
+                          <Text style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>
+                            Approved: {new Date(req.approved_at).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
                           </Text>
                         </View>
-                        <View style={styles.reqMetaItem}>
-                          <Ionicons name="time-outline" size={13} color="#64748b" />
-                          <Text style={styles.reqMetaText}>
-                            {new Date(req.created_at).toLocaleDateString()}
-                          </Text>
+
+                        <View style={styles.tapDetailsBanner}>
+                          <Text style={[styles.tapDetailsText, { color: "#15803d" }]}>Tap card to inspect full details</Text>
+                          <Ionicons name="chevron-forward" size={14} color="#15803d" />
                         </View>
-                      </View>
-
-                      {/* View full details indicator banner */}
-                      <View style={styles.tapDetailsBanner}>
-                        <Text style={styles.tapDetailsText}>Tap card to inspect full details</Text>
-                        <Ionicons name="chevron-forward" size={14} color="#2563eb" />
-                      </View>
-
-                      {/* Approve / Reject Action Buttons */}
-                      <View style={styles.actionButtonsRow}>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, styles.approveBtn]}
-                          onPress={(e) => {
-                            e.stopPropagation?.();
-                            handleOpenAction(req, "APPROVE");
-                          }}
-                        >
-                          <Ionicons name="checkmark-circle" size={16} color="#ffffff" />
-                          <Text style={styles.approveBtnText}>Approve</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                          style={[styles.actionBtn, styles.rejectBtn]}
-                          onPress={(e) => {
-                            e.stopPropagation?.();
-                            handleOpenAction(req, "REJECT");
-                          }}
-                        >
-                          <Ionicons name="close-circle" size={16} color="#ffffff" />
-                          <Text style={styles.rejectBtnText}>Reject</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </NativeCardContent>
-                  </NativeCard>
-                </TouchableOpacity>
-              ))
+                      </NativeCardContent>
+                    </NativeCard>
+                  </TouchableOpacity>
+                ))
+              )
             )}
           </View>
         )}
