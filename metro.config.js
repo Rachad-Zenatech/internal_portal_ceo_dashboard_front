@@ -10,16 +10,6 @@ config.resolver.extraNodeModules = {
   "@": path.resolve(__dirname, "src"),
 };
 
-// Ensure .native extensions are prioritized
-const standardExts = config.resolver.sourceExts || ["tsx", "ts", "jsx", "js", "json"];
-config.resolver.sourceExts = [
-  "native.tsx",
-  "native.ts",
-  "native.jsx",
-  "native.js",
-  ...standardExts.filter((ext) => !ext.startsWith("native.")),
-];
-
 // Set Metro port to 8090
 config.server = {
   ...config.server,
