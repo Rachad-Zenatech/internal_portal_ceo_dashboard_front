@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, Bell, Building2, BookText, FileText, Banknote, Loader2, LogOut, User, Sparkles, Mail, BellRing, Settings2, CheckCheck } from "lucide-react";
+import { Search, Bell, Building2, BookText, FileText, Banknote, Loader2, LogOut, User, Bot, Sparkles, Mail, BellRing, Settings2, CheckCheck, X, CloudDownload } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -24,7 +24,8 @@ import { useNavigate } from "react-router-dom";
 import ThemeSwitch from "./ThemeSwitch";
 import { useGlobalSearch } from "@/hooks/useSearch";
 import { useAuth } from "@/lib/AuthContext";
-import { useNotifications, useUnreadNotificationCount, useMarkNotificationAsRead, useMarkAllNotificationsAsRead, useClearReadNotifications } from "@/hooks/useNotifications";
+import { useNotifications, useUnreadNotificationCount, useMarkNotificationAsRead, useMarkAllNotificationsAsRead, useClearAllNotifications } from "@/hooks/useNotifications";
+import { useCeoRealtimeStream } from "@/hooks/useCeoRealtimeStream";
 
 
 function TopBarClock() {
@@ -78,13 +79,13 @@ export default function TopBar() {
   }, [inputValue]);
 
   const { data: results = [], isLoading, isFetching } = useGlobalSearch(debouncedValue);
+  useCeoRealtimeStream();
   const { data: notifications = [] } = useNotifications();
   const { data: unreadCountData } = useUnreadNotificationCount();
   const { mutate: markAsRead } = useMarkNotificationAsRead();
   const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllNotificationsAsRead();
-  const { mutate: clearRead } = useClearReadNotifications();
+  const { mutate: clearAll, isPending: isClearingAll } = useClearAllNotifications();
   const unreadCount = unreadCountData?.count ?? 0;
-  const hasReadNotifications = notifications.some(n => n.is_read);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -207,7 +208,25 @@ export default function TopBar() {
         </div>
       </div>
       
-      <div className="flex items-center gap-2 sm:gap-4 md:gap-5 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
+        {/* TopBar Ask AI Copilot Button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.dispatchEvent(new CustomEvent("open-ai-chat"))}
+          className="h-9 px-3 rounded-xl border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/70 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-medium text-xs gap-2 transition-all shadow-2xs group"
+          title="Open AI Executive Assistant (Say 'Hey Zena')"
+        >
+          <div className="relative flex items-center justify-center">
+            <Bot className="w-4 h-4 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform" />
+            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          </div>
+          <span className="hidden sm:inline">Ask AI</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-200/60 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-200 font-bold hidden md:inline">
+            Hey Zena
+          </span>
+        </Button>
+
         <TopBarClock />
         <TooltipProvider delayDuration={0}>
           <Tooltip>
@@ -222,74 +241,143 @@ export default function TopBar() {
         <div className="hidden sm:flex items-center gap-1.5 border-r pr-2 sm:pr-4 md:pr-5 mr-1">
           <DropdownMenu open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground hover:bg-muted rounded-full h-10 w-10 outline-none focus-visible:ring-0">
-                <Bell className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground hover:bg-muted rounded-full h-8.5 w-8.5 outline-none focus-visible:ring-0">
+                <Bell className="h-4 w-4" />
                 {unreadCount > 0 && (
                   <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-card" />
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[420px] p-0 rounded-xl overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 bg-muted/30 border-b">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold">Notifications</span>
-                  {unreadCount > 0 && (
-                    <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full whitespace-nowrap">{unreadCount} new</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {unreadCount > 0 && (
-                    <Button variant="ghost" size="sm" className="h-6 text-xs px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors whitespace-nowrap" onClick={(e) => { e.preventDefault(); e.stopPropagation(); markAllAsRead(); }} disabled={isMarkingAll}>
-                      <CheckCheck className={`h-3.5 w-3.5 mr-1 ${isMarkingAll ? "animate-pulse" : ""}`} />
-                      Mark all as read
-                    </Button>
-                  )}
-                  {hasReadNotifications && (
-                    <Button variant="ghost" size="sm" className="h-6 text-xs px-2 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors whitespace-nowrap" onClick={(e) => { e.preventDefault(); e.stopPropagation(); clearRead(); }}>
-                      Clear
-                    </Button>
-                  )}
-                </div>
+            <DropdownMenuContent align="end" className="w-[480px] p-0 rounded-2xl overflow-hidden bg-white dark:bg-zinc-950 shadow-2xl border border-slate-200 dark:border-zinc-800">
+              {/* Header */}
+              <div className="flex items-center justify-between pt-5 px-5 pb-3">
+                <span className="text-2xl font-bold text-slate-900 dark:text-zinc-100 tracking-tight">Notifications</span>
+                <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg border-slate-200 dark:border-zinc-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800" onClick={() => setIsNotificationsOpen(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-              <div className="max-h-[300px] overflow-y-auto">
+
+              {/* Tabs */}
+              <div className="px-5 border-b border-slate-100 dark:border-zinc-800 flex gap-6">
+                <button className="text-sm font-semibold text-slate-900 dark:text-zinc-100 border-b-2 border-slate-900 dark:border-zinc-100 pb-3">View all</button>
+              </div>
+
+              {/* List */}
+              <div className="max-h-[400px] overflow-y-auto py-2">
                 {notifications.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-muted-foreground">
+                  <div className="p-8 text-center text-sm text-slate-500 dark:text-zinc-400">
                     You have no notifications.
                   </div>
                 ) : (
-                  notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      onClick={() => {
-                        if (!notification.is_read) {
-                          markAsRead(notification.id);
-                        }
-                        if (notification.link_url) {
-                          setIsNotificationsOpen(false);
-                          navigate(notification.link_url);
-                        }
-                      }}
-                      className={`p-4 border-b last:border-0 cursor-pointer transition-colors duration-500 ${
-                        !notification.is_read ? "bg-blue-50/50 hover:bg-blue-50 dark:bg-blue-900/10 dark:hover:bg-blue-900/20" : "hover:bg-muted/50"
-                      }`}
-                    >
-                      <div className="flex gap-3">
-                        <div className="flex-1 space-y-1">
-                          <p className={`text-sm leading-snug transition-colors duration-500 ${!notification.is_read ? "font-semibold text-foreground" : "font-medium text-muted-foreground"}`}>
-                            {notification.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            {notification.message}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground mt-1.5 font-medium uppercase tracking-wider">
-                            {new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </p>
+                  notifications.map((notification) => {
+                    const isUnread = !notification.is_read;
+                    const dateObj = new Date(notification.created_at);
+                    const dayString = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                    const timeString = dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase();
+                    const fullDateString = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const capitalizedTitle = notification.title ? notification.title.charAt(0).toUpperCase() + notification.title.slice(1) : "";
+
+                    return (
+                      <div
+                        key={notification.id}
+                        onClick={() => {
+                          if (!notification.is_read) {
+                            markAsRead(notification.id);
+                          }
+                          if (notification.link_url) {
+                            setIsNotificationsOpen(false);
+                            navigate(notification.link_url);
+                          }
+                        }}
+                        className={`px-5 py-5 cursor-pointer transition-colors duration-200 flex gap-4 group ${
+                          isUnread ? "bg-slate-50/50 hover:bg-slate-50 dark:bg-zinc-900/30 dark:hover:bg-zinc-900/50" : "hover:bg-slate-50 dark:hover:bg-zinc-900/30"
+                        }`}
+                      >
+                        {/* Avatar */}
+                        <div className="shrink-0 relative">
+                          {(notification as any).sender_avatar ? (
+                            <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-zinc-800 overflow-hidden shadow-sm">
+                              <img src={(notification as any).sender_avatar} alt={(notification as any).sender_name || "Sender"} className="h-full w-full object-cover" />
+                            </div>
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200 dark:border-blue-800 shadow-sm">
+                              <Bell className="h-4 w-4" />
+                            </div>
+                          )}
                         </div>
-                        <div className={`w-2 h-2 rounded-full bg-blue-500 mt-1 shrink-0 shadow-sm transition-all duration-500 ${!notification.is_read ? "opacity-100 scale-100" : "opacity-0 scale-0"}`} />
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          {/* Sender name + action */}
+                          <div className="flex justify-between items-start">
+                            <p className="text-sm font-medium text-slate-900 dark:text-zinc-100 leading-snug pr-4">
+                              {capitalizedTitle}
+                            </p>
+                            {/* Unread Dot */}
+                            {isUnread && <div className="w-2.5 h-2.5 rounded-full bg-blue-600 dark:bg-blue-500 shrink-0 mt-1 shadow-sm" />}
+                          </div>
+
+                          {/* Message box if present */}
+                          {notification.message && (!(notification as any).attachments || (notification as any).attachments.length === 0) && (
+                            <div className="mt-2.5 p-3.5 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg text-sm font-medium text-slate-700 dark:text-zinc-300 shadow-sm leading-relaxed whitespace-pre-line">
+                              {notification.message}
+                            </div>
+                          )}
+
+                          {/* Attachments if present */}
+                          {(notification as any).attachments && (notification as any).attachments.length > 0 && (
+                            <div className="mt-3 flex flex-col gap-2">
+                              {(notification as any).attachments.map((att: any, i: number) => (
+                                <div key={i} className="flex items-center justify-between bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl p-3 shadow-sm hover:border-slate-300 dark:hover:border-zinc-700 transition-colors">
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-12 h-10 bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-lg flex items-center justify-center shrink-0">
+                                      <FileText className="h-5 w-5 text-slate-400" />
+                                    </div>
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="text-sm font-semibold text-slate-900 dark:text-zinc-100 truncate">{att.filename || 'Attachment'}</span>
+                                      <span className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-0.5">{att.size ? `${Math.round(att.size / 1024 / 1024)} MB` : '14 MB'}</span>
+                                    </div>
+                                  </div>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-900 dark:hover:text-zinc-100 shrink-0">
+                                    <CloudDownload className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Footer times */}
+                          <div className="flex items-center justify-between mt-3 text-xs font-semibold text-slate-500 dark:text-zinc-400">
+                            <span>{dayString} {timeString}</span>
+                            <span>{fullDateString}</span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
+              </div>
+
+              {/* Footer Actions */}
+              <div className="p-4 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between bg-white dark:bg-zinc-950">
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    className="h-9 px-3 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-bold tracking-tight transition-colors gap-2" 
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); markAllAsRead(); }} 
+                    disabled={isMarkingAll}
+                  >
+                    <CheckCheck className={`h-4 w-4 ${isMarkingAll ? "animate-pulse" : ""}`} />
+                    Mark all as read
+                  </Button>
+                </div>
+                <Button 
+                  className="h-9 px-5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition-colors"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); clearAll(); }}
+                  disabled={notifications.length === 0 || isClearingAll}
+                >
+                  {isClearingAll ? "Clearing..." : "Clear All"}
+                </Button>
               </div>
             </DropdownMenuContent>
           </DropdownMenu>

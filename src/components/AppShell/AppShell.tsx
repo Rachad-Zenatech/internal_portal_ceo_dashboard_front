@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   contentArea: {
     flex: 1,
     flexDirection: "column",
-    padding: 24,
+    padding: 0,
     backgroundColor: "#f8fafc",
     overflow: "auto" as unknown as "hidden",
   },

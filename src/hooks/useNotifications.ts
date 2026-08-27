@@ -28,7 +28,8 @@ export function useNotifications(options?: { refetchInterval?: number | false })
       }
     },
     retry: false,
-    refetchInterval: options?.refetchInterval ?? false, // No continuous polling by default
+    staleTime: 5000,
+    refetchInterval: options?.refetchInterval ?? 10000,
   });
 }
 
@@ -44,7 +45,8 @@ export function useUnreadNotificationCount(options?: { refetchInterval?: number 
       }
     },
     retry: false,
-    refetchInterval: options?.refetchInterval ?? false, // No continuous polling by default
+    staleTime: 5000,
+    refetchInterval: options?.refetchInterval ?? 10000,
   });
 }
 
@@ -89,6 +91,24 @@ export function useClearReadNotifications() {
     mutationFn: async () => {
       try {
         return await apiClient.delete("/api/notifications/read");
+      } catch {
+        return null;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
+    },
+  });
+}
+
+export function useClearAllNotifications() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      try {
+        return await apiClient.delete("/api/notifications/all");
       } catch {
         return null;
       }

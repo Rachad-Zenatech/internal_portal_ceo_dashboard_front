@@ -43,7 +43,7 @@ const SUGGESTIONS = [
 export default function FloatingChat() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [hasUnread, setHasUnread] = useState(false);
+  const [, setHasUnread] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [wakeWordEnabled, setWakeWordEnabled] = useState(true);
 
@@ -121,6 +121,21 @@ export default function FloatingChat() {
     }
     return true;
   };
+
+  // Listen for Open Chat events triggered from TopBar or Global Search
+  useEffect(() => {
+    const handleOpenChat = (e: Event) => {
+      const customEvent = e as CustomEvent<{ query?: string }>;
+      setIsOpen(true);
+      setHasUnread(false);
+      if (customEvent.detail?.query) {
+        setInput(customEvent.detail.query);
+        sendMessage(customEvent.detail.query);
+      }
+    };
+    window.addEventListener("open-ai-chat", handleOpenChat);
+    return () => window.removeEventListener("open-ai-chat", handleOpenChat);
+  }, [sendMessage]);
 
   // Process Wake Word or Command
   const handleWakeWordDetection = (transcript: string) => {
@@ -741,62 +756,6 @@ export default function FloatingChat() {
           <span>{wakeToast}</span>
         </div>
       )}
-
-      {/* Floating Action Button (to trigger Sheet) */}
-      <div data-onboarding="ai-assistant" className={`fixed bottom-6 right-6 z-[100] flex items-center gap-2.5 ${isOpen ? "hidden" : ""}`}>
-        {wakeWordEnabled && (
-          <div
-            onClick={async () => {
-              setIsOpen(true);
-              setHasUnread(false);
-              const granted = await requestMicPermission();
-              if (granted) {
-                dictationBaseRef.current = "";
-                transitionToMode("dictating");
-              }
-            }}
-            className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3.5 py-2 rounded-full shadow-lg border border-slate-200/80 dark:border-slate-800 flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer hover:scale-105 transition-all animate-in fade-in slide-in-from-right-3 group"
-          >
-            <span className="relative flex h-2.5 w-2.5">
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${micPermissionState === "denied" ? "bg-amber-400" : "bg-emerald-400"} opacity-75`}></span>
-              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${micPermissionState === "denied" ? "bg-amber-500" : "bg-emerald-500"}`}></span>
-            </span>
-            <span>
-              {micPermissionState === "denied" ? (
-                <span className="text-amber-600 dark:text-amber-400">Click to Enable Mic</span>
-              ) : (
-                <>Say <span className="text-blue-600 dark:text-blue-400 font-bold group-hover:underline">"Hey Zena"</span></>
-              )}
-            </span>
-          </div>
-        )}
-
-        <button
-          onClick={async () => {
-            const nextOpen = !isOpen;
-            setIsOpen(nextOpen);
-            if (nextOpen) {
-              setHasUnread(false);
-              if (wakeWordEnabled) {
-                const granted = await requestMicPermission();
-                if (granted) {
-                  dictationBaseRef.current = "";
-                  transitionToMode("dictating");
-                }
-              }
-            }
-          }}
-          className="h-14 w-14 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-[0_4px_20px_rgba(79,70,229,0.4)] hover:shadow-[0_8px_25px_rgba(79,70,229,0.5)] flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 relative group"
-        >
-          <Bot className="h-6 w-6 group-hover:animate-pulse" />
-          {!isOpen && hasUnread && (
-            <span className="absolute -top-1 -right-1 flex h-5 w-5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500 border-2 border-background"></span>
-            </span>
-          )}
-        </button>
-      </div>
     </>
   );
 }

@@ -314,10 +314,20 @@ export default function Dashboard() {
     },
   });
 
+  const isActionable = (status?: string) => {
+    if (!status) return true;
+    const s = status.trim().toUpperCase().replace(/\s+/g, "_");
+    return !["APPROVED", "REJECTED", "CANCELLED", "CANCEL", "COMPLETED"].includes(s);
+  };
+
   const handleOpenAction = (
     req: PurchaseRequest,
     type: "APPROVE" | "REJECT"
   ) => {
+    if (!isActionable(req.status)) {
+      Alert.alert("Action Not Allowed", `Request #${req.id} is already ${req.status.toLowerCase()} and cannot be modified.`);
+      return;
+    }
     setSelectedRequest(req);
     setActionType(type);
     setActionNote(
@@ -329,6 +339,12 @@ export default function Dashboard() {
 
   const handleConfirmAction = () => {
     if (!selectedRequest || !actionType) return;
+    if (!isActionable(selectedRequest.status)) {
+      Alert.alert("Action Not Allowed", `Request #${selectedRequest.id} is already ${selectedRequest.status.toLowerCase()} and cannot be modified.`);
+      setSelectedRequest(null);
+      setActionType(null);
+      return;
+    }
     actionMutation.mutate({
       requestId: selectedRequest.id,
       action: actionType,
@@ -1488,31 +1504,33 @@ export default function Dashboard() {
             </ScrollView>
 
             {/* Modal Bottom Action Bar */}
-            <View style={styles.detailFooter}>
-              <TouchableOpacity
-                style={[styles.detailActionBtn, styles.detailApproveBtn]}
-                onPress={() => {
-                  const req = detailedRequest;
-                  setDetailedRequest(null);
-                  if (req) handleOpenAction(req, "APPROVE");
-                }}
-              >
-                <Ionicons name="checkmark-circle" size={18} color="#ffffff" />
-                <Text style={styles.detailActionBtnText}>Approve Request</Text>
-              </TouchableOpacity>
+            {detailedRequest && isActionable(detailedRequest.status) && (
+              <View style={styles.detailFooter}>
+                <TouchableOpacity
+                  style={[styles.detailActionBtn, styles.detailApproveBtn]}
+                  onPress={() => {
+                    const req = detailedRequest;
+                    setDetailedRequest(null);
+                    if (req) handleOpenAction(req, "APPROVE");
+                  }}
+                >
+                  <Ionicons name="checkmark-circle" size={18} color="#ffffff" />
+                  <Text style={styles.detailActionBtnText}>Approve Request</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.detailActionBtn, styles.detailRejectBtn]}
-                onPress={() => {
-                  const req = detailedRequest;
-                  setDetailedRequest(null);
-                  if (req) handleOpenAction(req, "REJECT");
-                }}
-              >
-                <Ionicons name="close-circle" size={18} color="#ffffff" />
-                <Text style={styles.detailActionBtnText}>Reject</Text>
-              </TouchableOpacity>
-            </View>
+                <TouchableOpacity
+                  style={[styles.detailActionBtn, styles.detailRejectBtn]}
+                  onPress={() => {
+                    const req = detailedRequest;
+                    setDetailedRequest(null);
+                    if (req) handleOpenAction(req, "REJECT");
+                  }}
+                >
+                  <Ionicons name="close-circle" size={18} color="#ffffff" />
+                  <Text style={styles.detailActionBtnText}>Reject</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </View>
       </Modal>

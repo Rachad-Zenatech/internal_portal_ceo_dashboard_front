@@ -88,6 +88,9 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+
+                  {/* Settings redirect to dashboard */}
+                  <Route path="/settings" element={<Navigate to="/" replace />} />
                 </Route>
               </Routes>
             </Suspense>
