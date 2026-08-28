@@ -6,6 +6,18 @@ import fs from "fs";
 function getAndroidSdkPaths() {
   const isWindows = process.platform === "win32";
 
+  // Check ANDROID_HOME or ANDROID_SDK_ROOT environment variables first
+  const envSdk = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
+  if (envSdk && fs.existsSync(envSdk)) {
+    const ext = isWindows ? ".exe" : "";
+    const adbPath = path.join(envSdk, "platform-tools", `adb${ext}`);
+    const emulatorPath = path.join(envSdk, "emulator", `emulator${ext}`);
+    if (fs.existsSync(adbPath)) {
+      return { adbPath, emulatorPath, isWindows };
+    }
+  }
+
+  // Windows
   if (isWindows) {
     const localAppData =
       process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local");
@@ -24,38 +36,68 @@ function getAndroidSdkPaths() {
       "emulator.exe"
     );
     return { adbPath, emulatorPath, isWindows: true };
-  } else {
-    // WSL or Linux environment
-    let sdkBase = "/mnt/c/Users/RachadQuintyne/AppData/Local/Android/Sdk";
-    if (!fs.existsSync(sdkBase)) {
-      try {
-        const users = fs.readdirSync("/mnt/c/Users");
-        const foundUser = users.find(
-          (u) =>
-            u !== "Public" &&
-            u !== "Default" &&
-            fs.existsSync(`/mnt/c/Users/${u}/AppData/Local/Android/Sdk`)
-        );
-        if (foundUser) {
-          sdkBase = `/mnt/c/Users/${foundUser}/AppData/Local/Android/Sdk`;
-        }
-      } catch {}
-    }
+  }
 
-    const adbPath = path.join(sdkBase, "platform-tools", "adb.exe");
-    const emulatorPath = path.join(sdkBase, "emulator", "emulator.exe");
-
-    // Create a Linux `adb` shim directory in ./node_modules/.bin if in WSL
-    try {
-      const binDir = path.resolve("./node_modules/.bin");
-      if (fs.existsSync(binDir)) {
-        const adbShim = path.join(binDir, "adb");
-        fs.writeFileSync(adbShim, `#!/bin/sh\n"${adbPath}" "$@"\n`, { mode: 0o755 });
-      }
-    } catch {}
-
+  // macOS
+  if (process.platform === "darwin") {
+    const sdkBase = path.join(os.homedir(), "Library", "Android", "sdk");
+    const adbPath = path.join(sdkBase, "platform-tools", "adb");
+    const emulatorPath = path.join(sdkBase, "emulator", "emulator");
     return { adbPath, emulatorPath, isWindows: false };
   }
+
+  // WSL or Linux environment
+  let sdkBase = "";
+  if (fs.existsSync("/mnt/c/Users")) {
+    try {
+      const users = fs.readdirSync("/mnt/c/Users");
+      const foundUser = users.find(
+        (u) =>
+          u !== "Public" &&
+          u !== "Default" &&
+          u !== "All Users" &&
+          fs.existsSync(`/mnt/c/Users/${u}/AppData/Local/Android/Sdk`)
+      );
+      if (foundUser) {
+        sdkBase = `/mnt/c/Users/${foundUser}/AppData/Local/Android/Sdk`;
+      }
+    } catch {}
+  }
+
+  if (!sdkBase) {
+    sdkBase = path.join(os.homedir(), "Android", "Sdk");
+  }
+
+  const ext = sdkBase.startsWith("/mnt/c") ? ".exe" : "";
+  const adbPath = path.join(sdkBase, "platform-tools", `adb${ext}`);
+  const emulatorPath = path.join(sdkBase, "emulator", `emulator${ext}`);
+
+  // Create an adb shim directory in ./node_modules/.bin if in WSL
+  try {
+    const binDir = path.resolve("./node_modules/.bin");
+    if (fs.existsSync(binDir) && ext === ".exe") {
+      const adbShim = path.join(binDir, "adb");
+      fs.writeFileSync(adbShim, `#!/bin/sh\n"${adbPath}" "$@"\n`, { mode: 0o755 });
+    }
+  } catch {}
+
+  return { adbPath, emulatorPath, isWindows: false };
+}
+
+function getAvailableAvd(emulatorPath) {
+  try {
+    const avdOutput = execSync(`"${emulatorPath}" -list-avds`, { encoding: "utf-8" });
+    const avds = avdOutput
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+    if (avds.length > 0) {
+      // Prioritize Pixel_7 if present, otherwise pick the first available AVD
+      if (avds.includes("Pixel_7")) return "Pixel_7";
+      return avds[0];
+    }
+  } catch {}
+  return "Pixel_7";
 }
 
 async function main() {
@@ -80,15 +122,16 @@ async function main() {
     .some((l) => l.endsWith("device") && !l.startsWith("List"));
 
   if (!hasDevice) {
+    const targetAvd = getAvailableAvd(emulatorPath);
     console.log(
-      "📱 Launching Pixel_7 emulator (DirectX ANGLE / Vulkan disabled for crash protection)..."
+      `📱 Launching ${targetAvd} emulator (DirectX ANGLE / Vulkan disabled for crash protection)...`
     );
     try {
       spawn(
         emulatorPath,
         [
           "-avd",
-          "Pixel_7",
+          targetAvd,
           "-gpu",
           "angle_indirect",
           "-feature",
@@ -101,17 +144,17 @@ async function main() {
         }
       ).unref();
 
-      console.log("⏳ Waiting for Pixel 7 to attach...");
+      console.log(`⏳ Waiting for ${targetAvd} to attach...`);
       execSync(`"${adbPath}" wait-for-device`, {
         stdio: "inherit",
         timeout: 45000,
       });
-      console.log("✅ Pixel 7 connected!");
+      console.log(`✅ ${targetAvd} connected!`);
     } catch {
       console.log("⚠️ Emulator starting in background, continuing to Expo...");
     }
   } else {
-    console.log("✅ Pixel 7 emulator is already running and connected.");
+    console.log("✅ Android device/emulator is already running and connected.");
   }
 
   // Configure ADB reverse forwarding
