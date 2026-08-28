@@ -8,6 +8,9 @@ import { View, ActivityIndicator, StyleSheet } from "@/components/native";
 import Login from "./pages/Login.native";
 import PendingAccess from "./pages/PendingAccess.native";
 import Dashboard from "./pages/Dashboard.native";
+import MergersAcquisitions from "./pages/MergersAcquisitions.native";
+import UploadFiles from "./pages/UploadFiles.native";
+import AuditLog from "./pages/Log/AuditLog.native";
 
 const Stack = createNativeStackNavigator();
 
@@ -36,6 +39,7 @@ function NavigationContent() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: "#f8fafc" },
+        animation: "slide_from_right",
       }}
     >
       {!user ? (
@@ -43,13 +47,36 @@ function NavigationContent() {
       ) : user.is_active === false ? (
         <Stack.Screen name="PendingAccess" component={PendingAccess} />
       ) : (
-        <Stack.Screen
-          name="Dashboard"
-          component={Dashboard}
-          options={{
-            headerShown: false,
-          }}
-        />
+        <>
+          <Stack.Screen
+            name="Dashboard"
+            component={Dashboard}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="MergersAcquisitions"
+            component={MergersAcquisitions}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="UploadFiles"
+            component={UploadFiles}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="AuditLog"
+            component={AuditLog}
+            options={{
+              headerShown: false,
+            }}
+          />
+        </>
       )}
     </Stack.Navigator>
   );

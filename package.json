@@ -5,13 +5,16 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "expo start --host lan --port 8090",
+    "start": "concurrently -n \"EXPO,WEB\" -c \"cyan,magenta\" \"expo start --host lan --port 8090\" \"vite\"",
+    "restart": "concurrently -n \"EXPO,WEB\" -c \"cyan,magenta\" \"expo start --clear --host lan --port 8090\" \"vite --force\"",
+    "reload": "node scripts/reload-android.js",
     "android": "node scripts/start-android.js",
     "ios": "expo start --ios --host lan --port 8090",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "web": "vite"
   },
   "dependencies": {
     "@expo/metro-runtime": "^57.0.11",
@@ -62,6 +65,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^10.0.5",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",

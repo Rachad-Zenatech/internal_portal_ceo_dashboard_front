@@ -1,4 +1,4 @@
-import { BrowserRouter, MemoryRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+﻿import { BrowserRouter, MemoryRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./lib/AuthContext";
@@ -7,6 +7,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 const AppShell = lazy(() => import("./components/AppShell/AppShell"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const MergersAcquisitions = lazy(() => import("./pages/MergersAcquisitions"));
 const UploadFile = lazy(() => import("./pages/UploadFiles"));
 const AuditLog = lazy(() => import("./pages/Log/AuditLog"));
 const Login = lazy(() => import("./pages/Login"));
@@ -69,6 +70,7 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+                  <Route path="/mergers-acquisitions" element={<ProtectedRoute navigationCode="DASHBOARD"><MergersAcquisitions /></ProtectedRoute>} />
                   <Route
                     path="/upload-files"
                     element={
@@ -117,3 +119,6 @@ const styles = StyleSheet.create({
 });
 
 export default App;
+
+
+

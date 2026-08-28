@@ -10,6 +10,8 @@ Lean rules for this enterprise internal portal.
 
 ## Frontend
 
+- Maintain full parity between Web (`.tsx`) and Mobile (`.native.tsx`). Whenever features, pages, or API integrations are modified or added on Web, the corresponding `.native.tsx` version must also be updated in tandem unless explicitly specified otherwise.
+- Default list and data tables to clean pagination with 50 items per page.
 - Put reusable backend shapes in `src/types`; use `import type`.
 - Keep one-off prop types beside their component.
 - Prefer shadcn components from `src/components/ui`.
