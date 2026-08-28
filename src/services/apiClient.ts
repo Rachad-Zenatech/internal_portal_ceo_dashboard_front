@@ -1,8 +1,9 @@
-import { handleResponse } from "./helper";
+import { handleResponse, ApiError } from "./helper";
 import { appStorage } from "../lib/storage";
 import { getEnv, getApiBaseUrl } from "../lib/env";
 
 export const BASE_URL = getApiBaseUrl();
+export const DEFAULT_TIMEOUT_MS = 30_000; // 30s hard timeout
 
 const getAuthHeaders = (): Record<string, string> => {
   const token = appStorage.getItem("token");
@@ -18,7 +19,11 @@ const PERFORMANCE_DEDUPLICATION_MS = 60_000;
 const performanceReportTimes: number[] = [];
 const recentPerformanceReports = new Map<string, number>();
 
-async function monitoredFetch(endpoint: string, options: RequestInit): Promise<Response> {
+export interface ApiRequestOptions extends RequestInit {
+  timeoutMs?: number;
+}
+
+async function monitoredFetch(endpoint: string, options: ApiRequestOptions): Promise<Response> {
   const started = performance.now();
   let statusCode = 0;
   
@@ -38,12 +43,37 @@ async function monitoredFetch(endpoint: string, options: RequestInit): Promise<R
     }
   }
 
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const controller = new AbortController();
+  let isTimeout = false;
+
+  const timeoutTimer = setTimeout(() => {
+    isTimeout = true;
+    controller.abort();
+  }, timeoutMs);
+
+  // Combine parent signal if provided
+  if (options.signal) {
+    options.signal.addEventListener("abort", () => controller.abort());
+  }
 
   try {
-    const response = await fetch(`${BASE_URL}${targetEndpoint}`, options);
+    const response = await fetch(`${BASE_URL}${targetEndpoint}`, {
+      ...options,
+      signal: controller.signal,
+    });
     statusCode = response.status;
     return response;
+  } catch (err: any) {
+    if (isTimeout || err.name === "AbortError") {
+      throw new ApiError(`Request to ${endpoint} timed out after ${Math.round(timeoutMs / 1000)}s.`, 408);
+    }
+    if (err.name === "TypeError" && err.message?.includes("fetch")) {
+      throw new ApiError(`Service at ${endpoint} is temporarily unreachable.`, 503);
+    }
+    throw err;
   } finally {
+    clearTimeout(timeoutTimer);
     const durationMs = performance.now() - started;
     if (
       durationMs >= SLOW_REQUEST_MS &&
@@ -89,7 +119,7 @@ async function monitoredFetch(endpoint: string, options: RequestInit): Promise<R
 }
 
 export const apiClient = {
-  async get<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  async get<T>(endpoint: string, options?: ApiRequestOptions): Promise<T> {
     const res = await monitoredFetch(endpoint, {
       ...options, 
       method: "GET",
@@ -102,7 +132,7 @@ export const apiClient = {
     return handleResponse<T>(res);
   },
   
-  async post<T>(endpoint: string, body?: unknown, options?: RequestInit): Promise<T> {
+  async post<T>(endpoint: string, body?: unknown, options?: ApiRequestOptions): Promise<T> {
     const isFormData = body instanceof FormData;
     const res = await monitoredFetch(endpoint, {
       ...options,
@@ -118,7 +148,7 @@ export const apiClient = {
     return handleResponse<T>(res);
   },
   
-  async patch<T>(endpoint: string, body?: unknown, options?: RequestInit): Promise<T> {
+  async patch<T>(endpoint: string, body?: unknown, options?: ApiRequestOptions): Promise<T> {
     const res = await monitoredFetch(endpoint, {
       ...options,
       method: "PATCH",
@@ -133,7 +163,7 @@ export const apiClient = {
     return handleResponse<T>(res);
   },
   
-  async put<T>(endpoint: string, body?: unknown, options?: RequestInit): Promise<T> {
+  async put<T>(endpoint: string, body?: unknown, options?: ApiRequestOptions): Promise<T> {
     const res = await monitoredFetch(endpoint, {
       ...options,
       method: "PUT",
@@ -148,7 +178,7 @@ export const apiClient = {
     return handleResponse<T>(res);
   },
   
-  async delete<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  async delete<T>(endpoint: string, options?: ApiRequestOptions): Promise<T> {
     const res = await monitoredFetch(endpoint, {
       ...options, 
       method: "DELETE",

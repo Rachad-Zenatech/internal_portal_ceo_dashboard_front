@@ -7,6 +7,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 const AppShell = lazy(() => import("./components/AppShell/AppShell"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Administration = lazy(() => import("./pages/Administration"));
 const UploadFile = lazy(() => import("./pages/UploadFiles"));
 const AuditLog = lazy(() => import("./pages/Log/AuditLog"));
 const Login = lazy(() => import("./pages/Login"));
@@ -68,6 +69,10 @@ function App() {
                         <Dashboard />
                       </ProtectedRoute>
                     }
+                  />
+                  <Route
+                    path="/administration"
+                    element={<Administration />}
                   />
                   <Route
                     path="/upload-files"
