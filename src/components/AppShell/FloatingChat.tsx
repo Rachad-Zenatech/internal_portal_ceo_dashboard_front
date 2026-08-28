@@ -139,7 +139,6 @@ export default function FloatingChat() {
 
   // Process Wake Word or Command
   const handleWakeWordDetection = (transcript: string) => {
-    console.log("🎙️ Wake word detected in transcript:", transcript);
     clearAutoSendTimer();
     playWakeSound();
     setIsOpen(true);
@@ -334,7 +333,6 @@ export default function FloatingChat() {
           autoSendTimerRef.current = setTimeout(() => {
             const queryToSend = latestSpokenRef.current.trim();
             if (queryToSend && queryToSend.length > 1 && !isStreaming) {
-              console.log("🚀 Auto-sending query (Hey Google style):", queryToSend);
               transitionToMode(wakeWordEnabled ? "wake" : "idle");
               sendMessage(queryToSend);
               setInput("");

@@ -32,7 +32,9 @@ export default function Login() {
         if (Platform.OS === "ios") {
           try {
             WebBrowser.dismissAuthSession();
-          } catch {}
+          } catch {
+            // Ignore dismiss session errors on iOS
+          }
         }
       }
     };
@@ -140,25 +142,27 @@ export default function Login() {
               </View>
             </NativeButton>
 
-            <NativeButton
-              onPress={handleDirectLogin}
-              disabled={isLoading}
-              variant="outline"
-              size="lg"
-              style={[styles.signInButton, { marginTop: 12, backgroundColor: "#f1f5f9" }]}
-            >
-              <View style={styles.buttonContent}>
-                <MaterialCommunityIcons
-                  name="shield-account"
-                  size={20}
-                  color="#2563eb"
-                  style={styles.buttonIcon}
-                />
-                <Text style={[styles.buttonText, { color: "#1e293b" }]}>
-                  {isLoading ? "Signing in..." : "Direct Dev Sign In"}
-                </Text>
-              </View>
-            </NativeButton>
+            {__DEV__ && (
+              <NativeButton
+                onPress={handleDirectLogin}
+                disabled={isLoading}
+                variant="outline"
+                size="lg"
+                style={[styles.signInButton, { marginTop: 12, backgroundColor: "#f1f5f9" }]}
+              >
+                <View style={styles.buttonContent}>
+                  <MaterialCommunityIcons
+                    name="shield-account"
+                    size={20}
+                    color="#2563eb"
+                    style={styles.buttonIcon}
+                  />
+                  <Text style={[styles.buttonText, { color: "#1e293b" }]}>
+                    {isLoading ? "Signing in..." : "Direct Dev Sign In"}
+                  </Text>
+                </View>
+              </NativeButton>
+            )}
           </NativeCardContent>
 
           <NativeCardFooter style={styles.footer}>

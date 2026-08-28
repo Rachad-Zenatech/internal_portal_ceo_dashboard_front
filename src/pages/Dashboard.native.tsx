@@ -23,6 +23,7 @@ import {
   Linking,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 
 interface PortalStatus {
   name: string;
@@ -87,6 +88,7 @@ interface LoginActivity {
 type TabType = "approvals" | "portals" | "events" | "logins";
 
 export default function Dashboard() {
+  const navigation = useNavigation<any>();
   const { user, logout } = useAuth();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>("approvals");
@@ -483,6 +485,54 @@ export default function Dashboard() {
               <Text style={styles.kpiLabel}>Live Events</Text>
             </TouchableOpacity>
           </View>
+        </View>
+
+        {/* Quick Executive Portals Hub */}
+        <View style={styles.portalsHubSection}>
+          <View style={styles.portalsHubHeader}>
+            <Text style={styles.portalsHubTitle}>Executive Workflows</Text>
+            <TouchableOpacity onPress={() => setIsDrawerOpen(true)}>
+              <Text style={styles.portalsHubLink}>View All Menus →</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.portalsHubScroll}>
+            <TouchableOpacity
+              style={styles.portalHubCard}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate("MergersAcquisitions")}
+            >
+              <View style={[styles.portalHubIconBox, { backgroundColor: "#ecfdf5" }]}>
+                <MaterialCommunityIcons name="briefcase-outline" size={20} color="#10b981" />
+              </View>
+              <Text style={styles.portalHubName}>M&A Pipeline</Text>
+              <Text style={styles.portalHubSub}>10 Accepted • LOIs</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.portalHubCard}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate("UploadFiles")}
+            >
+              <View style={[styles.portalHubIconBox, { backgroundColor: "#eff6ff" }]}>
+                <MaterialCommunityIcons name="folder-upload-outline" size={20} color="#2563eb" />
+              </View>
+              <Text style={styles.portalHubName}>File Ingestion</Text>
+              <Text style={styles.portalHubSub}>Spreadsheets & Docs</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.portalHubCard}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate("AuditLog")}
+            >
+              <View style={[styles.portalHubIconBox, { backgroundColor: "#fef3c7" }]}>
+                <MaterialCommunityIcons name="shield-search" size={20} color="#f59e0b" />
+              </View>
+              <Text style={styles.portalHubName}>Audit Trail</Text>
+              <Text style={styles.portalHubSub}>Security & History</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
 
         {/* Tab Selector */}
@@ -1858,6 +1908,181 @@ export default function Dashboard() {
           </View>
         </View>
       </Modal>
+
+      {/* ========================================================= */}
+      {/* EXECUTIVE NAVIGATION DRAWER MODAL                         */}
+      {/* ========================================================= */}
+      <Modal
+        visible={isDrawerOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsDrawerOpen(false)}
+      >
+        <View style={styles.drawerOverlay}>
+          <TouchableOpacity
+            style={styles.drawerBackdrop}
+            activeOpacity={1}
+            onPress={() => setIsDrawerOpen(false)}
+          />
+          <View style={styles.drawerContent}>
+            <SafeAreaView style={styles.drawerSafeArea}>
+              <View style={styles.drawerHeader}>
+                <View style={styles.drawerBrandRow}>
+                  <View style={styles.drawerLogoBox}>
+                    <MaterialCommunityIcons name="office-building" size={22} color="#2563eb" />
+                  </View>
+                  <View>
+                    <Text style={styles.drawerBrandName}>ZenaTech Portal</Text>
+                    <Text style={styles.drawerBrandSub}>Executive Governance</Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.drawerCloseButton}
+                  onPress={() => setIsDrawerOpen(false)}
+                >
+                  <Ionicons name="close" size={20} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+
+              {/* User Card */}
+              <View style={styles.drawerUserCard}>
+                <View style={styles.drawerAvatarCircle}>
+                  <Text style={styles.drawerAvatarText}>{initials}</Text>
+                </View>
+                <View style={styles.drawerUserInfo}>
+                  <Text style={styles.drawerUserName} numberOfLines={1}>
+                    {user?.full_name || "Chief Executive Officer"}
+                  </Text>
+                  <Text style={styles.drawerUserEmail} numberOfLines={1}>
+                    {user?.email || "ceo@zenatech.com"}
+                  </Text>
+                  <View style={styles.drawerRoleBadge}>
+                    <Text style={styles.drawerRoleText}>EXECUTIVE ACCESS</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Nav List */}
+              <ScrollView style={styles.drawerNavList}>
+                <Text style={styles.drawerSectionLabel}>EXECUTIVE PORTALS</Text>
+
+                <TouchableOpacity
+                  style={[styles.drawerNavItem, styles.drawerNavItemActive]}
+                  onPress={() => {
+                    setIsDrawerOpen(false);
+                    setActiveTab("approvals");
+                  }}
+                >
+                  <MaterialCommunityIcons name="view-dashboard-outline" size={20} color="#2563eb" />
+                  <Text style={[styles.drawerNavText, styles.drawerNavTextActive]}>
+                    CEO Dashboard
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.drawerNavItem}
+                  onPress={() => {
+                    setIsDrawerOpen(false);
+                    navigation.navigate("MergersAcquisitions");
+                  }}
+                >
+                  <MaterialCommunityIcons name="briefcase-outline" size={20} color="#64748b" />
+                  <Text style={styles.drawerNavText}>M&A Pipeline</Text>
+                  <View style={[styles.drawerCountBadge, { backgroundColor: "#10b981" }]}>
+                    <Text style={[styles.drawerCountText, { color: "#ffffff" }]}>10</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.drawerNavItem}
+                  onPress={() => {
+                    setIsDrawerOpen(false);
+                    navigation.navigate("UploadFiles");
+                  }}
+                >
+                  <MaterialCommunityIcons name="folder-upload-outline" size={20} color="#64748b" />
+                  <Text style={styles.drawerNavText}>File Ingestion & Archive</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.drawerNavItem}
+                  onPress={() => {
+                    setIsDrawerOpen(false);
+                    navigation.navigate("AuditLog");
+                  }}
+                >
+                  <MaterialCommunityIcons name="shield-search" size={20} color="#64748b" />
+                  <Text style={styles.drawerNavText}>System Audit Trail</Text>
+                </TouchableOpacity>
+
+                <Text style={[styles.drawerSectionLabel, { marginTop: 20 }]}>QUICK DASHBOARD TABS</Text>
+
+                <TouchableOpacity
+                  style={styles.drawerNavItem}
+                  onPress={() => navigateToTab("approvals")}
+                >
+                  <MaterialCommunityIcons name="checkbox-marked-circle-outline" size={18} color="#64748b" />
+                  <Text style={styles.drawerNavText}>Executive Approvals</Text>
+                  {pendingApprovals.length > 0 && (
+                    <View style={styles.drawerCountBadge}>
+                      <Text style={styles.drawerCountText}>{pendingApprovals.length}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.drawerNavItem}
+                  onPress={() => navigateToTab("portals")}
+                >
+                  <MaterialCommunityIcons name="server-network" size={18} color="#64748b" />
+                  <Text style={styles.drawerNavText}>Connected Systems</Text>
+                  <Text style={{ fontSize: 11, fontWeight: "700", color: "#10b981" }}>
+                    {onlinePortalsCount}/4
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.drawerNavItem}
+                  onPress={() => navigateToTab("events")}
+                >
+                  <MaterialCommunityIcons name="lightning-bolt-outline" size={18} color="#64748b" />
+                  <Text style={styles.drawerNavText}>Live Telemetry</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.drawerNavItem}
+                  onPress={() => navigateToTab("logins")}
+                >
+                  <MaterialCommunityIcons name="account-key-outline" size={18} color="#64748b" />
+                  <Text style={styles.drawerNavText}>Security Logins</Text>
+                </TouchableOpacity>
+              </ScrollView>
+
+              {/* Sign Out Button Bottom */}
+              <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: "#f1f5f9" }}>
+                <TouchableOpacity
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 10,
+                    paddingVertical: 12,
+                    paddingHorizontal: 14,
+                    borderRadius: 10,
+                    backgroundColor: "#fef2f2",
+                  }}
+                  onPress={handleLogoutPress}
+                >
+                  <Ionicons name="log-out-outline" size={20} color="#dc2626" />
+                  <Text style={{ fontSize: 13, fontWeight: "700", color: "#dc2626" }}>
+                    Sign Out
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1973,6 +2198,57 @@ const styles = StyleSheet.create({
   kpiRow: {
     flexDirection: "row",
     gap: 8,
+  },
+  portalsHubSection: {
+    marginBottom: 16,
+  },
+  portalsHubHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  portalsHubTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#64748b",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  portalsHubLink: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#2563eb",
+  },
+  portalsHubScroll: {
+    flexDirection: "row",
+  },
+  portalHubCard: {
+    width: 140,
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    marginRight: 8,
+    gap: 4,
+  },
+  portalHubIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  portalHubName: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#0f172a",
+  },
+  portalHubSub: {
+    fontSize: 10,
+    color: "#64748b",
   },
   kpiCard: {
     flex: 1,

@@ -6,7 +6,7 @@ Cross-platform frontend portal for the **ZenaTech CEO Dashboard**, supporting bo
 
 ## Architecture Overview
 
-The frontend codebase is architected with platform-specific extensions (`.tsx` for Web and `.native.tsx` for Mobile / React Native):
+The frontend codebase is architected with platform-specific extensions (`.tsx` for Web and `.native.tsx` for Mobile / React Native) ensuring full feature parity across desktop and mobile:
 
 * **Web Portal (Vite)**: Runs as a single-page application at `http://localhost:5175`.
 * **Mobile App (Expo / React Native)**: Runs via Metro Bundler on port `8090` targeting iOS & Android devices/emulators.
@@ -15,30 +15,41 @@ The frontend codebase is architected with platform-specific extensions (`.tsx` f
 
 ```txt
 frontend/internal_portal_ceo_dashboard_front/
-├── index.html                 # Web HTML entry point
-├── index.js                   # Mobile Expo entry point
-├── app.json                   # Expo configuration & app scheme
-├── vite.config.ts             # Vite configuration (port 5175, proxy to backend)
+├── index.html                     # Web HTML entry point
+├── index.js                       # Mobile Expo entry point
+├── app.json                       # Expo configuration & app scheme
+├── vite.config.ts                 # Vite configuration (port 5175, proxy to backend)
 ├── scripts/
-│   └── start-android.js       # Automated Android emulator & ADB reverse startup script
+│   └── start-android.js           # Automated Android emulator & ADB reverse startup script
 ├── src/
-│   ├── App.tsx                # Web root navigation & layout
-│   ├── App.native.tsx         # Mobile root navigation (NativeStack)
+│   ├── App.tsx                    # Web root navigation & layout
+│   ├── App.native.tsx             # Mobile root navigation (NativeStack)
 │   ├── components/
-│   │   ├── native/            # Universal & native UI primitives (Cards, Buttons, Badges)
-│   │   └── ui/                # Web shadcn UI components
+│   │   ├── native/                # Universal & native UI primitives (Cards, Buttons, Badges)
+│   │   └── ui/                    # Web shadcn UI components
 │   ├── lib/
-│   │   ├── AuthContext.tsx    # Universal authentication context & permissions state
-│   │   ├── env.ts             # Universal environment config reader
-│   │   └── storage.ts         # Unified storage (localStorage for Web / AsyncStorage for Native)
+│   │   ├── AuthContext.tsx        # Universal authentication context & permissions state
+│   │   ├── env.ts                 # Universal environment config reader
+│   │   └── storage.ts             # Unified storage (localStorage for Web / AsyncStorage for Native)
 │   ├── pages/
-│   │   ├── Dashboard.tsx        # Web CEO Dashboard
-│   │   ├── Dashboard.native.tsx # Mobile CEO Dashboard
-│   │   ├── Login.tsx            # Web Microsoft SSO Login
-│   │   ├── Login.native.tsx     # Mobile Microsoft SSO & Direct Dev Login
-│   │   └── PendingAccess.native.tsx
+│   │   ├── Dashboard.tsx          # Web CEO Dashboard
+│   │   ├── Dashboard.native.tsx   # Mobile CEO Dashboard (with Portals Hub & Executive Drawer)
+│   │   ├── Login.tsx              # Web Microsoft SSO Login
+│   │   ├── Login.native.tsx       # Mobile Microsoft SSO & Direct Dev Login
+│   │   ├── MergersAcquisitions.tsx         # Web M&A Target Pipeline (Paginated 50/page)
+│   │   ├── MergersAcquisitions.native.tsx  # Mobile M&A Target Pipeline (Paginated 50/page)
+│   │   ├── UploadFiles.tsx                 # Web File Ingestion & Archive (Paginated 50/page)
+│   │   ├── UploadFiles.native.tsx          # Mobile File Ingestion & Archive (Paginated 50/page)
+│   │   ├── PendingAccess.tsx               # Web Pending Access screen
+│   │   ├── PendingAccess.native.tsx        # Mobile Pending Access screen
+│   │   └── Log/
+│   │       ├── AuditLog.tsx                # Web Administrative Audit Trail (Paginated 50/page)
+│   │       └── AuditLog.native.tsx         # Mobile Administrative Audit Trail (Paginated 50/page)
 │   └── services/
-│       └── apiClient.ts       # Central Axios client (routes requests to API base URL)
+│       ├── apiClient.ts           # Central Axios client (routes requests to API base URL)
+│       ├── mergersAcquisitionsService.ts   # M&A Pipeline & LOI tracking API
+│       ├── uploadArchiveService.ts          # File upload & ingestion archive API
+│       └── auditService.ts                  # Audit log & security events API
 ```
 
 ---
@@ -77,7 +88,15 @@ EXPO_PUBLIC_API_BASE_URL=http://localhost:8005
 
 ## Running the Application
 
-### Option A: Run Web Application
+### Option A: Run Both Web & Mobile Concurrently (Recommended)
+
+Starts both the **Expo Metro Bundler** (for Android emulator / mobile) on port `8090` and the **Vite Web Dev Server** on port `5175` concurrently:
+
+```bash
+npm start
+```
+
+### Option B: Run Web Application Only
 
 Start the Vite development server on `http://localhost:5175`:
 
@@ -85,32 +104,62 @@ Start the Vite development server on `http://localhost:5175`:
 npm run dev
 ```
 
-### Option B: Run Mobile Application (Android Emulator)
+### Option C: Run Mobile Application (Android Emulator)
 
-Ensure your Android SDK is installed and configured. Then run the automated starter script:
+Detects/launches the **Pixel 7** Android emulator, configures ADB reverse port forwarding (`8090`, `8005`, `5175`), and starts Expo Metro:
 
 ```bash
 npm run android
 ```
 
-This script will automatically:
-1. Detect or launch the **Pixel 7** Android emulator.
-2. Configure **ADB reverse port forwarding**:
-   * `8090 -> 8090` (Metro Bundler)
-   * `8005 -> 8005` (FastAPI Backend)
-   * `5175 -> 5175` (Vite SSO Redirect server)
-3. Launch Expo Metro on port `8090` and connect the Android emulator.
+### Option D: Reload Mobile App on Android Emulator (Instant)
 
-### Option C: Run Expo Metro Directly
+Re-syncs ADB reverse port forwarding and hot-reloads the Expo app on the connected emulator with the fresh bundle:
 
 ```bash
-npm start
-# (Runs expo start --host lan --port 8090)
+npm run reload
 ```
 
-* In the terminal, press **`a`** to open Android emulator.
-* In the terminal, press **`w`** to open web mode.
-* In the terminal, press **`r`** to reload the bundle.
+### Option E: Full Clean Restart (Web & Mobile)
+
+Clears Metro bundler and Vite caches and restarts both dev servers cleanly:
+
+```bash
+npm run restart
+```
+
+### In-Terminal Hotkeys (when `npm start` is running)
+* Press **`r`** in the Metro terminal to reload the mobile app.
+* Press **`a`** to open/connect to the Android emulator.
+* Press **`m`** to toggle the Expo Dev Menu.
+
+---
+
+## Features & Modules
+
+### 1. CEO Dashboard (`/dashboard`)
+* Executive KPI stat chips (Pending Approvals, Financials, Active Initiatives).
+* Live System Status cards with auto-refresh and latency monitoring.
+* Financial overview charts and breakdown widgets.
+* Mobile Navigation Drawer and Quick Workflows Hub for instant portal access.
+
+### 2. M&A Pipeline (`/mergers-acquisitions`)
+* Acquisition candidates discovery and deal tracking.
+* Metric cards (Total Deals, Under Review, LOI Accepted, Total Valuation).
+* Search, sector filter chips, and clean 50-item pagination.
+* Detailed deal inspection modals with valuation, EBITDA, and synergy ratings.
+
+### 3. File & Data Ingestion (`/upload-files`)
+* Multi-file ingestion and cloud archive tracking.
+* Storage analytics KPIs (Total Ingested, Storage Used, Compression Ratio).
+* Search, category filtering, and clean 50-item pagination.
+* File detail inspection with metadata, byte sizes, and checksums.
+
+### 4. System Audit Trail (`/log/audit-log`)
+* Comprehensive administrative audit log and user authentication event tracker.
+* Severity badge tagging (`INFO`, `WARNING`, `CRITICAL`, `ERROR`).
+* Search and action filtering with clean 50-item pagination.
+* Detail inspection modals with raw JSON metadata viewing.
 
 ---
 
@@ -137,3 +186,4 @@ npm run lint
 # Preview production build
 npm run preview
 ```
+

@@ -133,10 +133,10 @@ async function main() {
   };
 
   // Launch Expo
-  console.log("⚡ Starting Expo Metro on port 8090...\n");
+  console.log("⚡ Starting Expo Metro on port 8090 with fresh cache...\n");
   const expoProcess = spawn(
     "npx",
-    ["expo", "start", "--android", "--host", "lan", "--port", "8090"],
+    ["expo", "start", "--android", "--clear", "--port", "8090"],
     {
       stdio: "inherit",
       shell: true,

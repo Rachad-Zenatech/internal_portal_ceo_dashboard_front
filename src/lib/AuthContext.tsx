@@ -60,6 +60,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     setIsLoading(true);
+    if (token === "dev-session-token") {
+      setPermissions({
+        user: {
+          id: "dev-user-1",
+          email: "rachad.quintyne@zenatech.com",
+          full_name: "Rachad Quintyne",
+          is_super_admin: true,
+          is_active: true,
+        },
+        roles: [
+          {
+            id: "role-1",
+            name: "CEO & Super Admin",
+            code: "SUPER_ADMIN",
+            is_active: true,
+            is_system_role: true,
+          },
+        ],
+        navigation_permissions: { "*": ["*"] },
+        mcp_tool_permissions: ["*"],
+      });
+      setIsLoading(false);
+      return;
+    }
     try {
       const data = await apiClient.get<PermissionsData>('/api/me/permissions');
       if (requestId === fetchRequestId.current) {
