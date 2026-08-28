@@ -12,44 +12,52 @@ export interface RealtimeSyncState {
 let globalEventSource: EventSource | null = null;
 let globalIsConnected = false;
 let globalLastSyncedAt = new Date();
-const listeners = new Set<(state: { isConnected: boolean; lastSyncedAt: Date }) => void>();
+const listeners = new Set<(connected: boolean) => void>();
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let globalQueryClient: ReturnType<typeof useQueryClient> | null = null;
 
 function setConnectionStatus(newStatus: boolean) {
-  if (globalIsConnected === newStatus) return; // Prevent duplicate notifications
+  if (globalIsConnected === newStatus) return;
   globalIsConnected = newStatus;
-  notifyListeners();
-}
-
-function notifyListeners() {
-  const payload = { isConnected: globalIsConnected, lastSyncedAt: globalLastSyncedAt };
   listeners.forEach((listener) => {
     try {
-      listener(payload);
+      listener(globalIsConnected);
     } catch {
       // ignore
     }
   });
 }
 
-function debouncedInvalidate() {
+function handleIncomingEvent(eventPayload: any) {
+  if (!globalQueryClient) return;
+
+  const eventType = eventPayload?.event_type || "";
+
+  // Direct cache update for telemetry (Zero HTTP fetch needed!)
+  if (eventType === "PORTALS_STATUS_UPDATED" && eventPayload?.portals) {
+    globalQueryClient.setQueryData(["portalsStatus"], eventPayload.portals);
+    return;
+  }
+
+  // Targeted debounced invalidation for approvals & notifications only
   if (debounceTimer) clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
     globalLastSyncedAt = new Date();
-    notifyListeners();
     if (globalQueryClient) {
-      globalQueryClient.invalidateQueries({ queryKey: ["pendingApprovals"] });
-      globalQueryClient.invalidateQueries({ queryKey: ["completedApprovalsHistory"] });
-      globalQueryClient.invalidateQueries({ queryKey: ["notifications"] });
-      globalQueryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
-      globalQueryClient.invalidateQueries({ queryKey: ["ceoEvents"] });
-      globalQueryClient.invalidateQueries({ queryKey: ["ceoAuditLogs"] });
-      globalQueryClient.invalidateQueries({ queryKey: ["summaryMetrics"] });
-      globalQueryClient.invalidateQueries({ queryKey: ["portalsStatus"] });
+      if (eventType.startsWith("PURCHASE_") || eventType === "PURCHASE_REQUESTS_UPDATED") {
+        globalQueryClient.invalidateQueries({ queryKey: ["pendingApprovals"] });
+        globalQueryClient.invalidateQueries({ queryKey: ["completedApprovalsHistory"] });
+        globalQueryClient.invalidateQueries({ queryKey: ["notifications"] });
+        globalQueryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
+        globalQueryClient.invalidateQueries({ queryKey: ["ceoEvents"] });
+        globalQueryClient.invalidateQueries({ queryKey: ["ceoAuditLogs"] });
+      } else {
+        globalQueryClient.invalidateQueries({ queryKey: ["pendingApprovals"] });
+        globalQueryClient.invalidateQueries({ queryKey: ["notifications"] });
+      }
     }
-  }, 1500); // 1.5s debounce buffer
+  }, 2500); // 2.5s calm debounce
 }
 
 function closeGlobalEventSource() {
@@ -80,8 +88,13 @@ function initGlobalEventSource() {
       globalLastSyncedAt = new Date();
     });
 
-    es.addEventListener("message", () => {
-      debouncedInvalidate();
+    es.addEventListener("message", (evt) => {
+      try {
+        const data = evt.data ? JSON.parse(evt.data) : null;
+        handleIncomingEvent(data);
+      } catch {
+        handleIncomingEvent(null);
+      }
     });
 
     es.onopen = () => {
@@ -95,7 +108,7 @@ function initGlobalEventSource() {
         reconnectTimer = setTimeout(() => {
           reconnectTimer = null;
           initGlobalEventSource();
-        }, 15000); // Wait full 15s before attempting reconnection
+        }, 15000);
       }
     };
   } catch {
@@ -114,26 +127,31 @@ export function useCeoRealtimeStream(): RealtimeSyncState {
   const queryClient = useQueryClient();
   globalQueryClient = queryClient;
 
-  const [state, setState] = useState({
-    isConnected: globalIsConnected,
-    lastSyncedAt: globalLastSyncedAt,
-  });
+  const [isConnected, setIsConnected] = useState(globalIsConnected);
 
   useEffect(() => {
     initGlobalEventSource();
-    listeners.add(setState);
+    listeners.add(setIsConnected);
     return () => {
-      listeners.delete(setState);
+      listeners.delete(setIsConnected);
     };
   }, []);
 
   const triggerManualSync = useCallback(() => {
-    debouncedInvalidate();
+    if (globalQueryClient) {
+      globalQueryClient.invalidateQueries({ queryKey: ["pendingApprovals"] });
+      globalQueryClient.invalidateQueries({ queryKey: ["completedApprovalsHistory"] });
+      globalQueryClient.invalidateQueries({ queryKey: ["portalsStatus"] });
+      globalQueryClient.invalidateQueries({ queryKey: ["summaryMetrics"] });
+      globalQueryClient.invalidateQueries({ queryKey: ["ceoEvents"] });
+      globalQueryClient.invalidateQueries({ queryKey: ["ceoAuditLogs"] });
+      globalQueryClient.invalidateQueries({ queryKey: ["notifications"] });
+    }
   }, []);
 
   return {
-    isConnected: state.isConnected,
-    lastSyncedAt: state.lastSyncedAt,
+    isConnected,
+    lastSyncedAt: globalLastSyncedAt,
     triggerManualSync,
   };
 }
