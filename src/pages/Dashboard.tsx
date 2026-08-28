@@ -13,7 +13,6 @@ import {
   ArrowUpRight,
   RefreshCw,
   Server,
-  Building2,
   ArrowRight,
 } from "lucide-react";
 import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
@@ -183,16 +182,6 @@ export default function Dashboard() {
 
         {/* Quick Action Executive Toolbar */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0">
-          <Button
-            size="sm"
-            onClick={() => navigate("/administration")}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium h-9 px-3.5 rounded-xl shadow-2xs gap-1.5 transition-all cursor-pointer"
-          >
-            <Building2 className="w-4 h-4" />
-            <span>Administration</span>
-            <ArrowRight className="w-3 h-3" />
-          </Button>
-
           <Button
             variant="outline"
             size="sm"
