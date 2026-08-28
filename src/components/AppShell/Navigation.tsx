@@ -1,8 +1,9 @@
-﻿import {
+import {
   LayoutDashboard,
   Upload,
   FileClock,
-  Briefcase
+  Briefcase,
+  Building2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -40,6 +41,12 @@ export const navigation: NavigationItem[] = [
     icon: Upload,
     section: "MAIN",
     navigationCode: "UPLOAD_FILES",
+  },
+  {
+    label: "Administration",
+    path: "/administration",
+    icon: Building2,
+    section: "ADMIN PORTAL",
   },
   {
     label: "Audit Log",
