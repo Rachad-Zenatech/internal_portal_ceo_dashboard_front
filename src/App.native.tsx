@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard.native";
 import MergersAcquisitions from "./pages/MergersAcquisitions.native";
 import UploadFiles from "./pages/UploadFiles.native";
 import AuditLog from "./pages/Log/AuditLog.native";
+import Administration from "./pages/Administration.native";
 
 const Stack = createNativeStackNavigator();
 
@@ -58,6 +59,13 @@ function NavigationContent() {
           <Stack.Screen
             name="MergersAcquisitions"
             component={MergersAcquisitions}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Administration"
+            component={Administration}
             options={{
               headerShown: false,
             }}

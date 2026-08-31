@@ -28,8 +28,9 @@ export function useNotifications(options?: { refetchInterval?: number | false })
       }
     },
     retry: false,
-    staleTime: 5000,
-    refetchInterval: options?.refetchInterval ?? 10000,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+    refetchInterval: options?.refetchInterval ?? 30000,
   });
 }
 
@@ -45,8 +46,9 @@ export function useUnreadNotificationCount(options?: { refetchInterval?: number 
       }
     },
     retry: false,
-    staleTime: 5000,
-    refetchInterval: options?.refetchInterval ?? 10000,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+    refetchInterval: options?.refetchInterval ?? 30000,
   });
 }
 

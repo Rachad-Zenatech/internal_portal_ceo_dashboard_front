@@ -24,7 +24,7 @@ export default function Breadcrumbs() {
     return name
       .replace(/-/g, " ")
       .split(" ")
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
   };
 
@@ -34,30 +34,36 @@ export default function Breadcrumbs() {
   }
 
   return (
-    <nav className="flex items-center text-sm text-muted-foreground mb-6 overflow-x-auto whitespace-nowrap pt-1 pb-2 scrollbar-none min-h-[36px]">
-      <Link 
-        to="/" 
-        className="flex items-center hover:text-foreground transition-colors"
-        title="Home"
+    <nav
+      aria-label="Breadcrumb"
+      className="flex items-center text-xs sm:text-sm text-slate-500 dark:text-zinc-400 px-4 sm:px-6 lg:px-7 pt-3.5 pb-2 overflow-x-auto whitespace-nowrap scrollbar-none min-h-[40px] select-none"
+    >
+      <Link
+        to="/"
+        className="inline-flex items-center gap-1.5 text-slate-500 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-400 transition-colors p-1 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800/60"
+        title="Command Center Home"
       >
-        <Home className="h-4 w-4" />
+        <Home className="h-3.5 w-3.5" />
       </Link>
-      
+
       {pathnames.map((value, index) => {
         const to = `/${pathnames.slice(0, index + 1).join("/")}`;
         const isLast = index === pathnames.length - 1;
 
         return (
           <div key={to} className="flex items-center">
-            <ChevronRight className="h-4 w-4 mx-1 opacity-50 shrink-0" />
+            <ChevronRight className="h-3.5 w-3.5 mx-1.5 text-slate-400 dark:text-zinc-600 shrink-0" />
             {isLast ? (
-              <span className="font-semibold text-foreground" aria-current="page">
+              <span
+                className="font-semibold text-slate-900 dark:text-zinc-100 px-1 py-0.5"
+                aria-current="page"
+              >
                 {customTitles[to] || formatName(value)}
               </span>
             ) : (
-              <Link 
-                to={to} 
-                className="hover:text-foreground hover:underline underline-offset-4 transition-colors"
+              <Link
+                to={to}
+                className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline underline-offset-4 transition-colors px-1 py-0.5 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800/60"
               >
                 {customTitles[to] || formatName(value)}
               </Link>

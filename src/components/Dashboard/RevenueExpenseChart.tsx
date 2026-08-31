@@ -102,7 +102,7 @@ export default function RevenueExpenseChart({
         <CardTitle className="text-lg capitalize">{period} P&L Trend</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 pt-2">
-        <div className="h-full min-h-[300px] w-full">
+        <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <ComposedChart
               data={chartData}

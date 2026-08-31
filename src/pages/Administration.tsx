@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
 import { apiClient } from "@/services/apiClient";
@@ -20,6 +20,7 @@ import {
   Package,
   Lock,
   Building2,
+  WifiOff,
 } from "lucide-react";
 import { AssignApproversModal } from "@/components/AssignApproversModal";
 import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
@@ -56,10 +57,14 @@ interface PortalStatus {
 
 interface PurchaseRequestLineItem {
   id?: string | number;
-  description: string;
-  quantity: number;
-  unit_price: number;
+  description?: string;
+  item_name?: string;
+  product_name?: string;
+  quantity?: number;
+  unit_price?: number;
   total?: number;
+  total_price?: number;
+  item_url?: string;
 }
 
 interface PurchaseRequest {
@@ -68,6 +73,7 @@ interface PurchaseRequest {
   amount: number;
   status: string;
   description: string;
+  product_name?: string;
   priority: string;
   requester_name: string;
   created_at: string;
@@ -76,11 +82,13 @@ interface PurchaseRequest {
   item_url?: string;
   product_info?: {
     vendor?: string;
+    preferred_vendor?: string;
     specs?: string;
     delivery_date?: string;
     model?: string;
     warranty?: string;
   };
+  vendor?: string;
   items?: PurchaseRequestLineItem[];
   item_mode?: "SINGLE" | "MULTIPLE";
   quantity?: number;
@@ -95,6 +103,9 @@ interface PurchaseRequest {
   request_type?: string;
   assigned_user?: string;
   hold_reason?: string;
+  approved_at?: string;
+  note?: string;
+  rawReq?: any;
   attachments?: Array<{
     name: string;
     url: string;
@@ -131,11 +142,12 @@ export default function Administration() {
     queryKey: ["portalsStatus"],
     queryFn: () => apiClient.get<PortalStatus[]>("/api/v1/ceo/portals-status"),
     staleTime: 60000,
+    retry: false,
     refetchOnWindowFocus: false,
   });
 
   const adminPortal = useMemo(
-    () => portals.find((p) => p.code?.toUpperCase().includes("ADMIN") || p.name?.toLowerCase().includes("admin")),
+    () => Array.isArray(portals) ? portals.find((p) => p?.code?.toUpperCase().includes("ADMIN") || p?.name?.toLowerCase().includes("admin")) : undefined,
     [portals]
   );
   const isAdminOnline = adminPortal?.status === "online";
@@ -146,15 +158,17 @@ export default function Administration() {
     isLoading: isApprovalsLoading,
     refetch: refetchApprovals,
     isFetching: isFetchingApprovals,
+    isError: isApprovalsError,
   } = useQuery<PurchaseRequest[]>({
     queryKey: ["pendingApprovals"],
     queryFn: () => apiClient.get<PurchaseRequest[]>("/api/v1/ceo/approvals/pending"),
     staleTime: 60000,
-    refetchOnWindowFocus: true,
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
   const pendingApprovals = useMemo(() => {
-    return rawApprovals || [];
+    return Array.isArray(rawApprovals) ? rawApprovals : [];
   }, [rawApprovals]);
 
   // Completed / Approved History Query
@@ -162,24 +176,27 @@ export default function Administration() {
     data: rawCompletedHistory = [],
     isLoading: isHistoryLoading,
     refetch: refetchHistory,
+    isFetching: isFetchingHistory,
   } = useQuery<PurchaseRequest[]>({
     queryKey: ["completedApprovalsHistory"],
     queryFn: () => apiClient.get<PurchaseRequest[]>("/api/v1/ceo/approvals/history"),
     staleTime: 60000,
+    retry: false,
     refetchOnWindowFocus: false,
-    retry: 1,
   });
 
   // Detail query for active selected detailed request
+  const detailedRequestId = detailedRequest?.id;
   const { data: requestDetailResponse, isLoading: isDetailLoading } = useQuery({
-    queryKey: ["approvalDetail", detailedRequest?.id],
+    queryKey: ["approvalDetail", detailedRequestId],
     queryFn: async () => {
-      if (!detailedRequest?.id) return null;
-      const res = await apiClient.get<any>(`/api/v1/ceo/approvals/${detailedRequest.id}`);
+      if (!detailedRequestId) return null;
+      const res = await apiClient.get<any>(`/api/v1/ceo/approvals/${detailedRequestId}`);
       return res?.request || res;
     },
-    enabled: Boolean(detailedRequest?.id),
-    staleTime: 10000,
+    enabled: Boolean(detailedRequestId),
+    staleTime: 60000,
+    retry: false,
   });
 
   const activeRequest = useMemo(() => {
@@ -195,12 +212,15 @@ export default function Administration() {
     mutationFn: async ({ requestId, action, note }: { requestId: string; action: string; note: string }) => {
       return apiClient.post(`/api/v1/ceo/approvals/${requestId}/action`, {
         action,
-        note: note || undefined,
+        note,
       });
     },
-    onSuccess: (_, variables) => {
-      const verb = variables.action === "APPROVE" ? "approved" : "rejected";
-      toast.success(`Purchase Request #${variables.requestId} successfully ${verb}`);
+    onSuccess: () => {
+      toast.success(
+        actionType === "APPROVE"
+          ? "Purchase request approved successfully"
+          : "Purchase request rejected"
+      );
       queryClient.invalidateQueries({ queryKey: ["pendingApprovals"] });
       queryClient.invalidateQueries({ queryKey: ["completedApprovalsHistory"] });
       queryClient.invalidateQueries({ queryKey: ["ceoEvents"] });
@@ -223,67 +243,70 @@ export default function Administration() {
     });
   };
 
-  const refreshAll = () => {
+  const refreshAll = useCallback(() => {
     triggerManualSync();
     refetchPortals();
     refetchApprovals();
     refetchHistory();
-    toast.info("Refreshed administration approval feeds");
-  };
+    toast.info("Retrying connection and refreshing live feeds...");
+  }, [triggerManualSync, refetchPortals, refetchApprovals, refetchHistory]);
 
   const approvedRequests = useMemo(() => {
-    if (rawCompletedHistory && rawCompletedHistory.length > 0) {
-      return rawCompletedHistory.map((r) => ({
+    if (Array.isArray(rawCompletedHistory)) {
+      return rawCompletedHistory.map((r: any) => ({
         id: String(r.id),
         department: r.department || "Operations",
-        requester_name: r.requester_name || "Staff",
-        amount: Number(r.amount || 0),
-        description: r.description || (r as any).product_name || `Purchase Request #${r.id}`,
+        amount: Number(r.amount) || 0,
+        requester_name: r.requester_name || r.requester || "Staff Member",
+        created_at: r.created_at || r.request_date || "",
+        description: r.description || r.product_name || `Purchase Request #${r.id}`,
         status: r.status || "COMPLETED",
         approved_at: r.created_at || "",
-        note: (r as any).hold_reason || "Completed",
-        vendor: (r.product_info as any)?.vendor || "Verified Vendor",
+        note: r.hold_reason || "Completed",
+        vendor: r.vendor || r.product_info?.vendor || "Verified Vendor",
         rawReq: r,
       }));
     }
     return [];
   }, [rawCompletedHistory]);
 
-  // Filtered requests
+  // Filtered requests with safe string matching
   const filteredApprovals = useMemo(() => {
+    const q = (searchTerm || "").trim().toLowerCase();
     return pendingApprovals.filter((req) => {
-      const q = searchTerm.toLowerCase();
-      const matchesSearch =
-        (req.description || "").toLowerCase().includes(q) ||
-        (req.department || "").toLowerCase().includes(q) ||
-        (req.requester_name || "").toLowerCase().includes(q) ||
-        req.id.includes(q);
+      const matchesSearch = !q || (
+        String(req.description || "").toLowerCase().includes(q) ||
+        String(req.department || "").toLowerCase().includes(q) ||
+        String(req.requester_name || "").toLowerCase().includes(q) ||
+        String(req.id || "").toLowerCase().includes(q)
+      );
 
-      const stNorm = (req.status || "").toUpperCase().replace(" ", "_");
+      const stNorm = String(req.status || "").toUpperCase().replace(" ", "_");
       const matchesStatus =
         statusFilter === "ALL" ||
         (statusFilter === "WAITING_APPROVAL" && (stNorm === "WAITING_APPROVAL" || stNorm === "PENDING")) ||
         (statusFilter === "NEW" && stNorm === "NEW") ||
         (statusFilter === "UNDER_REVIEW" && stNorm === "UNDER_REVIEW");
 
+      const reqAmount = Number(req.amount) || 0;
       const matchesTier =
         tierFilter === "ALL" ||
-        (tierFilter === "SENIOR" && req.amount >= 10000) ||
-        (tierFilter === "STANDARD" && req.amount < 10000);
+        (tierFilter === "SENIOR" && reqAmount >= 10000) ||
+        (tierFilter === "STANDARD" && reqAmount < 10000);
 
       return matchesSearch && matchesStatus && matchesTier;
     });
   }, [pendingApprovals, searchTerm, statusFilter, tierFilter]);
 
   const filteredApproved = useMemo(() => {
+    const q = (searchTerm || "").trim().toLowerCase();
     return approvedRequests.filter((req) => {
-      const q = searchTerm.toLowerCase();
-      return (
-        (req.description || "").toLowerCase().includes(q) ||
-        (req.department || "").toLowerCase().includes(q) ||
-        (req.requester_name || "").toLowerCase().includes(q) ||
-        (req.vendor || "").toLowerCase().includes(q) ||
-        req.id.includes(q)
+      return !q || (
+        String(req.description || "").toLowerCase().includes(q) ||
+        String(req.department || "").toLowerCase().includes(q) ||
+        String(req.requester_name || "").toLowerCase().includes(q) ||
+        String(req.vendor || "").toLowerCase().includes(q) ||
+        String(req.id || "").toLowerCase().includes(q)
       );
     });
   }, [approvedRequests, searchTerm]);
@@ -303,8 +326,14 @@ export default function Administration() {
     return filteredApproved.slice(startIndex, startIndex + pageSize);
   }, [filteredApproved, safePage, pageSize]);
 
-  const totalPendingAmount = pendingApprovals.reduce((acc, curr) => acc + (curr.amount || 0), 0);
-  const totalApprovedAmount = approvedRequests.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+  const totalPendingAmount = useMemo(
+    () => pendingApprovals.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0),
+    [pendingApprovals]
+  );
+  const totalApprovedAmount = useMemo(
+    () => approvedRequests.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0),
+    [approvedRequests]
+  );
 
   const activeLineItems = useMemo(() => {
     if (!activeRequest) return [];
@@ -318,6 +347,9 @@ export default function Administration() {
     }
     return Array.isArray(items) ? (items as PurchaseRequestLineItem[]) : [];
   }, [activeRequest]);
+
+  const isServerDisconnected = !isAdminOnline || isApprovalsError;
+  const isRefreshingAny = isFetchingApprovals || isFetchingPortals || isFetchingHistory;
 
   return (
     <div className="w-full flex flex-col gap-4 sm:gap-5 p-4 sm:p-6 lg:p-7 min-h-screen bg-slate-50/40 dark:bg-zinc-950 transition-colors">
@@ -346,7 +378,7 @@ export default function Administration() {
         </div>
 
         {/* Action Toolbar */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0 w-full lg:w-auto">
           <Button
             size="sm"
             disabled={!isAdminOnline}
@@ -357,7 +389,7 @@ export default function Administration() {
               }
               setIsAssignApproversOpen(true);
             }}
-            className={`text-xs font-medium h-9 px-4 rounded-xl gap-2 transition-all ${
+            className={`text-xs font-medium h-9 px-4 rounded-xl gap-2 transition-all flex-1 sm:flex-initial justify-center ${
               isAdminOnline
                 ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs cursor-pointer active:scale-98"
                 : "bg-slate-200 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 border border-slate-200 dark:border-zinc-800 cursor-not-allowed opacity-60"
@@ -369,16 +401,19 @@ export default function Administration() {
             ) : (
               <Lock className="w-4 h-4 text-slate-400" />
             )}
-            <span>Assign Approvers</span>
+            <span>Assign Approver</span>
           </Button>
 
           <Button
             variant="outline"
             size="sm"
+            disabled={isServerDisconnected}
             onClick={() => window.open(getEnv("VITE_ADMIN_PORTAL_URL", "http://localhost:5174") + "/purchasing/requests", "_blank")}
-            className="text-xs h-9 px-3 rounded-xl border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 gap-1.5"
+            className={`text-xs h-9 px-3 rounded-xl border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 gap-1.5 ${
+              isServerDisconnected ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+            }`}
           >
-            <span>Open Admin Portal</span>
+            <span className="hidden xs:inline">Open</span> Admin Portal
             <ExternalLink className="w-3.5 h-3.5" />
           </Button>
 
@@ -386,19 +421,50 @@ export default function Administration() {
             variant="outline"
             size="sm"
             onClick={refreshAll}
-            disabled={isFetchingApprovals || isFetchingPortals}
-            className="text-xs h-9 px-3.5 rounded-xl border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 gap-1.5 transition-all shadow-2xs"
+            disabled={isRefreshingAny}
+            className="text-xs h-9 px-3.5 rounded-xl border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 gap-1.5 transition-all shadow-2xs cursor-pointer"
             title={`Last synced: ${lastSyncedAt.toLocaleTimeString()}`}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${(isFetchingApprovals || isFetchingPortals) ? "animate-spin text-indigo-600" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingAny ? "animate-spin text-indigo-600" : ""}`} />
             <span className="hidden sm:inline">Sync Feeds</span>
           </Button>
         </div>
       </div>
 
+      {/* Disconnected Notice Banner with Retry Connection Button */}
+      {isServerDisconnected && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-xl border border-amber-200/80 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 shadow-2xs transition-all">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 shrink-0">
+              <WifiOff className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2">
+                <span>Administration Service Disconnected</span>
+                <span className="text-[10px] font-semibold px-2 py-0.2 rounded bg-amber-200/70 dark:bg-amber-900/80 text-amber-800 dark:text-amber-200 uppercase">
+                  Offline
+                </span>
+              </h4>
+              <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                The connection to Administration Portal (:8001) is currently unreachable. Displaying placeholder skeletons while disconnected. Navigation and other tools remain fully functional.
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={refreshAll}
+            disabled={isRefreshingAny}
+            className="h-8 px-4 text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white rounded-lg shadow-2xs gap-1.5 shrink-0 cursor-pointer active:scale-98"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingAny ? "animate-spin" : ""}`} />
+            <span>Retry Connection</span>
+          </Button>
+        </div>
+      )}
+
       {/* 3 Executive Administration KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        {/* Pending Approvals */}
+        {/* Pending Approvals Card */}
         <WidgetErrorBoundary widgetName="Pending Approvals">
           <Card className="border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs hover:shadow-xs transition-shadow">
             <CardContent className="p-4 sm:p-5">
@@ -411,10 +477,10 @@ export default function Administration() {
                 </div>
               </div>
               <div className="mt-2.5">
-                {isApprovalsLoading ? (
-                  <div className="space-y-1.5 py-0.5">
+                {isApprovalsLoading || isServerDisconnected ? (
+                  <div className="space-y-2 py-0.5">
                     <Skeleton className="h-7 w-28 rounded-lg" />
-                    <Skeleton className="h-3.5 w-32 rounded" />
+                    <Skeleton className="h-3.5 w-36 rounded" />
                   </div>
                 ) : (
                   <>
@@ -434,7 +500,7 @@ export default function Administration() {
           </Card>
         </WidgetErrorBoundary>
 
-        {/* Approved Decisions */}
+        {/* Approved Decisions Card */}
         <WidgetErrorBoundary widgetName="Approved Decisions">
           <Card className="border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs hover:shadow-xs transition-shadow">
             <CardContent className="p-4 sm:p-5">
@@ -447,10 +513,10 @@ export default function Administration() {
                 </div>
               </div>
               <div className="mt-2.5">
-                {isHistoryLoading ? (
-                  <div className="space-y-1.5 py-0.5">
+                {isHistoryLoading || isServerDisconnected ? (
+                  <div className="space-y-2 py-0.5">
                     <Skeleton className="h-7 w-28 rounded-lg" />
-                    <Skeleton className="h-3.5 w-36 rounded" />
+                    <Skeleton className="h-3.5 w-40 rounded" />
                   </div>
                 ) : (
                   <>
@@ -470,25 +536,48 @@ export default function Administration() {
           </Card>
         </WidgetErrorBoundary>
 
-        {/* Governance & RBAC */}
+        {/* Governance & Approver Delegation Card */}
         <WidgetErrorBoundary widgetName="Governance & RBAC">
-          <Card className="border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs hover:shadow-xs transition-shadow">
+          <Card
+            onClick={() => {
+              if (isAdminOnline) setIsAssignApproversOpen(true);
+            }}
+            className="border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all cursor-pointer group"
+          >
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                   Approver Delegation
                 </span>
-                <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400">
+                <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950/60 group-hover:text-indigo-600 transition-colors">
                   <ShieldCheck className="h-4 w-4" />
                 </div>
               </div>
-              <div className="mt-2.5">
-                <div className="text-xl sm:text-2xl font-bold text-purple-700 dark:text-purple-300">
-                  5 Roles Active
+              <div className="mt-2.5 flex items-end justify-between gap-2">
+                <div>
+                  <div className="text-xl sm:text-2xl font-bold text-purple-700 dark:text-purple-300">
+                    5 Roles Active
+                  </div>
+                  <div className="flex items-center gap-1 mt-1 text-xs text-purple-600 dark:text-purple-400 font-medium">
+                    <span>Executive & Manager tiers</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 mt-1 text-xs text-purple-600 dark:text-purple-400 font-medium">
-                  <span>Executive & Manager tiers configured</span>
-                </div>
+                <Button
+                  size="sm"
+                  disabled={!isAdminOnline}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!isAdminOnline) {
+                      toast.error("Admin Portal is disconnected.");
+                      return;
+                    }
+                    setIsAssignApproversOpen(true);
+                  }}
+                  className="h-8 px-2.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg gap-1 shadow-2xs cursor-pointer active:scale-95 shrink-0"
+                >
+                  <UserCheck className="w-3.5 h-3.5" />
+                  <span>Assign</span>
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -498,37 +587,71 @@ export default function Administration() {
       {/* Main Approvals Table Section */}
       <WidgetErrorBoundary widgetName="Approvals Pipeline" onReset={refetchApprovals}>
         <div className="space-y-3 outline-none">
+          {/* Mobile-Only Quick Action Bar */}
+          <div className="sm:hidden flex items-center justify-between gap-2 p-3 bg-indigo-50/80 dark:bg-indigo-950/40 rounded-xl border border-indigo-100 dark:border-indigo-900/60 shadow-2xs">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-indigo-600 text-white">
+                <UserCheck className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-900 dark:text-zinc-100 block">Approver Role Delegation</span>
+                <span className="text-[10px] text-muted-foreground">Assign PBAC review tiers</span>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              disabled={!isAdminOnline}
+              onClick={() => {
+                if (!isAdminOnline) {
+                  toast.error("Admin Portal is disconnected.");
+                  return;
+                }
+                setIsAssignApproversOpen(true);
+              }}
+              className="h-8 px-3 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold shadow-2xs gap-1 cursor-pointer shrink-0"
+            >
+              <UserCheck className="w-3.5 h-3.5" />
+              <span>Assign</span>
+            </Button>
+          </div>
+
           {/* Controls Bar: Search, Filters & View Mode */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-3 sm:p-3.5 rounded-xl border border-slate-200/80 dark:border-zinc-800 shadow-2xs">
-            {/* View Mode Toggle: Pending vs Approved */}
+            {/* View Mode Toggle */}
             <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800/80 p-1 rounded-lg shrink-0">
               <button
                 type="button"
+                disabled={isServerDisconnected}
                 onClick={() => {
                   setApprovalViewMode("pending");
                   setCurrentPage(1);
                 }}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                  approvalViewMode === "pending"
-                    ? "bg-white dark:bg-zinc-900 text-indigo-700 dark:text-indigo-300 shadow-2xs"
-                    : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100"
+                  isServerDisconnected
+                    ? "opacity-50 cursor-not-allowed text-slate-400"
+                    : approvalViewMode === "pending"
+                    ? "bg-white dark:bg-zinc-900 text-indigo-700 dark:text-indigo-300 shadow-2xs cursor-pointer"
+                    : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 cursor-pointer"
                 }`}
               >
-                Pending Review ({pendingApprovals.length})
+                Pending Review ({isServerDisconnected ? "-" : pendingApprovals.length})
               </button>
               <button
                 type="button"
+                disabled={isServerDisconnected}
                 onClick={() => {
                   setApprovalViewMode("approved");
                   setCurrentPage(1);
                 }}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                  approvalViewMode === "approved"
-                    ? "bg-white dark:bg-zinc-900 text-indigo-700 dark:text-indigo-300 shadow-2xs"
-                    : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100"
+                  isServerDisconnected
+                    ? "opacity-50 cursor-not-allowed text-slate-400"
+                    : approvalViewMode === "approved"
+                    ? "bg-white dark:bg-zinc-900 text-indigo-700 dark:text-indigo-300 shadow-2xs cursor-pointer"
+                    : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 cursor-pointer"
                 }`}
               >
-                Approved History ({approvedRequests.length})
+                Approved History ({isServerDisconnected ? "-" : approvedRequests.length})
               </button>
             </div>
 
@@ -538,96 +661,104 @@ export default function Administration() {
                 <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Search ID, description, requester, dept..."
+                  placeholder={isServerDisconnected ? "Search disabled while offline..." : "Search ID, description, requester..."}
+                  disabled={isServerDisconnected}
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="h-8 pl-8 text-xs bg-slate-50/60 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 rounded-lg w-full"
+                  className={`h-8 pl-8 text-xs bg-slate-50/60 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 rounded-lg w-full ${
+                    isServerDisconnected ? "opacity-50 cursor-not-allowed bg-slate-100 dark:bg-zinc-900" : ""
+                  }`}
                 />
               </div>
 
               {approvalViewMode === "pending" && (
-                <div className="flex items-center gap-1 shrink-0 overflow-x-auto">
-                  {["ALL", "WAITING_APPROVAL", "UNDER_REVIEW", "NEW"].map((st) => (
-                    <button
-                      key={st}
-                      type="button"
-                      onClick={() => {
-                        setStatusFilter(st);
-                        setCurrentPage(1);
-                      }}
-                      className={`px-2 py-1 rounded-md text-[11px] font-medium transition-all ${
-                        statusFilter === st
-                          ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
-                          : "bg-transparent text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800"
-                      }`}
-                    >
-                      {st === "ALL" ? "All" : st.replace("_", " ")}
-                    </button>
-                  ))}
-
-                  <div className="h-4 w-[1px] bg-slate-200 dark:bg-zinc-700 mx-1" />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTierFilter((prev) => (prev === "ALL" ? "SENIOR" : prev === "SENIOR" ? "STANDARD" : "ALL"));
+                <>
+                  <select
+                    disabled={isServerDisconnected}
+                    value={statusFilter}
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className={`px-2 py-1 rounded-md text-[11px] font-medium transition-all border ${
-                      tierFilter === "SENIOR"
-                        ? "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300"
-                        : tierFilter === "STANDARD"
-                        ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300"
-                        : "bg-transparent text-slate-500 border-transparent hover:bg-slate-100 dark:hover:bg-zinc-800"
+                    className={`h-8 text-xs bg-slate-50/60 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 rounded-lg px-2 text-slate-700 dark:text-zinc-300 font-medium ${
+                      isServerDisconnected ? "opacity-50 cursor-not-allowed bg-slate-100 dark:bg-zinc-900" : "cursor-pointer"
                     }`}
                   >
-                    {tierFilter === "ALL" ? "All Tiers" : tierFilter === "SENIOR" ? "≥ $10k Tier" : "< $10k Tier"}
-                  </button>
-                </div>
+                    <option value="ALL">All Statuses</option>
+                    <option value="WAITING_APPROVAL">Waiting Approval</option>
+                    <option value="NEW">New</option>
+                    <option value="UNDER_REVIEW">Under Review</option>
+                  </select>
+
+                  <select
+                    disabled={isServerDisconnected}
+                    value={tierFilter}
+                    onChange={(e) => {
+                      setTierFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className={`h-8 text-xs bg-slate-50/60 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 rounded-lg px-2 text-slate-700 dark:text-zinc-300 font-medium ${
+                      isServerDisconnected ? "opacity-50 cursor-not-allowed bg-slate-100 dark:bg-zinc-900" : "cursor-pointer"
+                    }`}
+                  >
+                    <option value="ALL">All Tiers</option>
+                    <option value="STANDARD">&lt; $10k Manager</option>
+                    <option value="SENIOR">&ge; $10k Executive</option>
+                  </select>
+                </>
               )}
             </div>
           </div>
 
-          {/* Clean Proportional Executive Data Table */}
-          <div className="w-full border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl shadow-2xs overflow-hidden">
-            {(approvalViewMode === "pending" ? isApprovalsLoading : isHistoryLoading) ? (
-              <div className="p-4 space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
-                  <Skeleton className="h-4 w-20 rounded" />
-                  <Skeleton className="h-4 w-28 rounded" />
-                  <Skeleton className="h-4 w-48 rounded" />
-                  <Skeleton className="h-4 w-16 rounded" />
-                  <Skeleton className="h-4 w-20 rounded" />
-                  <Skeleton className="h-4 w-24 rounded" />
-                  <Skeleton className="h-4 w-28 rounded" />
-                </div>
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center justify-between gap-4 py-2.5 border-b border-slate-100 dark:border-zinc-800/60">
-                    <Skeleton className="h-4 w-16 rounded" />
-                    <Skeleton className="h-4 w-28 rounded" />
-                    <Skeleton className="h-4 flex-1 rounded" />
-                    <Skeleton className="h-4 w-14 rounded-full" />
-                    <Skeleton className="h-4 w-16 rounded-full" />
-                    <Skeleton className="h-4 w-20 rounded" />
-                    <Skeleton className="h-7 w-28 rounded-lg" />
-                  </div>
-                ))}
+          {/* Table Container */}
+          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800 shadow-2xs overflow-hidden">
+            {isApprovalsLoading || isHistoryLoading || isServerDisconnected ? (
+              /* Skeletons view while loading or disconnected */
+              <div className="w-full overflow-x-auto">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/80 dark:bg-zinc-800/60 border-b border-slate-200/80 dark:border-zinc-800 text-slate-500 dark:text-zinc-400 font-semibold">
+                      <th className="py-3 px-4 w-[110px]">ID / Date</th>
+                      <th className="py-3 px-4 w-[170px]">Requester</th>
+                      <th className="py-3 px-4 min-w-[280px]">Item Description & Purpose</th>
+                      <th className="py-3 px-4 w-[90px] text-center">Priority</th>
+                      <th className="py-3 px-4 w-[130px] text-center">Tier</th>
+                      <th className="py-3 px-4 w-[130px] text-right">Amount</th>
+                      <th className="py-3 px-4 w-[160px] text-center">Status</th>
+                      <th className="py-3 px-4 w-[190px] text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/80">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <tr key={i} className="hover:bg-slate-50/40 dark:hover:bg-zinc-800/30">
+                        <td className="py-3.5 px-4"><Skeleton className="h-4 w-16 rounded" /></td>
+                        <td className="py-3.5 px-4"><Skeleton className="h-4 w-28 rounded" /></td>
+                        <td className="py-3.5 px-4"><Skeleton className="h-4 w-52 rounded" /></td>
+                        <td className="py-3.5 px-4 text-center"><Skeleton className="h-4 w-14 mx-auto rounded" /></td>
+                        <td className="py-3.5 px-4 text-center"><Skeleton className="h-4 w-16 mx-auto rounded" /></td>
+                        <td className="py-3.5 px-4 text-right"><Skeleton className="h-4 w-20 ml-auto rounded" /></td>
+                        <td className="py-3.5 px-4 text-center"><Skeleton className="h-5 w-24 mx-auto rounded-full" /></td>
+                        <td className="py-3.5 px-4 text-right"><Skeleton className="h-7 w-28 ml-auto rounded-lg" /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : currentList.length === 0 ? (
               <div className="p-12 text-center space-y-2">
-                <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
+                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-400 flex items-center justify-center mx-auto">
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
-                  {approvalViewMode === "pending" ? "All caught up!" : "No approved records found"}
-                </h3>
-                <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                <h4 className="text-xs font-semibold text-slate-800 dark:text-zinc-200">
+                  {approvalViewMode === "pending" ? "No Pending Approvals" : "No Approved History"}
+                </h4>
+                <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
                   {approvalViewMode === "pending"
-                    ? "There are no pending requests matching your current filter criteria."
-                    : "No historical approved purchases match your search."}
+                    ? "All executive purchase requests have been reviewed and processed."
+                    : "No approved requests matched the current search criteria."}
                 </p>
               </div>
             ) : (
@@ -691,16 +822,16 @@ export default function Administration() {
                             <Badge
                               variant="outline"
                               className={`text-[10px] px-2 py-0.5 font-medium ${
-                                req.amount >= 10000
+                                (Number(req.amount) || 0) >= 10000
                                   ? "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 font-semibold"
                                   : "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300"
                               }`}
                             >
-                              {req.amount >= 10000 ? "≥ $10k Exec" : "< $10k Mgr"}
+                              {(Number(req.amount) || 0) >= 10000 ? "≥ $10k Exec" : "< $10k Mgr"}
                             </Badge>
                           </td>
                           <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-zinc-100 whitespace-nowrap">
-                            ${req.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ${(Number(req.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                           <td className="py-3 px-4 text-center whitespace-nowrap">
                             <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/80 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900/60 uppercase">
@@ -711,11 +842,12 @@ export default function Administration() {
                             <div className="flex items-center justify-end gap-1.5">
                               <Button
                                 size="sm"
+                                disabled={!isAdminOnline}
                                 onClick={() => {
                                   setSelectedRequest(req);
                                   setActionType("APPROVE");
                                 }}
-                                className="h-7 px-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-2xs font-medium gap-1"
+                                className="h-7 px-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-2xs font-medium gap-1 cursor-pointer"
                               >
                                 <Check className="w-3 h-3" />
                                 Approve
@@ -723,11 +855,12 @@ export default function Administration() {
                               <Button
                                 size="sm"
                                 variant="outline"
+                                disabled={!isAdminOnline}
                                 onClick={() => {
                                   setSelectedRequest(req);
                                   setActionType("REJECT");
                                 }}
-                                className="h-7 px-2.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 rounded-lg font-medium"
+                                className="h-7 px-2.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 rounded-lg font-medium cursor-pointer"
                               >
                                 Reject
                               </Button>
@@ -773,16 +906,16 @@ export default function Administration() {
                             <Badge
                               variant="outline"
                               className={`text-[10px] px-2 py-0.5 font-medium ${
-                                req.amount >= 10000
+                                (Number(req.amount) || 0) >= 10000
                                   ? "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300"
                                   : "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300"
                               }`}
                             >
-                              {req.amount >= 10000 ? "≥ $10k Exec" : "< $10k Mgr"}
+                              {(Number(req.amount) || 0) >= 10000 ? "≥ $10k Exec" : "< $10k Mgr"}
                             </Badge>
                           </td>
                           <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-zinc-100 whitespace-nowrap">
-                            ${req.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ${(Number(req.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                           <td className="py-3 px-4 text-center whitespace-nowrap">
                             <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900/60 uppercase">
@@ -803,7 +936,7 @@ export default function Administration() {
             )}
 
             {/* Pagination footer */}
-            {totalPages > 1 && (
+            {!isServerDisconnected && totalPages > 1 && (
               <div className="flex items-center justify-between p-3 border-t border-slate-100 dark:border-zinc-800 text-xs">
                 <span className="text-slate-500">
                   Showing {(safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, currentList.length)} of {currentList.length} items
@@ -814,7 +947,7 @@ export default function Administration() {
                     size="sm"
                     onClick={() => setCurrentPage(1)}
                     disabled={safePage === 1}
-                    className="h-7 w-7 p-0 rounded-lg"
+                    className="h-7 w-7 p-0 rounded-lg cursor-pointer"
                   >
                     <ChevronsLeft className="w-3.5 h-3.5" />
                   </Button>
@@ -823,7 +956,7 @@ export default function Administration() {
                     size="sm"
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={safePage === 1}
-                    className="h-7 w-7 p-0 rounded-lg"
+                    className="h-7 w-7 p-0 rounded-lg cursor-pointer"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                   </Button>
@@ -835,7 +968,7 @@ export default function Administration() {
                     size="sm"
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={safePage === totalPages}
-                    className="h-7 w-7 p-0 rounded-lg"
+                    className="h-7 w-7 p-0 rounded-lg cursor-pointer"
                   >
                     <ChevronRight className="w-3.5 h-3.5" />
                   </Button>
@@ -844,7 +977,7 @@ export default function Administration() {
                     size="sm"
                     onClick={() => setCurrentPage(totalPages)}
                     disabled={safePage === totalPages}
-                    className="h-7 w-7 p-0 rounded-lg"
+                    className="h-7 w-7 p-0 rounded-lg cursor-pointer"
                   >
                     <ChevronsRight className="w-3.5 h-3.5" />
                   </Button>
@@ -856,7 +989,15 @@ export default function Administration() {
       </WidgetErrorBoundary>
 
       {/* Action Dialog: Approve or Reject */}
-      <Dialog open={Boolean(selectedRequest && actionType)} onOpenChange={(open) => !open && setSelectedRequest(null)}>
+      <Dialog
+        open={Boolean(selectedRequest && actionType)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedRequest(null);
+            setActionType(null);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-[480px] rounded-2xl">
           <DialogHeader>
             <div className="flex items-center gap-2.5">
@@ -874,7 +1015,7 @@ export default function Administration() {
                   {actionType === "APPROVE" ? "Confirm Purchase Approval" : "Reject Purchase Request"}
                 </DialogTitle>
                 <DialogDescription className="text-xs mt-0.5">
-                  Purchase Request #{selectedRequest?.id} • ${(selectedRequest?.amount || 0).toLocaleString()}
+                  Purchase Request #{selectedRequest?.id} • ${(Number(selectedRequest?.amount) || 0).toLocaleString()}
                 </DialogDescription>
               </div>
             </div>
@@ -896,7 +1037,7 @@ export default function Administration() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Total Amount:</span>
-                <span className="font-bold text-slate-900 dark:text-zinc-100">${(selectedRequest?.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span className="font-bold text-slate-900 dark:text-zinc-100">${(Number(selectedRequest?.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
             </div>
 
@@ -928,7 +1069,7 @@ export default function Administration() {
               size="sm"
               onClick={handleActionSubmit}
               disabled={approvalMutation.isPending}
-              className={`text-xs font-medium h-9 px-4 rounded-xl gap-1.5 text-white ${
+              className={`text-xs font-medium h-9 px-4 rounded-xl gap-1.5 text-white cursor-pointer ${
                 actionType === "APPROVE"
                   ? "bg-emerald-600 hover:bg-emerald-700"
                   : "bg-rose-600 hover:bg-rose-700"
@@ -951,7 +1092,14 @@ export default function Administration() {
       </Dialog>
 
       {/* Comprehensive Request Detail Modal */}
-      <Dialog open={Boolean(activeRequest && !actionType)} onOpenChange={(open) => !open && setDetailedRequest(null)}>
+      <Dialog
+        open={Boolean(detailedRequest && !actionType)}
+        onOpenChange={(open) => {
+          if (!open && detailedRequest) {
+            setDetailedRequest(null);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-[620px] max-h-[85vh] overflow-y-auto p-5 sm:p-6 rounded-2xl">
           <DialogHeader>
             <div className="flex items-center justify-between">
@@ -975,7 +1123,7 @@ export default function Administration() {
               <div className="text-right">
                 <span className="text-xs text-muted-foreground block">Requested Total</span>
                 <span className="text-lg font-mono font-bold text-slate-900 dark:text-zinc-100">
-                  ${(activeRequest?.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ${(Number(activeRequest?.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
             </div>
@@ -999,7 +1147,7 @@ export default function Administration() {
               <div>
                 <span className="text-[10px] text-muted-foreground uppercase font-semibold block">Spend Tier</span>
                 <span className="font-semibold text-purple-700 dark:text-purple-300">
-                  {(activeRequest?.amount || 0) >= 10000 ? "≥ $10k Executive" : "< $10k Manager"}
+                  {(Number(activeRequest?.amount) || 0) >= 10000 ? "≥ $10k Executive" : "< $10k Manager"}
                 </span>
               </div>
               <div>
@@ -1120,15 +1268,15 @@ export default function Administration() {
                       <span className="text-[10px] text-muted-foreground block">Unit Price</span>
                       <span className="font-mono font-bold text-slate-800 dark:text-zinc-200">
                         ${((activeRequest?.unit_price !== undefined && activeRequest?.unit_price !== null && activeRequest?.unit_price > 0)
-                          ? activeRequest.unit_price
-                          : (activeRequest?.amount || 0) / (activeRequest?.quantity || 1)
+                          ? Number(activeRequest.unit_price)
+                          : (Number(activeRequest?.amount) || 0) / (Number(activeRequest?.quantity) || 1)
                         ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
                     <div className="p-2 rounded-lg bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100/80 dark:border-indigo-900/40">
                       <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold block">Total Item Cost</span>
                       <span className="font-mono font-bold text-indigo-700 dark:text-indigo-300">
-                        ${(activeRequest?.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        ${(Number(activeRequest?.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
                   </div>
@@ -1167,25 +1315,27 @@ export default function Administration() {
                 <Button
                   size="sm"
                   variant="outline"
+                  disabled={!isAdminOnline}
                   onClick={() => {
                     const req = activeRequest;
                     setDetailedRequest(null);
                     setSelectedRequest(req);
                     setActionType("REJECT");
                   }}
-                  className="text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 rounded-xl"
+                  className="text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 rounded-xl cursor-pointer"
                 >
                   Reject Request
                 </Button>
                 <Button
                   size="sm"
+                  disabled={!isAdminOnline}
                   onClick={() => {
                     const req = activeRequest;
                     setDetailedRequest(null);
                     setSelectedRequest(req);
                     setActionType("APPROVE");
                   }}
-                  className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-2xs gap-1"
+                  className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-2xs gap-1 cursor-pointer"
                 >
                   <Check className="w-3.5 h-3.5" /> Approve Request
                 </Button>
@@ -1195,15 +1345,17 @@ export default function Administration() {
         </DialogContent>
       </Dialog>
 
-      {/* Assign Approvers Modal */}
-      <AssignApproversModal
-        isOpen={isAssignApproversOpen}
-        onClose={() => setIsAssignApproversOpen(false)}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ["pendingApprovals"] });
-          queryClient.invalidateQueries({ queryKey: ["completedApprovalsHistory"] });
-        }}
-      />
+      {/* Assign Approvers Modal - ONLY mounted when open */}
+      {isAssignApproversOpen && (
+        <AssignApproversModal
+          isOpen={isAssignApproversOpen}
+          onClose={() => setIsAssignApproversOpen(false)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["pendingApprovals"] });
+            queryClient.invalidateQueries({ queryKey: ["completedApprovalsHistory"] });
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1176,6 +1176,23 @@ export default function Dashboard() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
+                  style={styles.drawerNavItem}
+                  onPress={() => {
+                    setIsDrawerOpen(false);
+                    navigation.navigate("Administration");
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="office-building-cog"
+                    size={20}
+                    color="#64748b"
+                  />
+                  <Text style={styles.drawerNavText}>
+                    Administration & Governance
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
                   style={[
                     styles.drawerNavItem,
                     activeTab === "portals" && styles.drawerNavItemActive,

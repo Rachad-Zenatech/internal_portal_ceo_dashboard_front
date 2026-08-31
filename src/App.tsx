@@ -13,6 +13,7 @@ const UploadFile = lazy(() => import("./pages/UploadFiles"));
 const AuditLog = lazy(() => import("./pages/Log/AuditLog"));
 const Login = lazy(() => import("./pages/Login"));
 const PendingAccess = lazy(() => import("./pages/PendingAccess"));
+const Settings = lazy(() => import("./pages/Settings"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -97,7 +98,7 @@ function App() {
                   />
 
                   {/* Settings redirect to dashboard */}
-                  <Route path="/settings" element={<Navigate to="/" replace />} />
+                  <Route path="/settings" element={<ProtectedRoute navigationCode="DASHBOARD"><Settings /></ProtectedRoute>} />
                 </Route>
               </Routes>
             </Suspense>

@@ -3,7 +3,7 @@ import { appStorage } from "../lib/storage";
 import { getEnv, getApiBaseUrl } from "../lib/env";
 
 export const BASE_URL = getApiBaseUrl();
-export const DEFAULT_TIMEOUT_MS = 30_000; // 30s hard timeout
+export const DEFAULT_TIMEOUT_MS = 6_000; // 30s hard timeout
 
 const getAuthHeaders = (): Record<string, string> => {
   const token = appStorage.getItem("token");

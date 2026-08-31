@@ -49,6 +49,9 @@ function useDashboardOverview<T>(
     queryFn: () =>
       fetcher<DashboardOverview>(`/overview?period=${period}`, filters),
     select,
+    staleTime: 60000,
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 }
 

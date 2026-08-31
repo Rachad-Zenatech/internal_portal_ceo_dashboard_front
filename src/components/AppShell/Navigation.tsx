@@ -4,6 +4,7 @@ import {
   FileClock,
   Briefcase,
   Building2,
+  Settings,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -36,6 +37,13 @@ export const navigation: NavigationItem[] = [
     navigationCode: "DASHBOARD",
   },
   {
+    label: "Administration",
+    path: "/administration",
+    icon: Building2,
+    section: "MAIN",
+    navigationCode: "DASHBOARD",
+  },
+  {
     label: "Upload Files",
     path: "/upload-files",
     icon: Upload,
@@ -43,17 +51,17 @@ export const navigation: NavigationItem[] = [
     navigationCode: "UPLOAD_FILES",
   },
   {
-    label: "Administration",
-    path: "/administration",
-    icon: Building2,
-    section: "ADMIN PORTAL",
-  },
-  {
     label: "Audit Log",
     path: "/log/audit-log",
     icon: FileClock,
-    section: "ADMIN PORTAL",
+    section: "SYSTEM ADMINISTRATION",
     navigationCode: "AUDIT_LOG",
   },
+  {
+    label: "Settings",
+    path: "/settings",
+    icon: Settings,
+    section: "SYSTEM ADMINISTRATION",
+    navigationCode: "DASHBOARD",
+  },
 ];
-

@@ -85,12 +85,21 @@ export default function Login() {
     setIsLoading(true);
     try {
       const baseUrl = getApiBaseUrl();
-      const res = await fetch(`${baseUrl}/api/auth/developer/login`, {
+      let res = await fetch(`${baseUrl}/api/auth/developer/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "rachad.quintyne@zenatech.com" }),
+        body: JSON.stringify({ email: "alvin.tsang@zenatech.com" }),
       });
-      const data = await res.json();
+      let data = await res.json();
+      if (!data.token) {
+        res = await fetch(`${baseUrl}/api/auth/developer/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: "rachad.quintyne@zenatech.com" }),
+        });
+        data = await res.json();
+      }
+
       if (data.token) {
         appStorage.setItem("token", data.token);
         await refreshPermissions();
