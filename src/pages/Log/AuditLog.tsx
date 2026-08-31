@@ -118,8 +118,11 @@ export default function AuditLog() {
     },
   ], []);
 
+  const safeAuditLogs = useMemo(() => Array.isArray(auditLogs) ? auditLogs : [], [auditLogs]);
+  const safeLoginActivities = useMemo(() => Array.isArray(loginActivities) ? loginActivities : [], [loginActivities]);
+
   const auditTable = useReactTable({
-    data: auditLogs,
+    data: safeAuditLogs,
     columns: auditColumns,
     onSortingChange: setAuditSorting,
     onColumnFiltersChange: setAuditColumnFilters,
@@ -236,7 +239,7 @@ export default function AuditLog() {
   ], []);
 
   const loginTable = useReactTable({
-    data: loginActivities,
+    data: safeLoginActivities,
     columns: loginColumns,
     onSortingChange: setLoginSorting,
     onColumnFiltersChange: setLoginColumnFilters,

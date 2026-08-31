@@ -121,8 +121,8 @@ export function AssignApproversModal({
     setIsLoading(true);
     try {
       const [assnRes, userRes] = await Promise.all([
-        api.get<WorkflowAssignment[]>("/api/purchasing/assignments").catch(() => api.get<WorkflowAssignment[]>("/purchasing/assignments")),
-        api.get<any>("/api/configuration/users?is_active=true").catch(() => api.get<any>("/configuration/users?is_active=true")),
+        api.get<WorkflowAssignment[]>("/api/purchasing/assignments").catch(() => []),
+        api.get<any>("/api/configuration/users?is_active=true").catch(() => []),
       ]);
       const rawAssns = Array.isArray(assnRes) ? assnRes : [];
       const canonicalRoles = WORKFLOW_ROLES.map((r) => r.role);

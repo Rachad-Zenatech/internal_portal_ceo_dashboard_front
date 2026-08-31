@@ -32,7 +32,7 @@ export default function SessionTimeout() {
       isOpenRef.current = false;
       setTimeLeft(COUNTDOWN_MS);
       // Immediately send a heartbeat so the backend knows we continued
-      apiClient.post('/auth/heartbeat').catch(() => {});
+      apiClient.post('/auth/heartbeat', {}, { timeoutMs: 1500 }).catch(() => {});
     }
   }, []);
 
@@ -66,7 +66,7 @@ export default function SessionTimeout() {
 
       // Send a heartbeat every 60 seconds IF the user has been active since the last heartbeat
       if (now - lastHeartbeatSent >= 60000 && idleTime < 60000) {
-        apiClient.post('/auth/heartbeat').catch(() => {});
+        apiClient.post('/auth/heartbeat', {}, { timeoutMs: 1500 }).catch(() => {});
         lastHeartbeatSent = now;
       }
 

@@ -30,7 +30,7 @@ export function useNotifications(options?: { refetchInterval?: number | false })
     retry: false,
     staleTime: 30000,
     refetchOnWindowFocus: false,
-    refetchInterval: options?.refetchInterval ?? 30000,
+    refetchInterval: options?.refetchInterval ?? false,
   });
 }
 
@@ -48,7 +48,7 @@ export function useUnreadNotificationCount(options?: { refetchInterval?: number 
     retry: false,
     staleTime: 30000,
     refetchOnWindowFocus: false,
-    refetchInterval: options?.refetchInterval ?? 30000,
+    refetchInterval: options?.refetchInterval ?? false,
   });
 }
 

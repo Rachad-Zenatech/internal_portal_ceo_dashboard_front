@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/services/apiClient";
 import { useCeoRealtimeStream } from "@/hooks/useCeoRealtimeStream";
@@ -6,22 +6,10 @@ import {
   Briefcase,
   Search,
   RefreshCw,
-  Clock,
-  MapPin,
-  User,
-  Radio,
-  ChevronRight,
-  X,
-  DollarSign,
   CheckCircle2,
-  Sparkles,
-  ExternalLink,
-  ShieldCheck,
-  FileCheck,
   WifiOff,
-  AlertTriangle,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -64,31 +52,7 @@ interface PipelineTask {
   updated_at?: string;
 }
 
-interface CeoEvent {
-  id: string;
-  event_type: string;
-  source: string;
-  entity_id: string;
-  title?: string;
-  industry?: string;
-  location?: string;
-  state?: string;
-  revenue?: string | number | null;
-  priority?: string;
-  priority_color?: string;
-  analyst?: string;
-  note?: string;
-  created_at?: string;
-}
 
-interface LoiAcceptedAlert {
-  id: string | number;
-  company_name: string;
-  revenue?: string | number | null;
-  analyst?: string;
-  timestamp: string;
-  task?: PipelineTask;
-}
 
 function formatRevenue(rev: string | number | null | undefined): string {
   if (!rev) return "-";
@@ -113,11 +77,9 @@ function formatSingleRev(valStr: string): string {
 
 export default function MergersAcquisitions() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTask, setSelectedTask] = useState<PipelineTask | null>(null);
-  const [loiToastAlert, setLoiToastAlert] = useState<LoiAcceptedAlert | null>(null);
 
   // Shared Singleton SSE Hook
-  const { isConnected: isSseConnected, lastSyncedAt, triggerManualSync } = useCeoRealtimeStream();
+  const { lastSyncedAt, triggerManualSync } = useCeoRealtimeStream();
 
   // 1. Fetch Executive Summary KPIs
   const {
@@ -149,28 +111,13 @@ export default function MergersAcquisitions() {
     refetchOnWindowFocus: false,
   });
 
-  // 3. Fetch Initial M&A Events Feed
-  const {
-    data: liveEvents = [],
-    isLoading: isEventsLoading,
-    refetch: refetchEvents,
-    isFetching: isEventsFetching,
-  } = useQuery<CeoEvent[]>({
-    queryKey: ["ma-events"],
-    queryFn: () => apiClient.get<CeoEvent[]>("/api/v1/ceo/ma/events?limit=25"),
-    staleTime: 60000,
-    retry: false,
-    refetchOnWindowFocus: false,
-  });
-
   const isMaOffline = summary?.status === "offline" || isSummaryError || isTasksError;
-  const isRefreshingAny = isSummaryFetching || isTasksFetching || isEventsFetching;
+  const isRefreshingAny = isSummaryFetching || isTasksFetching;
 
   const refreshAll = () => {
     triggerManualSync();
     refetchSummary();
     refetchTasks();
-    refetchEvents();
     toast.info("Retrying M&A connection and refreshing pipeline feeds...");
   };
 
@@ -454,7 +401,7 @@ export default function MergersAcquisitions() {
                     {filteredDeals.map((deal) => (
                       <tr
                         key={deal.id}
-                        onClick={() => setSelectedTask(deal)}
+
                         className="hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors group"
                       >
                         <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors whitespace-nowrap">

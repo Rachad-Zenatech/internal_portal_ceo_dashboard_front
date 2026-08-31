@@ -110,7 +110,10 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
   });
 
-  const pendingApprovals = useMemo(() => rawApprovals || [], [rawApprovals]);
+  const pendingApprovals = useMemo(
+    () => (Array.isArray(rawApprovals) ? rawApprovals : []),
+    [rawApprovals]
+  );
 
   const {
     data: rawCompletedHistory = [],
@@ -121,10 +124,13 @@ export default function Dashboard() {
     queryFn: () => apiClient.get<PurchaseRequest[]>("/api/v1/ceo/approvals/history"),
     staleTime: 60000,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: false,
   });
 
-  const approvedRequests = useMemo(() => rawCompletedHistory || [], [rawCompletedHistory]);
+  const approvedRequests = useMemo(
+    () => (Array.isArray(rawCompletedHistory) ? rawCompletedHistory : []),
+    [rawCompletedHistory]
+  );
 
   const { data: summary, isLoading: isSummaryLoading, refetch: refetchSummary } = useQuery<SummaryData>({
     queryKey: ["summaryMetrics"],
@@ -147,8 +153,14 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
   });
 
-  const totalPendingAmount = pendingApprovals.reduce((acc, curr) => acc + (curr.amount || 0), 0);
-  const totalApprovedAmount = approvedRequests.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+  const totalPendingAmount = useMemo(
+    () => (Array.isArray(pendingApprovals) ? pendingApprovals.reduce((acc, curr) => acc + (Number(curr?.amount) || 0), 0) : 0),
+    [pendingApprovals]
+  );
+  const totalApprovedAmount = useMemo(
+    () => (Array.isArray(approvedRequests) ? approvedRequests.reduce((acc, curr) => acc + (Number(curr?.amount) || 0), 0) : 0),
+    [approvedRequests]
+  );
 
   const refreshAll = () => {
     triggerManualSync();

@@ -68,7 +68,7 @@ export default function AccountTypeDonut({ filters }: AccountTypeDonutProps) {
     );
   }
 
-  if (isError || !data) {
+  if (isError || !data || !Array.isArray(data) || data.length === 0) {
     return (
       <Card className="w-full h-full flex flex-col rounded-2xl border-slate-200/60 shadow-sm">
         <CardHeader>

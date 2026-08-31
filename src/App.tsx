@@ -19,16 +19,9 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5,
-      retry: (failureCount, error: unknown) => {
-        const status =
-          typeof error === "object" && error !== null && "status" in error
-            ? (error as { status?: unknown }).status
-            : undefined;
-        if (status === 401 || status === 403) {
-          return false;
-        }
-        return failureCount < 3;
-      },
+      retry: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     },
   },
 });

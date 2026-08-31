@@ -3,41 +3,34 @@ import { apiClient } from '../services/apiClient';
 
 export function useHeartbeat(isAuthenticated: boolean) {
   const lastActiveTimeRef = useRef<number>(Date.now());
+  const throttleRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    // Track user activity
     const updateActivity = () => {
+      if (throttleRef.current) return;
+      throttleRef.current = true;
       lastActiveTimeRef.current = Date.now();
+      setTimeout(() => {
+        throttleRef.current = false;
+      }, 5000);
     };
 
-    // Listen for common activity events
-    window.addEventListener('mousemove', updateActivity);
-    window.addEventListener('keydown', updateActivity);
     window.addEventListener('click', updateActivity);
-    window.addEventListener('scroll', updateActivity);
+    window.addEventListener('keydown', updateActivity);
 
-    // Send heartbeat every 60 seconds
     const interval = setInterval(() => {
       const timeSinceLastActivity = Date.now() - lastActiveTimeRef.current;
-      
-      // If the user has been completely inactive in the browser for more than 15 minutes,
-      // stop sending heartbeats (the backend will log them out on the next request).
-      // Otherwise, we send a heartbeat as long as they are active or have been active within 15 minutes.
       if (timeSinceLastActivity < 15 * 60 * 1000) {
-        apiClient.post('/auth/heartbeat').catch(() => {
-          // Ignore heartbeat errors (e.g., if they are already logged out)
-        });
+        apiClient.post('/auth/heartbeat', {}, { timeoutMs: 1500 }).catch(() => {});
       }
     }, 60000);
 
     return () => {
       clearInterval(interval);
-      window.removeEventListener('mousemove', updateActivity);
-      window.removeEventListener('keydown', updateActivity);
       window.removeEventListener('click', updateActivity);
-      window.removeEventListener('scroll', updateActivity);
+      window.removeEventListener('keydown', updateActivity);
     };
   }, [isAuthenticated]);
 }

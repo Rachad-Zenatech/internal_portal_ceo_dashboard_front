@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Archive,
   Download,
   Eye,
   FileSpreadsheet,
@@ -14,12 +13,10 @@ import {
   ChevronsRight,
   FolderArchive,
   HardDrive,
-  ShieldCheck,
   Search,
   CheckCircle2,
 } from "lucide-react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -35,19 +32,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
-  TableBody,
-  TableCell,
-  TableHead,
   TableHeader,
-  TableRow,
 } from "@/components/ui/table";
 import { uploadArchiveService } from "@/services/uploadArchiveService";
 import type { ArchivedUpload, UploadType } from "@/types/uploadArchive";
@@ -89,8 +75,11 @@ function FileTypeIcon({ file }: { file: ArchivedUpload }) {
 
 function getContext(file: ArchivedUpload) {
   const parts: string[] = [];
-  if (file.company_id) parts.push(`Company: ${file.company_id}`);
-  if (file.entity_id) parts.push(`Entity: ${file.entity_id}`);
+  const meta = file.metadata || {};
+  const companyId = (file as any).company_id || meta.company_id || meta.company;
+  const entityId = (file as any).entity_id || meta.entity_id || meta.entity;
+  if (companyId) parts.push(`Company: ${companyId}`);
+  if (entityId) parts.push(`Entity: ${entityId}`);
   return parts.join(" • ");
 }
 
@@ -105,7 +94,7 @@ export default function UploadFiles() {
 
   // Pagination state
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const pageSize = 10;
 
   // Selection state
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
@@ -116,7 +105,7 @@ export default function UploadFiles() {
     isLoading,
     isFetching,
     refetch,
-    error: queryError,
+
   } = useQuery({
     queryKey: ["uploadArchive", filter],
     queryFn: () => uploadArchiveService.list(filter === "all" ? undefined : filter),
@@ -124,9 +113,8 @@ export default function UploadFiles() {
     refetchOnWindowFocus: false,
   });
 
-  const files = data?.files ?? [];
-  const uploadTypes = data?.upload_types ?? [];
-  const error = queryError instanceof Error ? queryError.message : null;
+  const files = Array.isArray(data?.files) ? data.files : [];
+  const uploadTypes = Array.isArray(data?.upload_types) ? data.upload_types : [];
 
   // Filter files by search term
   const filteredFiles = useMemo(() => {
@@ -136,8 +124,8 @@ export default function UploadFiles() {
       return (
         f.filename.toLowerCase().includes(q) ||
         (f.upload_type_label || "").toLowerCase().includes(q) ||
-        (f.company_id || "").toLowerCase().includes(q) ||
-        (f.entity_id || "").toLowerCase().includes(q)
+        String((f as any).company_id || f.metadata?.company_id || "").toLowerCase().includes(q) ||
+        String((f as any).entity_id || f.metadata?.entity_id || "").toLowerCase().includes(q)
       );
     });
   }, [files, searchTerm]);

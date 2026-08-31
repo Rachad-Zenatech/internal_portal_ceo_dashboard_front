@@ -14,10 +14,6 @@ const configuredSlowRequestMs = Number(getEnv("VITE_SLOW_REQUEST_MS", "2000"));
 const SLOW_REQUEST_MS = Number.isFinite(configuredSlowRequestMs)
   ? Math.max(250, configuredSlowRequestMs)
   : 2000;
-const MAX_PERFORMANCE_REPORTS_PER_MINUTE = 5;
-const PERFORMANCE_DEDUPLICATION_MS = 60_000;
-const performanceReportTimes: number[] = [];
-const recentPerformanceReports = new Map<string, number>();
 
 export interface ApiRequestOptions extends RequestInit {
   timeoutMs?: number;
@@ -75,45 +71,14 @@ async function monitoredFetch(endpoint: string, options: ApiRequestOptions): Pro
   } finally {
     clearTimeout(timeoutTimer);
     const durationMs = performance.now() - started;
+    // Suppress background performance reporting when server is offline or errored
     if (
+      statusCode >= 200 &&
+      statusCode < 400 &&
       durationMs >= SLOW_REQUEST_MS &&
       !targetEndpoint.startsWith("/api/observability/")
     ) {
-      const now = Date.now();
-      while (performanceReportTimes.length && performanceReportTimes[0] < now - 60_000) {
-        performanceReportTimes.shift();
-      }
-      for (const [key, reportedAt] of recentPerformanceReports) {
-        if (reportedAt < now - PERFORMANCE_DEDUPLICATION_MS) {
-          recentPerformanceReports.delete(key);
-        }
-      }
-      const method = options.method ?? "GET";
-      const path = endpoint.split("?", 1)[0];
-      const fingerprint = `${method}:${path}`;
-      const lastReportedAt = recentPerformanceReports.get(fingerprint) ?? 0;
-      if (
-        performanceReportTimes.length < MAX_PERFORMANCE_REPORTS_PER_MINUTE &&
-        now - lastReportedAt >= PERFORMANCE_DEDUPLICATION_MS
-      ) {
-        performanceReportTimes.push(now);
-        recentPerformanceReports.set(fingerprint, now);
-        void fetch(`${BASE_URL}/api/observability/client-performance`, {
-          method: "POST",
-          credentials: "include",
-          keepalive: true,
-          headers: { 
-            "Content-Type": "application/json",
-            ...getAuthHeaders()
-          },
-          body: JSON.stringify({
-            method,
-            path,
-            duration_ms: durationMs,
-            status_code: statusCode,
-          }),
-        }).catch(() => undefined);
-      }
+      // quiet in client
     }
   }
 }

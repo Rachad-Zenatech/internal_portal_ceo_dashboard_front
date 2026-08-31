@@ -8,23 +8,13 @@ import {
   Server,
   Activity,
   Bell,
-  Shield,
-  Palette,
   RefreshCw,
-  CheckCircle2,
-  AlertTriangle,
-  ExternalLink,
-  Wifi,
-  WifiOff,
   User,
-  Sliders,
-  Database,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { getEnv } from "@/lib/env";
 
 interface PortalStatus {
   name: string;
@@ -42,7 +32,6 @@ export default function Settings() {
   const { isConnected, lastSyncedAt, triggerManualSync } = useCeoRealtimeStream();
 
   const [inAppAlerts, setInAppAlerts] = useState(() => localStorage.getItem("inAppAlerts") !== "false");
-  const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
 
   // Portals Status Query
   const { data: portals = [], refetch: refetchPortals, isFetching: isFetchingPortals } = useQuery<PortalStatus[]>({
@@ -240,11 +229,15 @@ export default function Settings() {
               <div className="space-y-1">
                 <span className="text-muted-foreground text-[11px] block">Assigned PBAC Roles</span>
                 <div className="flex flex-wrap gap-1 mt-1">
-                  {(roles.length ? roles : ["SUPER_ADMIN", "CEO_EXECUTIVE"]).map((r) => (
-                    <Badge key={r} variant="secondary" className="text-[10px] px-2 py-0.5 bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-900">
-                      {r}
-                    </Badge>
-                  ))}
+                  {(roles.length ? roles : [{ id: "1", code: "SUPER_ADMIN", name: "SUPER_ADMIN" }]).map((r) => {
+                    const roleLabel = typeof r === "string" ? r : r.name || r.code || "Role";
+                    const roleKey = typeof r === "string" ? r : r.id || r.code || roleLabel;
+                    return (
+                      <Badge key={roleKey} variant="secondary" className="text-[10px] px-2 py-0.5 bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-900">
+                        {roleLabel}
+                      </Badge>
+                    );
+                  })}
                 </div>
               </div>
             </CardContent>

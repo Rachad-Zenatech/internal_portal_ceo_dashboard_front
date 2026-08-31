@@ -41,7 +41,7 @@ const SUGGESTIONS = [
 ];
 
 export default function FloatingChat() {
-  const { user } = useAuth();
+  useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [, setHasUnread] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -279,7 +279,7 @@ export default function FloatingChat() {
                                 </MessageAvatar>
                               )}
                               <Bubble
-                                variant={msg.role === "user" ? "sent" : "received"}
+                                variant={msg.role === "user" ? "default" : "outline"}
                                 className={`rounded-2xl text-xs leading-relaxed ${
                                   msg.role === "user"
                                     ? "bg-indigo-600 text-white p-3 shadow-2xs"
