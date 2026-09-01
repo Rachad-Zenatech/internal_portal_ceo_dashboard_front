@@ -95,7 +95,8 @@ export default function RecentTransactionsTable({
           <CardTitle className="text-lg">Recent Transactions</CardTitle>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <p className="text-sm text-muted-foreground mt-1">Failed to load recent transactions.</p>
+          <h3 className="text-sm font-medium text-slate-700 dark:text-zinc-300">No Data Available</h3>
+          <p className="text-xs text-muted-foreground mt-1">Unable to reach Transaction service. Waiting for connection...</p>
         </CardContent>
       </Card>
     );
@@ -139,7 +140,7 @@ export default function RecentTransactionsTable({
               ) : (
                 <tr>
                   <td colSpan={columns.length} className="h-24 text-center text-slate-500">
-                    No results.
+                    No Data Available
                   </td>
                 </tr>
               )}

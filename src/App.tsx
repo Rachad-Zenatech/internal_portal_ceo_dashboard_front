@@ -1,4 +1,4 @@
-import { BrowserRouter, MemoryRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./lib/AuthContext";
@@ -50,14 +50,12 @@ function FallbackLoader() {
 }
 
 function App() {
-  const RouterComponent = Platform.OS === "web" ? BrowserRouter : MemoryRouter;
-
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ServiceStatusProvider>
         <View style={styles.root}>
-          <RouterComponent>
+          <BrowserRouter>
             <Suspense fallback={<FallbackLoader />}>
               <Routes>
                 <Route path="/login" element={<Login />} />
@@ -111,7 +109,7 @@ function App() {
                 </Route>
               </Routes>
             </Suspense>
-          </RouterComponent>
+          </BrowserRouter>
         </View>
       </ServiceStatusProvider>
       </AuthProvider>

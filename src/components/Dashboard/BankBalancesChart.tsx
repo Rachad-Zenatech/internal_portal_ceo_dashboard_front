@@ -98,7 +98,8 @@ export default function BankBalancesChart({ filters }: BankBalancesChartProps) {
           <CardTitle className="text-lg">Bank Account Balances</CardTitle>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <p className="text-sm text-muted-foreground mt-1">Failed to load bank balances.</p>
+          <h3 className="text-sm font-medium text-slate-700 dark:text-zinc-300">No Data Available</h3>
+          <p className="text-xs text-muted-foreground mt-1">Unable to reach Banking service. Waiting for connection...</p>
         </CardContent>
       </Card>
     );
@@ -142,7 +143,7 @@ export default function BankBalancesChart({ filters }: BankBalancesChartProps) {
               ) : (
                 <tr>
                   <td colSpan={columns.length} className="h-24 text-center text-slate-500">
-                    No results.
+                    No Data Available
                   </td>
                 </tr>
               )}
