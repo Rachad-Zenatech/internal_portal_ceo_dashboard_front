@@ -62,7 +62,7 @@ export default function AuditLog() {
   } = useQuery<AuditLogItem[]>({
     queryKey: ["auditLogs-native"],
     queryFn: () => apiClient.get<AuditLogItem[]>("/api/audit-logs"),
-    refetchInterval: 20000,
+    refetchInterval: false,
   });
 
   // 2. Fetch Login Activities
@@ -73,7 +73,7 @@ export default function AuditLog() {
   } = useQuery<LoginActivityItem[]>({
     queryKey: ["loginActivities-native"],
     queryFn: () => apiClient.get<LoginActivityItem[]>("/api/login-activities"),
-    refetchInterval: 20000,
+    refetchInterval: false,
   });
 
   const onRefresh = async () => {

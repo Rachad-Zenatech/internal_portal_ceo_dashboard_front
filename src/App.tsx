@@ -1,27 +1,41 @@
 import { BrowserRouter, MemoryRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./lib/AuthContext";
 import { View, ActivityIndicator, StyleSheet, Platform } from "@/components/native";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-const AppShell = lazy(() => import("./components/AppShell/AppShell"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const MergersAcquisitions = lazy(() => import("./pages/MergersAcquisitions"));
-const Administration = lazy(() => import("./pages/Administration"));
-const UploadFile = lazy(() => import("./pages/UploadFiles"));
-const AuditLog = lazy(() => import("./pages/Log/AuditLog"));
-const Login = lazy(() => import("./pages/Login"));
-const PendingAccess = lazy(() => import("./pages/PendingAccess"));
-const Settings = lazy(() => import("./pages/Settings"));
+import AppShell from "./components/AppShell/AppShell";
+import Dashboard from "./pages/Dashboard";
+import MergersAcquisitions from "./pages/MergersAcquisitions";
+import Administration from "./pages/Administration";
+import UploadFile from "./pages/UploadFiles";
+import AuditLog from "./pages/Log/AuditLog";
+import Login from "./pages/Login";
+import PendingAccess from "./pages/PendingAccess";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,
-      retry: false,
+      staleTime: 1000 * 60 * 2, // 2 minutes stale time
+      retry: (failureCount, error: unknown) => {
+        const status =
+          typeof error === "object" && error !== null && "status" in error
+            ? (error as { status?: unknown }).status
+            : undefined;
+
+        // Never retry client-side authentication/permission/not-found errors
+        if (status === 401 || status === 403 || status === 404) {
+          return false;
+        }
+
+        // Retry server errors or network disconnects up to 2 times
+        return failureCount < 2;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 8000),
       refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+      refetchOnReconnect: true,
     },
   },
 });
@@ -118,6 +132,3 @@ const styles = StyleSheet.create({
 });
 
 export default App;
-
-
-

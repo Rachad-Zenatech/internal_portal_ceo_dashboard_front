@@ -1,51 +1,59 @@
-import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { BASE_URL } from "@/services/apiClient";
 
+export type ConnectionState = "CONNECTING" | "CONNECTED" | "DISCONNECTED" | "RECONNECTING";
+
 export interface RealtimeSyncState {
   isConnected: boolean;
+  connectionState: ConnectionState;
   lastSyncedAt: Date;
   triggerManualSync: () => void;
 }
 
-// Module-level Singleton State
+// Module-level Singleton State Machine
 let globalEventSource: EventSource | null = null;
-let globalIsConnected = false;
+let globalConnectionState: ConnectionState = "DISCONNECTED";
 let globalLastSyncedAt = new Date();
-const listeners = new Set<(connected: boolean) => void>();
+const listeners = new Set<(state: ConnectionState) => void>();
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let globalQueryClient: ReturnType<typeof useQueryClient> | null = null;
 
-// Reconnect with exponential backoff (1s -> 2s -> 4s ... capped at 15s), reset once a
-// connection is confirmed open so a brief blip doesn't leave us on a slow cadence.
-const RECONNECT_BASE_MS = 1000;
-const RECONNECT_MAX_MS = 15000;
+// Reconnect with exponential backoff (2s -> 4s -> 8s -> 16s ... capped at 30s) + jitter (±20%)
+const RECONNECT_BASE_MS = 2000;
+const RECONNECT_MAX_MS = 30000;
 let reconnectAttempt = 0;
 
 const lastKnownPortalStatus = new Map<string, "online" | "offline" | "checking">();
+const lastToastNotificationTime = new Map<string, number>();
 
-function setConnectionStatus(newStatus: boolean) {
-  if (globalIsConnected === newStatus) return;
-  globalIsConnected = newStatus;
+function setConnectionState(newState: ConnectionState) {
+  if (globalConnectionState === newState) return;
+  globalConnectionState = newState;
   listeners.forEach((listener) => {
     try {
-      listener(globalIsConnected);
+      listener(globalConnectionState);
     } catch {
       // ignore
     }
   });
 }
 
-// Toasts + cache dedupe so the same transition isn't announced twice (once from the instant
-// SERVICE_STATE_CHANGED push, once from the ~24s PORTALS_STATUS_UPDATED snapshot).
+// Debounced and deduplicated toast notifications for service status transitions
 function noteServiceStatus(serviceName: string, status: "online" | "offline" | "checking") {
   const previous = lastKnownPortalStatus.get(serviceName);
   if (previous === status) return;
   lastKnownPortalStatus.set(serviceName, status);
 
-  if (previous === undefined) return; // first observation - not a real transition
+  if (previous === undefined) return; // first observation - ignore initial baseline
+
+  const now = Date.now();
+  const lastToast = lastToastNotificationTime.get(serviceName) || 0;
+  if (now - lastToast < 10000) return; // 10s cooldown per service to prevent spam
+
+  lastToastNotificationTime.set(serviceName, now);
 
   if (status === "offline") {
     toast.error(`${serviceName} went offline`, {
@@ -59,19 +67,18 @@ function noteServiceStatus(serviceName: string, status: "online" | "offline" | "
 }
 
 function handleIncomingEvent(eventPayload: any) {
-  if (!globalQueryClient) return;
+  if (!globalQueryClient || !eventPayload) return;
 
   const eventType = eventPayload?.event_type || "";
 
-  // Instant per-service circuit-breaker transition push - fires the moment a service actually
-  // goes down or recovers, instead of waiting on the periodic health snapshot.
+  // Instant per-service circuit-breaker transition push
   if (eventType === "SERVICE_STATE_CHANGED" && eventPayload?.data?.service) {
     noteServiceStatus(eventPayload.data.service, eventPayload.data.status);
     globalQueryClient.invalidateQueries({ queryKey: ["portalsStatus"] });
     return;
   }
 
-  // Direct cache update for telemetry (Zero HTTP fetch needed!)
+  // Direct cache update for telemetry
   if (eventType === "PORTALS_STATUS_UPDATED" && eventPayload?.portals) {
     globalQueryClient.setQueryData(["portalsStatus"], eventPayload.portals);
     for (const portal of eventPayload.portals) {
@@ -118,8 +125,14 @@ function closeGlobalEventSource() {
 
 function scheduleReconnect() {
   if (reconnectTimer) return;
-  const delay = Math.min(RECONNECT_BASE_MS * 2 ** reconnectAttempt, RECONNECT_MAX_MS);
-  reconnectAttempt += 1;
+  setConnectionState("RECONNECTING");
+
+  // Calculate exponential backoff with ±20% jitter
+  const rawDelay = Math.min(RECONNECT_BASE_MS * (2 ** reconnectAttempt), RECONNECT_MAX_MS);
+  const jitterFactor = 1 + (Math.random() * 0.4 - 0.2);
+  const delay = Math.max(1000, Math.round(rawDelay * jitterFactor));
+
+  reconnectAttempt = Math.min(reconnectAttempt + 1, 6);
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null;
     initGlobalEventSource();
@@ -130,6 +143,8 @@ function initGlobalEventSource() {
   if (globalEventSource) return;
   if (reconnectTimer) return;
 
+  setConnectionState("CONNECTING");
+
   try {
     const streamUrl = `${BASE_URL}/api/v1/ceo/events/stream`;
     const es = new EventSource(streamUrl);
@@ -137,7 +152,7 @@ function initGlobalEventSource() {
 
     es.addEventListener("connected", () => {
       reconnectAttempt = 0;
-      setConnectionStatus(true);
+      setConnectionState("CONNECTED");
       globalLastSyncedAt = new Date();
     });
 
@@ -152,26 +167,21 @@ function initGlobalEventSource() {
 
     es.onopen = () => {
       reconnectAttempt = 0;
-      setConnectionStatus(true);
+      setConnectionState("CONNECTED");
     };
 
     es.onerror = () => {
-      setConnectionStatus(false);
       closeGlobalEventSource();
       scheduleReconnect();
     };
   } catch {
-    setConnectionStatus(false);
     closeGlobalEventSource();
     scheduleReconnect();
   }
 }
 
-// The CEO backend itself can be unreachable across a reconnect cycle (not just downstream
-// portals). Jump the exponential backoff the instant the browser regains connectivity or the
-// tab is refocused, rather than waiting out whatever delay was already queued.
 function forceImmediateReconnect() {
-  if (globalIsConnected) return;
+  if (globalConnectionState === "CONNECTED" || globalConnectionState === "CONNECTING") return;
   if (reconnectTimer) {
     clearTimeout(reconnectTimer);
     reconnectTimer = null;
@@ -192,13 +202,13 @@ export function useCeoRealtimeStream(): RealtimeSyncState {
   const queryClient = useQueryClient();
   globalQueryClient = queryClient;
 
-  const [isConnected, setIsConnected] = useState(globalIsConnected);
+  const [connState, setConnState] = useState<ConnectionState>(globalConnectionState);
 
   useEffect(() => {
     initGlobalEventSource();
-    listeners.add(setIsConnected);
+    listeners.add(setConnState);
     return () => {
-      listeners.delete(setIsConnected);
+      listeners.delete(setConnState);
     };
   }, []);
 
@@ -215,7 +225,8 @@ export function useCeoRealtimeStream(): RealtimeSyncState {
   }, []);
 
   return {
-    isConnected,
+    isConnected: connState === "CONNECTED",
+    connectionState: connState,
     lastSyncedAt: globalLastSyncedAt,
     triggerManualSync,
   };

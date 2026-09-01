@@ -178,7 +178,7 @@ export default function Dashboard() {
   } = useQuery<PurchaseRequest[]>({
     queryKey: ["pendingApprovals"],
     queryFn: () => apiClient.get<PurchaseRequest[]>("/api/v1/ceo/approvals/pending"),
-    refetchInterval: 10000,
+    refetchInterval: false,
   });
 
   const {
@@ -187,7 +187,7 @@ export default function Dashboard() {
   } = useQuery<any[]>({
     queryKey: ["ceoAuditLogs"],
     queryFn: () => apiClient.get<any[]>("/api/v1/ceo/audit-logs"),
-    refetchInterval: 10000,
+    refetchInterval: false,
   });
 
   const [approvalsSubTab, setApprovalsSubTab] = useState<"pending" | "approved">("pending");
@@ -253,7 +253,7 @@ export default function Dashboard() {
   } = useQuery<PortalStatus[]>({
     queryKey: ["portalsStatus"],
     queryFn: () => apiClient.get<PortalStatus[]>("/api/v1/ceo/portals-status"),
-    refetchInterval: 15000,
+    refetchInterval: false,
   });
 
   const {
@@ -263,7 +263,7 @@ export default function Dashboard() {
   } = useQuery<CeoEvent[]>({
     queryKey: ["ceoEvents"],
     queryFn: () => apiClient.get<CeoEvent[]>("/api/v1/ceo/events"),
-    refetchInterval: 10000,
+    refetchInterval: false,
   });
 
   const {

@@ -1,28 +1,23 @@
 import { handleResponse, ApiError } from "./helper";
 import { appStorage } from "../lib/storage";
-import { getEnv, getApiBaseUrl } from "../lib/env";
+import { getApiBaseUrl } from "../lib/env";
 
 export const BASE_URL = getApiBaseUrl();
-export const DEFAULT_TIMEOUT_MS = 6_000; // 30s hard timeout
+export const DEFAULT_TIMEOUT_MS = 15_000; // 15s default timeout
 
 const getAuthHeaders = (): Record<string, string> => {
   const token = appStorage.getItem("token");
   return token ? { "Authorization": `Bearer ${token}` } : {};
 };
 
-const configuredSlowRequestMs = Number(getEnv("VITE_SLOW_REQUEST_MS", "2000"));
-const SLOW_REQUEST_MS = Number.isFinite(configuredSlowRequestMs)
-  ? Math.max(250, configuredSlowRequestMs)
-  : 2000;
-
 export interface ApiRequestOptions extends RequestInit {
   timeoutMs?: number;
 }
 
+// In-flight GET request coalescing map to prevent duplicate burst requests
+const inFlightGetRequests = new Map<string, Promise<any>>();
+
 async function monitoredFetch(endpoint: string, options: ApiRequestOptions): Promise<Response> {
-  const started = performance.now();
-  let statusCode = 0;
-  
   let targetEndpoint = endpoint;
   if (!targetEndpoint.startsWith("/api/") && !targetEndpoint.startsWith("/ai/")) {
     const path = targetEndpoint.startsWith("/") ? targetEndpoint : `/${targetEndpoint}`;
@@ -58,7 +53,6 @@ async function monitoredFetch(endpoint: string, options: ApiRequestOptions): Pro
       ...options,
       signal: controller.signal,
     });
-    statusCode = response.status;
     return response;
   } catch (err: any) {
     if (isTimeout || err.name === "AbortError") {
@@ -70,31 +64,39 @@ async function monitoredFetch(endpoint: string, options: ApiRequestOptions): Pro
     throw err;
   } finally {
     clearTimeout(timeoutTimer);
-    const durationMs = performance.now() - started;
-    // Suppress background performance reporting when server is offline or errored
-    if (
-      statusCode >= 200 &&
-      statusCode < 400 &&
-      durationMs >= SLOW_REQUEST_MS &&
-      !targetEndpoint.startsWith("/api/observability/")
-    ) {
-      // quiet in client
-    }
   }
 }
 
 export const apiClient = {
   async get<T>(endpoint: string, options?: ApiRequestOptions): Promise<T> {
-    const res = await monitoredFetch(endpoint, {
-      ...options, 
-      method: "GET",
-      credentials: "include",
-      headers: {
-        ...getAuthHeaders(),
-        ...(options?.headers as Record<string, string>)
-      } as HeadersInit
-    });
-    return handleResponse<T>(res);
+    // Coalesce identical concurrent in-flight GET requests
+    const cacheKey = `${endpoint}_${JSON.stringify(options?.headers || {})}`;
+    if (!options?.signal && inFlightGetRequests.has(cacheKey)) {
+      return inFlightGetRequests.get(cacheKey)!;
+    }
+
+    const fetchPromise = (async () => {
+      try {
+        const res = await monitoredFetch(endpoint, {
+          ...options, 
+          method: "GET",
+          credentials: "include",
+          headers: {
+            ...getAuthHeaders(),
+            ...(options?.headers as Record<string, string>)
+          } as HeadersInit
+        });
+        return await handleResponse<T>(res);
+      } finally {
+        inFlightGetRequests.delete(cacheKey);
+      }
+    })();
+
+    if (!options?.signal) {
+      inFlightGetRequests.set(cacheKey, fetchPromise);
+    }
+
+    return fetchPromise;
   },
   
   async post<T>(endpoint: string, body?: unknown, options?: ApiRequestOptions): Promise<T> {

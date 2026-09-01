@@ -109,7 +109,7 @@ export default function MergersAcquisitions() {
   } = useQuery<PipelineSummary>({
     queryKey: ["ma-summary-native"],
     queryFn: () => apiClient.get<PipelineSummary>("/api/v1/ceo/ma/summary"),
-    refetchInterval: 20000,
+    refetchInterval: false,
   });
 
   // 2. Fetch LOI Accepted Target Deals (matches Web portal)
@@ -121,7 +121,7 @@ export default function MergersAcquisitions() {
     queryKey: ["ma-pipeline-loi-accepted-native"],
     queryFn: () =>
       apiClient.get<PipelineTask[]>("/api/v1/ceo/ma/pipeline?limit=100&skip=0&loi_accepted_only=true"),
-    refetchInterval: 20000,
+    refetchInterval: false,
   });
 
   // 3. Fetch Recent M&A Events
@@ -132,7 +132,7 @@ export default function MergersAcquisitions() {
   } = useQuery<CeoEvent[]>({
     queryKey: ["ma-events-native"],
     queryFn: () => apiClient.get<CeoEvent[]>("/api/v1/ceo/ma/events?limit=25"),
-    refetchInterval: 25000,
+    refetchInterval: false,
   });
 
   const onRefresh = async () => {
