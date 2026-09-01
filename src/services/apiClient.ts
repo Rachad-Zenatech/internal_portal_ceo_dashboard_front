@@ -45,7 +45,11 @@ async function monitoredFetch(endpoint: string, options: ApiRequestOptions): Pro
 
   // Combine parent signal if provided
   if (options.signal) {
-    options.signal.addEventListener("abort", () => controller.abort());
+    if (options.signal.aborted) {
+      controller.abort();
+    } else {
+      options.signal.addEventListener("abort", () => controller.abort());
+    }
   }
 
   try {
@@ -55,7 +59,10 @@ async function monitoredFetch(endpoint: string, options: ApiRequestOptions): Pro
     });
     return response;
   } catch (err: any) {
-    if (isTimeout || err.name === "AbortError") {
+    if (options.signal?.aborted && !isTimeout) {
+      throw err; // Let React Query cancellation propagate cleanly
+    }
+    if (isTimeout) {
       throw new ApiError(`Request to ${endpoint} timed out after ${Math.round(timeoutMs / 1000)}s.`, 408);
     }
     if (err.name === "TypeError" && err.message?.includes("fetch")) {

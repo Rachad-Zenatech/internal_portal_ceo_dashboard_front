@@ -2,6 +2,7 @@ import { BrowserRouter, MemoryRouter, Routes, Route, Navigate, Outlet } from "re
 import { Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./lib/AuthContext";
+import { ServiceStatusProvider } from "./lib/ServiceStatusContext";
 import { View, ActivityIndicator, StyleSheet, Platform } from "@/components/native";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -54,6 +55,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <ServiceStatusProvider>
         <View style={styles.root}>
           <RouterComponent>
             <Suspense fallback={<FallbackLoader />}>
@@ -111,6 +113,7 @@ function App() {
             </Suspense>
           </RouterComponent>
         </View>
+      </ServiceStatusProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

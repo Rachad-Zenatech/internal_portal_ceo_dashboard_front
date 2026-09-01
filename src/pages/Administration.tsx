@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
 import { apiClient } from "@/services/apiClient";
 import { useCeoRealtimeStream } from "@/hooks/useCeoRealtimeStream";
+import { useServiceStatus } from "@/lib/ServiceStatusContext";
 import {
   CheckCircle2,
   Clock,
@@ -44,16 +45,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { getEnv } from "@/lib/env";
 
-interface PortalStatus {
-  name: string;
-  code: string;
-  port: number;
-  domain: string;
-  status: "online" | "degraded" | "offline";
-  status_code?: number;
-  latency_ms: number;
-  is_local?: boolean;
-}
+
 
 interface PurchaseRequestLineItem {
   id?: string | number;
@@ -134,23 +126,13 @@ export default function Administration() {
   // Assign Approvers Modal state
   const [isAssignApproversOpen, setIsAssignApproversOpen] = useState(false);
 
-  // Real-time Event Stream
+  // Real-time Event Stream & Event-Driven Service Availability
   const { lastSyncedAt, triggerManualSync } = useCeoRealtimeStream();
+  const { isOnline } = useServiceStatus();
+  const isAdminOnline = isOnline("admin");
 
-  // Portals Status Query
-  const { data: portals = [], refetch: refetchPortals, isFetching: isFetchingPortals } = useQuery<PortalStatus[]>({
-    queryKey: ["portalsStatus"],
-    queryFn: () => apiClient.get<PortalStatus[]>("/api/v1/ceo/portals-status"),
-    staleTime: 60000,
-    retry: false,
-    refetchOnWindowFocus: false,
-  });
-
-  const adminPortal = useMemo(
-    () => Array.isArray(portals) ? portals.find((p) => p?.code?.toUpperCase().includes("ADMIN") || p?.name?.toLowerCase().includes("admin")) : undefined,
-    [portals]
-  );
-  const isAdminOnline = adminPortal?.status === "online";
+  // Event-driven online status for Administration service
+  // isAdminOnline is derived directly from useServiceStatus context
 
   // Pending Approvals Query
   const {
@@ -160,8 +142,9 @@ export default function Administration() {
     isFetching: isFetchingApprovals,
     isError: isApprovalsError,
   } = useQuery<PurchaseRequest[]>({
-    queryKey: ["pendingApprovals"],
-    queryFn: () => apiClient.get<PurchaseRequest[]>("/api/v1/ceo/approvals/pending"),
+    queryKey: ["admin", "pendingApprovals"],
+    queryFn: ({ signal }) => apiClient.get<PurchaseRequest[]>("/api/v1/ceo/approvals/pending", { signal }),
+    enabled: isAdminOnline,
     staleTime: 60000,
     retry: false,
     refetchOnWindowFocus: false,
@@ -178,8 +161,9 @@ export default function Administration() {
     refetch: refetchHistory,
     isFetching: isFetchingHistory,
   } = useQuery<PurchaseRequest[]>({
-    queryKey: ["completedApprovalsHistory"],
-    queryFn: () => apiClient.get<PurchaseRequest[]>("/api/v1/ceo/approvals/history"),
+    queryKey: ["admin", "completedApprovalsHistory"],
+    queryFn: ({ signal }) => apiClient.get<PurchaseRequest[]>("/api/v1/ceo/approvals/history", { signal }),
+    enabled: isAdminOnline,
     staleTime: 60000,
     retry: false,
     refetchOnWindowFocus: false,
@@ -188,13 +172,13 @@ export default function Administration() {
   // Detail query for active selected detailed request
   const detailedRequestId = detailedRequest?.id;
   const { data: requestDetailResponse, isLoading: isDetailLoading } = useQuery({
-    queryKey: ["approvalDetail", detailedRequestId],
-    queryFn: async () => {
+    queryKey: ["admin", "approvalDetail", detailedRequestId],
+    queryFn: async ({ signal }) => {
       if (!detailedRequestId) return null;
-      const res = await apiClient.get<any>(`/api/v1/ceo/approvals/${detailedRequestId}`);
+      const res = await apiClient.get<any>(`/api/v1/ceo/approvals/${detailedRequestId}`, { signal });
       return res?.request || res;
     },
-    enabled: Boolean(detailedRequestId),
+    enabled: Boolean(detailedRequestId) && isAdminOnline,
     staleTime: 60000,
     retry: false,
   });
@@ -245,11 +229,11 @@ export default function Administration() {
 
   const refreshAll = useCallback(() => {
     triggerManualSync();
-    refetchPortals();
+    
     refetchApprovals();
     refetchHistory();
     toast.info("Retrying connection and refreshing live feeds...");
-  }, [triggerManualSync, refetchPortals, refetchApprovals, refetchHistory]);
+  }, [triggerManualSync,  refetchApprovals, refetchHistory]);
 
   const approvedRequests = useMemo(() => {
     if (Array.isArray(rawCompletedHistory)) {
@@ -349,7 +333,7 @@ export default function Administration() {
   }, [activeRequest]);
 
   const isServerDisconnected = !isAdminOnline || isApprovalsError;
-  const isRefreshingAny = isFetchingApprovals || isFetchingPortals || isFetchingHistory;
+  const isRefreshingAny = isFetchingApprovals ||  isFetchingHistory;
 
   return (
     <div className="w-full flex flex-col gap-4 sm:gap-5 p-4 sm:p-6 lg:p-7 min-h-screen bg-slate-50/40 dark:bg-zinc-950 transition-colors">

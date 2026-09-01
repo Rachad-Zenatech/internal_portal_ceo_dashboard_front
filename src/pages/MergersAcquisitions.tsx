@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/services/apiClient";
 import { useCeoRealtimeStream } from "@/hooks/useCeoRealtimeStream";
+import { useServiceStatus } from "@/lib/ServiceStatusContext";
 import {
   Briefcase,
   Search,
@@ -78,8 +79,10 @@ function formatSingleRev(valStr: string): string {
 export default function MergersAcquisitions() {
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Shared Singleton SSE Hook
+  // Shared Singleton SSE Hook & Event-Driven Service Availability
   const { lastSyncedAt, triggerManualSync } = useCeoRealtimeStream();
+  const { isOnline } = useServiceStatus();
+  const isMaOnline = isOnline("ma");
 
   // 1. Fetch Executive Summary KPIs
   const {
@@ -89,8 +92,9 @@ export default function MergersAcquisitions() {
     isFetching: isSummaryFetching,
     isError: isSummaryError,
   } = useQuery<PipelineSummary>({
-    queryKey: ["ma-summary"],
-    queryFn: () => apiClient.get<PipelineSummary>("/api/v1/ceo/ma/summary"),
+    queryKey: ["ma", "summary"],
+    queryFn: ({ signal }) => apiClient.get<PipelineSummary>("/api/v1/ceo/ma/summary", { signal }),
+    enabled: isMaOnline,
     staleTime: 60000,
     retry: false,
     refetchOnWindowFocus: false,
@@ -104,14 +108,15 @@ export default function MergersAcquisitions() {
     isFetching: isTasksFetching,
     isError: isTasksError,
   } = useQuery<PipelineTask[]>({
-    queryKey: ["ma-pipeline-loi-accepted-deals"],
-    queryFn: () => apiClient.get<PipelineTask[]>("/api/v1/ceo/ma/pipeline?limit=100&skip=0&loi_accepted_only=true"),
+    queryKey: ["ma", "pipeline-loi-accepted-deals"],
+    queryFn: ({ signal }) => apiClient.get<PipelineTask[]>("/api/v1/ceo/ma/pipeline?limit=100&skip=0&loi_accepted_only=true", { signal }),
+    enabled: isMaOnline,
     staleTime: 60000,
     retry: false,
     refetchOnWindowFocus: false,
   });
 
-  const isMaOffline = summary?.status === "offline" || isSummaryError || isTasksError;
+  const isMaOffline = !isMaOnline || summary?.status === "offline" || isSummaryError || isTasksError;
   const isRefreshingAny = isSummaryFetching || isTasksFetching;
 
   const refreshAll = () => {

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { apiClient } from "@/services/apiClient";
 import { useCeoRealtimeStream } from "@/hooks/useCeoRealtimeStream";
+import { useServiceStatus } from "@/lib/ServiceStatusContext";
 import {
   Activity,
   CheckCircle2,
@@ -89,8 +90,10 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [period, setPeriod] = useState<"monthly" | "quarterly" | "yearly">("monthly");
 
-  // Real-time Event Stream
+  // Real-time Event Stream & Event-Driven Service Availability
   const { isConnected, lastSyncedAt, triggerManualSync } = useCeoRealtimeStream();
+  const { isOnline } = useServiceStatus();
+  const isAdminOnline = isOnline("admin");
 
   // Queries
   const { data: portals = [], refetch: refetchPortals, isFetching: isFetchingPortals } = useQuery<PortalStatus[]>({
@@ -104,9 +107,11 @@ export default function Dashboard() {
   const onlinePortalsCount = portals.filter((p) => p.status === "online").length;
 
   const { data: rawApprovals = [], isLoading: isApprovalsLoading, refetch: refetchApprovals, isFetching: isFetchingApprovals } = useQuery<PurchaseRequest[]>({
-    queryKey: ["pendingApprovals"],
-    queryFn: () => apiClient.get<PurchaseRequest[]>("/api/v1/ceo/approvals/pending"),
+    queryKey: ["admin", "pendingApprovals"],
+    queryFn: ({ signal }) => apiClient.get<PurchaseRequest[]>("/api/v1/ceo/approvals/pending", { signal }),
+    enabled: isAdminOnline,
     staleTime: 60000,
+    retry: false,
     refetchOnWindowFocus: false,
   });
 
@@ -120,8 +125,9 @@ export default function Dashboard() {
     isLoading: isHistoryLoading,
     refetch: refetchHistory,
   } = useQuery<PurchaseRequest[]>({
-    queryKey: ["completedApprovalsHistory"],
-    queryFn: () => apiClient.get<PurchaseRequest[]>("/api/v1/ceo/approvals/history"),
+    queryKey: ["admin", "completedApprovalsHistory"],
+    queryFn: ({ signal }) => apiClient.get<PurchaseRequest[]>("/api/v1/ceo/approvals/history", { signal }),
+    enabled: isAdminOnline,
     staleTime: 60000,
     refetchOnWindowFocus: false,
     retry: false,
