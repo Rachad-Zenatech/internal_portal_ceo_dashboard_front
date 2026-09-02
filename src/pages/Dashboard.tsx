@@ -92,8 +92,7 @@ export default function Dashboard() {
 
   // Real-time Event Stream & Event-Driven Service Availability
   const { isConnected, lastSyncedAt, triggerManualSync } = useCeoRealtimeStream();
-  const { isOnline, getStatus } = useServiceStatus();
-  const isAdminOnline = isOnline("admin");
+  const { getStatus } = useServiceStatus();
 
   // Connected Systems Telemetry directly synchronized with MQTT / WebSocket Registry
   const portals: PortalStatus[] = useMemo(() => [
@@ -109,8 +108,7 @@ export default function Dashboard() {
   const { data: rawApprovals = [], isLoading: isApprovalsLoading, refetch: refetchApprovals, isFetching: isFetchingApprovals } = useQuery<PurchaseRequest[]>({
     queryKey: ["admin", "pendingApprovals"],
     queryFn: ({ signal }) => apiClient.get<PurchaseRequest[]>("/api/v1/ceo/approvals/pending", { signal }),
-    enabled: isAdminOnline,
-    staleTime: 60000,
+    staleTime: 30000,
     retry: false,
     refetchOnWindowFocus: false,
   });
@@ -127,14 +125,17 @@ export default function Dashboard() {
   } = useQuery<PurchaseRequest[]>({
     queryKey: ["admin", "completedApprovalsHistory"],
     queryFn: ({ signal }) => apiClient.get<PurchaseRequest[]>("/api/v1/ceo/approvals/history", { signal }),
-    enabled: isAdminOnline,
-    staleTime: 60000,
+    staleTime: 30000,
     refetchOnWindowFocus: false,
     retry: false,
   });
 
-  const approvedRequests = useMemo(
-    () => (Array.isArray(rawCompletedHistory) ? rawCompletedHistory : []),
+  const syncedApprovedRequests = useMemo(
+    () => (Array.isArray(rawCompletedHistory) ? rawCompletedHistory.filter((r: any) => !r.pending_sync) : []),
+    [rawCompletedHistory]
+  );
+  const pendingSyncRequests = useMemo(
+    () => (Array.isArray(rawCompletedHistory) ? rawCompletedHistory.filter((r: any) => Boolean(r.pending_sync)) : []),
     [rawCompletedHistory]
   );
 
@@ -164,13 +165,13 @@ export default function Dashboard() {
     [pendingApprovals]
   );
   const totalApprovedAmount = useMemo(
-    () => (Array.isArray(approvedRequests) ? approvedRequests.reduce((acc, curr) => acc + (Number(curr?.amount) || 0), 0) : 0),
-    [approvedRequests]
+    () => (Array.isArray(syncedApprovedRequests) ? syncedApprovedRequests.reduce((acc, curr) => acc + (Number(curr?.amount) || 0), 0) : 0),
+    [syncedApprovedRequests]
   );
 
   const refreshAll = () => {
     triggerManualSync();
-    
+
     refetchApprovals();
     refetchHistory();
     refetchSummary();
@@ -413,16 +414,23 @@ export default function Dashboard() {
                   <>
                     <div className="flex items-baseline gap-2">
                       <span className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                        {approvedRequests.length}
+                        {syncedApprovedRequests.length}
                       </span>
                       <span className="text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-300">
                         (${totalApprovedAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })})
                       </span>
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] text-indigo-600 dark:text-indigo-400 font-medium mt-1 group-hover:underline">
-                      <span>View history in Administration</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </div>
+                    {pendingSyncRequests.length > 0 ? (
+                      <div className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-1">
+                        <Clock className="w-3 h-3" />
+                        <span>{pendingSyncRequests.length} waiting reconnect</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 text-[11px] text-indigo-600 dark:text-indigo-400 font-medium mt-1 group-hover:underline">
+                        <span>View history in Administration</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </div>
+                    )}
                   </>
                 )}
               </div>

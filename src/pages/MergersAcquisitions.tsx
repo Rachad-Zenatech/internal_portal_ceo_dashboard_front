@@ -94,7 +94,6 @@ export default function MergersAcquisitions() {
   } = useQuery<PipelineSummary>({
     queryKey: ["ma", "summary"],
     queryFn: ({ signal }) => apiClient.get<PipelineSummary>("/api/v1/ceo/ma/summary", { signal }),
-    enabled: isMaOnline,
     staleTime: 60000,
     retry: false,
     refetchOnWindowFocus: false,
@@ -110,7 +109,6 @@ export default function MergersAcquisitions() {
   } = useQuery<PipelineTask[]>({
     queryKey: ["ma", "pipeline-loi-accepted-deals"],
     queryFn: ({ signal }) => apiClient.get<PipelineTask[]>("/api/v1/ceo/ma/pipeline?limit=100&skip=0&loi_accepted_only=true", { signal }),
-    enabled: isMaOnline,
     staleTime: 60000,
     retry: false,
     refetchOnWindowFocus: false,
@@ -198,7 +196,7 @@ export default function MergersAcquisitions() {
                 </span>
               </h4>
               <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-                The connection to the M&A Microservice (:8000) is currently unreachable. Displaying placeholder skeletons while disconnected. Navigation and other portal pages remain fully active.
+                The connection to the M&A Microservice (:8000) is currently unreachable. Displaying cached pipeline data while disconnected. Navigation and actions remain fully active.
               </p>
             </div>
           </div>
@@ -224,7 +222,7 @@ export default function MergersAcquisitions() {
                 Target Companies
               </span>
               <div className="mt-2.5">
-                {isSummaryLoading || isMaOffline ? (
+                {isSummaryLoading && !isMaOffline ? (
                   <div className="space-y-1.5 py-0.5">
                     <Skeleton className="h-7 w-20 rounded-lg" />
                     <Skeleton className="h-3.5 w-28 rounded" />
@@ -250,7 +248,7 @@ export default function MergersAcquisitions() {
                 LOI Accepted
               </span>
               <div className="mt-2.5">
-                {isSummaryLoading || isMaOffline ? (
+                {isSummaryLoading && !isMaOffline ? (
                   <div className="space-y-1.5 py-0.5">
                     <Skeleton className="h-7 w-20 rounded-lg" />
                     <Skeleton className="h-3.5 w-32 rounded" />
@@ -276,7 +274,7 @@ export default function MergersAcquisitions() {
                 LOI Sent / Pending
               </span>
               <div className="mt-2.5">
-                {isSummaryLoading || isMaOffline ? (
+                {isSummaryLoading && !isMaOffline ? (
                   <div className="space-y-1.5 py-0.5">
                     <Skeleton className="h-7 w-20 rounded-lg" />
                     <Skeleton className="h-3.5 w-28 rounded" />
@@ -302,7 +300,7 @@ export default function MergersAcquisitions() {
                 Target Revenue Pool
               </span>
               <div className="mt-2.5">
-                {isSummaryLoading || isMaOffline ? (
+                {isSummaryLoading && !isMaOffline ? (
                   <div className="space-y-1.5 py-0.5">
                     <Skeleton className="h-7 w-24 rounded-lg" />
                     <Skeleton className="h-3.5 w-32 rounded" />
@@ -330,7 +328,7 @@ export default function MergersAcquisitions() {
                 LOI Accepted Acquisition Deals
               </h3>
               <Badge variant="outline" className="text-[10px] px-2 py-0 bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 font-semibold">
-                {isMaOffline ? "-" : filteredDeals.length} Deals
+                {filteredDeals.length} Deals
               </Badge>
             </div>
 
@@ -338,8 +336,8 @@ export default function MergersAcquisitions() {
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder={isMaOffline ? "Search disabled while offline..." : "Search target company, industry..."}
-                disabled={isMaOffline}
+                placeholder={"Search target company, industry..."}
+
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`h-8 pl-8 text-xs bg-slate-50/60 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 rounded-lg w-full ${
@@ -350,7 +348,7 @@ export default function MergersAcquisitions() {
           </div>
 
           <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800 shadow-2xs overflow-hidden">
-            {isTasksLoading || isMaOffline ? (
+            {isTasksLoading && !isMaOffline ? (
               <div className="w-full overflow-x-auto">
                 <table className="w-full text-xs text-left border-collapse">
                   <thead>

@@ -68,7 +68,7 @@ export const WidgetResilienceWrapper: React.FC<WidgetResilienceWrapperProps> = (
   const isDisconnectedState = status === "disconnected" || status === "timeout" || status === "error";
 
   // Initial loading skeleton (when no prior data exists)
-  if (isLoading && !hasData) {
+  if (isLoading && !hasData && !isDisconnectedState) {
     return (
       <WidgetErrorBoundary widgetName={widgetName}>
         {skeleton || (
