@@ -105,6 +105,45 @@ interface PurchaseRequest {
   }>;
 }
 
+const isRequestActionable = (
+  status?: string | null,
+  isInHistory?: boolean
+): boolean => {
+  if (isInHistory) return false;
+  if (!status) return false;
+  const s = status.trim().toUpperCase().replace(/\s+/g, "_");
+
+  const nonActionableStatuses = [
+    "APPROVED",
+    "REJECTED",
+    "CANCELLED",
+    "CANCEL",
+    "COMPLETED",
+    "DECLINED",
+    "CLOSED",
+    "WAITING_PAYMENT",
+    "PAYMENT_PENDING",
+    "PAID",
+    "ORDERED",
+    "PURCHASED",
+    "SHIPPED",
+    "GOODS_RECEIVED",
+    "INVOICE_RECEIVED",
+    "SENT_TO_AP",
+  ];
+  if (nonActionableStatuses.includes(s)) return false;
+
+  const pendingStatuses = [
+    "WAITING_APPROVAL",
+    "PENDING_APPROVAL",
+    "PENDING",
+    "UNDER_REVIEW",
+    "NEW",
+    "SUBMITTED",
+  ];
+  return pendingStatuses.includes(s);
+};
+
 export default function Administration() {
   useAuth();
   const queryClient = useQueryClient();
@@ -230,6 +269,16 @@ export default function Administration() {
 
   const handleActionSubmit = () => {
     if (!selectedRequest || !actionType) return;
+    const isInHistory =
+      approvalViewMode === "approved" ||
+      Boolean((selectedRequest as any).isHistory) ||
+      allCompletedRequests.some((c) => String(c.id) === String(selectedRequest.id));
+    if (!isRequestActionable(selectedRequest.status, isInHistory)) {
+      toast.error(`Request #${selectedRequest.id} is already ${selectedRequest.status.toLowerCase()} and cannot be modified.`);
+      setSelectedRequest(null);
+      setActionType(null);
+      return;
+    }
     approvalMutation.mutate({
       requestId: selectedRequest.id,
       action: actionType,
@@ -269,6 +318,16 @@ export default function Administration() {
     () => allCompletedRequests.filter((r) => !r.pending_sync),
     [allCompletedRequests]
   );
+
+  const isDetailedInApproveHistory = useMemo(() => {
+    if (!detailedRequest) return false;
+    if (approvalViewMode === "approved") return true;
+    const reqId = String(detailedRequest.id);
+    return (
+      Boolean((detailedRequest as any).isHistory) ||
+      allCompletedRequests.some((c) => String(c.id) === reqId)
+    );
+  }, [detailedRequest, approvalViewMode, allCompletedRequests]);
 
   const pendingSyncRequests = useMemo(
     () => allCompletedRequests.filter((r) => r.pending_sync),
@@ -997,11 +1056,10 @@ export default function Administration() {
                       paginatedApproved.map((req) => (
                         <tr
                           key={req.id}
-                          onClick={() => setDetailedRequest(req.rawReq || (req as any))}
+                          onClick={() => setDetailedRequest({ ...(req.rawReq || (req as any)), isHistory: true })}
                           className="hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors group"
                         >
                           <td className="py-3 px-4 font-mono font-medium text-slate-900 dark:text-zinc-100 whitespace-nowrap">
-                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">#{req.id}</span>
                             <span className={req.status === "REJECTED" || req.status === "CANCELLED" || req.status === "DECLINED" ? "text-rose-600 dark:text-rose-400 font-semibold" : "text-emerald-600 dark:text-emerald-400 font-semibold"}>
                               #{req.id}
                             </span>
@@ -1251,7 +1309,7 @@ export default function Administration() {
                       className={`text-[10px] px-2 py-0 uppercase ${
                         activeRequest?.status === "REJECTED" || activeRequest?.status === "CANCELLED" || activeRequest?.status === "DECLINED"
                           ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900/60"
-                          : activeRequest?.status === "APPROVED" || activeRequest?.status === "COMPLETED"
+                          : activeRequest?.status === "APPROVED" || activeRequest?.status === "COMPLETED" || isDetailedInApproveHistory || (activeRequest as any)?.isHistory
                           ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900/60"
                           : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900/60"
                       }`}
@@ -1455,12 +1513,11 @@ export default function Administration() {
             <Button variant="ghost" size="sm" onClick={() => setDetailedRequest(null)}>
               Close
             </Button>
-            {activeRequest?.status !== "APPROVED" && activeRequest?.status !== "COMPLETED" && (
+            {isRequestActionable(activeRequest?.status, Boolean(isDetailedInApproveHistory || (activeRequest as any)?.isHistory)) && (
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
                   variant="outline"
-
                   onClick={() => {
                     const req = activeRequest;
                     setDetailedRequest(null);
@@ -1473,7 +1530,6 @@ export default function Administration() {
                 </Button>
                 <Button
                   size="sm"
-
                   onClick={() => {
                     const req = activeRequest;
                     setDetailedRequest(null);
@@ -1486,39 +1542,6 @@ export default function Administration() {
                 </Button>
               </div>
             )}
-            {activeRequest?.status !== "APPROVED" &&
-              activeRequest?.status !== "COMPLETED" &&
-              activeRequest?.status !== "REJECTED" &&
-              activeRequest?.status !== "CANCELLED" &&
-              activeRequest?.status !== "DECLINED" && (
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      const req = activeRequest;
-                      setDetailedRequest(null);
-                      setSelectedRequest(req);
-                      setActionType("REJECT");
-                    }}
-                    className="text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 rounded-xl cursor-pointer"
-                  >
-                    Reject Request
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      const req = activeRequest;
-                      setDetailedRequest(null);
-                      setSelectedRequest(req);
-                      setActionType("APPROVE");
-                    }}
-                    className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-2xs gap-1 cursor-pointer"
-                  >
-                    <Check className="w-3.5 h-3.5" /> Approve Request
-                  </Button>
-                </div>
-              )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
