@@ -57,20 +57,29 @@ interface PurchaseRequestLineItem {
   total?: number;
   total_price?: number;
   item_url?: string;
+  converted_unit_price?: number | null;
+  converted_total?: number | null;
+  original_unit_price?: number | null;
+  original_total?: number | null;
+  original_currency?: string | null;
 }
 
 interface PurchaseRequest {
   id: string;
-  department: string;
+  department?: string;
   amount: number;
   status: string;
-  description: string;
+  description?: string;
   product_name?: string;
-  priority: string;
-  requester_name: string;
+  priority?: string;
+  requester_name?: string;
   created_at: string;
   gl_code?: string;
   currency?: string;
+  original_currency?: string | null;
+  original_amount?: number | null;
+  exchange_rate?: number | null;
+  is_converted?: boolean;
   item_url?: string;
   product_info?: {
     vendor?: string;
@@ -85,13 +94,7 @@ interface PurchaseRequest {
   item_mode?: "SINGLE" | "MULTIPLE";
   quantity?: number;
   unit_price?: number;
-  quote_data?: {
-    vendor_name?: string;
-    quote_number?: string;
-    quote_date?: string;
-    tax_amount?: number;
-    shipping_amount?: number;
-  };
+  quote_data?: any;
   request_type?: string;
   assigned_user?: string;
   hold_reason?: string;
@@ -103,6 +106,180 @@ interface PurchaseRequest {
     url: string;
     size?: string;
   }>;
+}
+
+function formatUsd(amount: number): string {
+  const isNeg = amount < 0;
+  const abs = Math.abs(amount);
+  const formatted = abs.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return isNeg ? `-$${formatted}` : `$${formatted}`;
+}
+
+function formatForeignCurrency(amount: number, currency: string): string {
+  const isNeg = amount < 0;
+  const abs = Math.abs(amount);
+  const formatted = abs.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return isNeg ? `-${currency} ${formatted}` : `${currency} ${formatted}`;
+}
+
+interface CurrencyInfo {
+  isConverted: boolean;
+  usdAmount: number;
+  origAmount: number | null;
+  origCurrency: string | null;
+  exchangeRate: number | null;
+}
+
+function getRequestCurrencyInfo(req?: PurchaseRequest | null): CurrencyInfo {
+  if (!req) {
+    return { isConverted: false, usdAmount: 0, origAmount: null, origCurrency: null, exchangeRate: null };
+  }
+
+  const rawAmount = Number(req.amount) || 0;
+  const quoteData = req.quote_data;
+  const conv = quoteData?.conversion;
+
+  let isConverted = Boolean(req.is_converted);
+  let origCurrency: string | null = req.original_currency || null;
+  let origAmount: number | null = req.original_amount !== undefined && req.original_amount !== null ? Number(req.original_amount) : null;
+  let exchangeRate: number | null = req.exchange_rate !== undefined && req.exchange_rate !== null ? Number(req.exchange_rate) : null;
+  let usdAmount = rawAmount;
+
+  if (conv) {
+    if (conv.is_converted || (conv.original_currency && conv.original_currency !== "USD")) {
+      isConverted = true;
+    }
+    if (!origCurrency) {
+      origCurrency = conv.original_currency || quoteData?.currency || null;
+    }
+    if (exchangeRate === null && conv.exchange_rate !== undefined && conv.exchange_rate !== null) {
+      exchangeRate = Number(conv.exchange_rate);
+    }
+    if (origAmount === null) {
+      const tot = conv.original_total ?? conv.original_subtotal;
+      if (tot !== undefined && tot !== null) origAmount = Number(tot);
+    }
+    if (conv.converted_total !== undefined && conv.converted_total !== null) {
+      usdAmount = Number(conv.converted_total);
+    }
+  }
+
+  if (!isConverted && req.description) {
+    const descMatch = req.description.match(/Original:\s*([A-Z]{3})\s*([\d,]+(?:\.\d+)?)\s*@\s*Rate\s*([\d.]+)/i);
+    if (descMatch) {
+      isConverted = true;
+      if (!origCurrency) origCurrency = descMatch[1].toUpperCase();
+      if (origAmount === null) origAmount = parseFloat(descMatch[2].replace(/,/g, ''));
+      if (exchangeRate === null) exchangeRate = parseFloat(descMatch[3]);
+    }
+  }
+
+  if (!isConverted && req.currency && req.currency !== "USD") {
+    isConverted = true;
+    if (!origCurrency) origCurrency = req.currency;
+    if (origAmount === null) origAmount = rawAmount;
+  }
+
+  return {
+    isConverted: isConverted && Boolean(origCurrency) && origCurrency !== "USD",
+    usdAmount,
+    origAmount,
+    origCurrency,
+    exchangeRate,
+  };
+}
+
+interface ItemPriceInfo {
+  usdUnitPrice: number;
+  usdTotal: number;
+  origUnitPrice: number | null;
+  origTotal: number | null;
+  isConverted: boolean;
+  origCurrency: string | null;
+}
+
+function getItemPriceInfo(it: any, reqInfo: CurrencyInfo, idx: number, quoteItems?: any[]): ItemPriceInfo {
+  const itQty = Number(it.quantity) || 1;
+  const rawPrice = Number(it.unit_price) || 0;
+  const rawTotal = Number(it.total_price ?? it.total) || (itQty * rawPrice);
+
+  if (!reqInfo.isConverted) {
+    return {
+      usdUnitPrice: rawPrice,
+      usdTotal: rawTotal,
+      origUnitPrice: null,
+      origTotal: null,
+      isConverted: false,
+      origCurrency: null,
+    };
+  }
+
+  const origCurrency = it.original_currency || reqInfo.origCurrency;
+
+  if (it.converted_total !== undefined && it.converted_total !== null) {
+    const usdTotal = Number(it.converted_total);
+    const usdUnitPrice = it.converted_unit_price !== undefined && it.converted_unit_price !== null
+      ? Number(it.converted_unit_price)
+      : (itQty !== 0 ? usdTotal / itQty : usdTotal);
+    const origUnitPrice = it.original_unit_price !== undefined && it.original_unit_price !== null
+      ? Number(it.original_unit_price)
+      : rawPrice;
+    const origTotal = it.original_total !== undefined && it.original_total !== null
+      ? Number(it.original_total)
+      : rawTotal;
+
+    return {
+      usdUnitPrice,
+      usdTotal,
+      origUnitPrice,
+      origTotal,
+      isConverted: true,
+      origCurrency,
+    };
+  }
+
+  let qItem = quoteItems && idx < quoteItems.length ? quoteItems[idx] : null;
+  if (!qItem && quoteItems) {
+    qItem = quoteItems.find((qi: any) => qi.description === it.description || qi.product_name === it.product_name);
+  }
+
+  if (qItem && (qItem.converted_total !== undefined || qItem.converted_unit_price !== undefined)) {
+    const usdTotal = Number(qItem.converted_total ?? (qItem.converted_unit_price ? qItem.converted_unit_price * itQty : rawTotal * (reqInfo.exchangeRate || 1)));
+    const usdUnitPrice = Number(qItem.converted_unit_price ?? (itQty !== 0 ? usdTotal / itQty : usdTotal));
+    const origUnitPrice = Number(qItem.original_unit_price ?? qItem.unit_price ?? rawPrice);
+    const origTotal = Number(qItem.original_total ?? qItem.total ?? rawTotal);
+
+    return {
+      usdUnitPrice,
+      usdTotal,
+      origUnitPrice,
+      origTotal,
+      isConverted: true,
+      origCurrency: qItem.original_currency || origCurrency,
+    };
+  }
+
+  if (reqInfo.exchangeRate && reqInfo.exchangeRate > 0) {
+    const usdUnitPrice = rawPrice * reqInfo.exchangeRate;
+    const usdTotal = rawTotal * reqInfo.exchangeRate;
+    return {
+      usdUnitPrice,
+      usdTotal,
+      origUnitPrice: rawPrice,
+      origTotal: rawTotal,
+      isConverted: true,
+      origCurrency,
+    };
+  }
+
+  return {
+    usdUnitPrice: rawPrice,
+    usdTotal: rawTotal,
+    origUnitPrice: rawPrice,
+    origTotal: rawTotal,
+    isConverted: true,
+    origCurrency,
+  };
 }
 
 const isRequestActionable = (
@@ -228,6 +405,14 @@ export default function Administration() {
     return detailedRequest;
   }, [detailedRequest, requestDetailResponse]);
 
+  const activeCurrencyInfo = useMemo(() => {
+    return getRequestCurrencyInfo(activeRequest);
+  }, [activeRequest]);
+
+  const selectedCurrencyInfo = useMemo(() => {
+    return getRequestCurrencyInfo(selectedRequest);
+  }, [selectedRequest]);
+
   // Execute Approval / Rejection Mutation
   const approvalMutation = useMutation({
     mutationFn: async ({ requestId, action, note }: { requestId: string; action: string; note: string }) => {
@@ -307,6 +492,13 @@ export default function Administration() {
         approved_at: r.created_at || "",
         note: r.approval_note || r.hold_reason || (r.pending_sync ? (r.status === "REJECTED" ? "Rejected Offline (Queued)" : "Approved Offline (Queued)") : (r.status === "REJECTED" ? "Rejected" : "Signed Off")),
         vendor: r.vendor || r.product_info?.vendor || "Verified Vendor",
+        currency: r.currency || "USD",
+        original_currency: r.original_currency,
+        original_amount: r.original_amount,
+        exchange_rate: r.exchange_rate,
+        is_converted: r.is_converted,
+        quote_data: r.quote_data,
+        items: r.items,
         pending_sync: Boolean(r.pending_sync),
         rawReq: r,
       }));
@@ -953,7 +1145,19 @@ export default function Administration() {
                             </Badge>
                           </td>
                           <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-zinc-100 whitespace-nowrap">
-                            ${(Number(req.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {(() => {
+                              const cInfo = getRequestCurrencyInfo(req);
+                              return (
+                                <div className="flex flex-col items-end">
+                                  <span>{formatUsd(cInfo.usdAmount)}</span>
+                                  {cInfo.isConverted && cInfo.origAmount !== null && cInfo.origCurrency && (
+                                    <span className="text-[10px] font-normal text-muted-foreground font-sans">
+                                      ({formatForeignCurrency(cInfo.origAmount, cInfo.origCurrency)})
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </td>
                           <td className="py-3 px-4 text-center whitespace-nowrap">
                             <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/80 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900/60 uppercase">
@@ -1037,7 +1241,19 @@ export default function Administration() {
                             </Badge>
                           </td>
                           <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-zinc-100 whitespace-nowrap">
-                            ${(Number(req.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {(() => {
+                              const cInfo = getRequestCurrencyInfo(req);
+                              return (
+                                <div className="flex flex-col items-end">
+                                  <span>{formatUsd(cInfo.usdAmount)}</span>
+                                  {cInfo.isConverted && cInfo.origAmount !== null && cInfo.origCurrency && (
+                                    <span className="text-[10px] font-normal text-muted-foreground font-sans">
+                                      ({formatForeignCurrency(cInfo.origAmount, cInfo.origCurrency)})
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </td>
                           <td className="py-3 px-4 text-center whitespace-nowrap">
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-300 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800 uppercase">
@@ -1101,7 +1317,19 @@ export default function Administration() {
                             </Badge>
                           </td>
                           <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-zinc-100 whitespace-nowrap">
-                            ${(Number(req.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {(() => {
+                              const cInfo = getRequestCurrencyInfo(req);
+                              return (
+                                <div className="flex flex-col items-end">
+                                  <span>{formatUsd(cInfo.usdAmount)}</span>
+                                  {cInfo.isConverted && cInfo.origAmount !== null && cInfo.origCurrency && (
+                                    <span className="text-[10px] font-normal text-muted-foreground font-sans">
+                                      ({formatForeignCurrency(cInfo.origAmount, cInfo.origCurrency)})
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </td>
                           <td className="py-3 px-4 text-center whitespace-nowrap">
                             {req.status === "REJECTED" || req.status === "CANCELLED" || req.status === "DECLINED" ? (
@@ -1229,9 +1457,18 @@ export default function Administration() {
                 <span className="text-muted-foreground">Description:</span>
                 <span className="font-semibold text-slate-800 dark:text-zinc-200 text-right max-w-[260px] truncate">{selectedRequest?.description}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Total Amount:</span>
-                <span className="font-bold text-slate-900 dark:text-zinc-100">${(Number(selectedRequest?.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <div className="text-right">
+                  <span className="font-bold text-slate-900 dark:text-zinc-100">
+                    {formatUsd(selectedCurrencyInfo.usdAmount)}
+                  </span>
+                  {selectedCurrencyInfo.isConverted && selectedCurrencyInfo.origAmount !== null && selectedCurrencyInfo.origCurrency && (
+                    <span className="text-xs font-normal text-muted-foreground ml-1.5 font-mono">
+                      ({formatForeignCurrency(selectedCurrencyInfo.origAmount, selectedCurrencyInfo.origCurrency)})
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1325,9 +1562,16 @@ export default function Administration() {
 
               <div className="text-right">
                 <span className="text-xs text-muted-foreground block">Requested Total</span>
-                <span className="text-lg font-mono font-bold text-slate-900 dark:text-zinc-100">
-                  ${(Number(activeRequest?.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
+                <div className="flex flex-col items-end">
+                  <span className="text-lg font-mono font-bold text-slate-900 dark:text-zinc-100">
+                    {formatUsd(activeCurrencyInfo.usdAmount)}
+                  </span>
+                  {activeCurrencyInfo.isConverted && activeCurrencyInfo.origAmount !== null && activeCurrencyInfo.origCurrency && (
+                    <span className="text-xs font-mono font-normal text-muted-foreground">
+                      ({formatForeignCurrency(activeCurrencyInfo.origAmount, activeCurrencyInfo.origCurrency)})
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </DialogHeader>
@@ -1359,7 +1603,11 @@ export default function Administration() {
               </div>
               <div>
                 <span className="text-[10px] text-muted-foreground uppercase font-semibold block">Currency</span>
-                <span className="font-mono text-slate-700 dark:text-zinc-300">{activeRequest?.currency || "USD"}</span>
+                <span className="font-mono text-slate-700 dark:text-zinc-300">
+                  {activeCurrencyInfo.isConverted && activeCurrencyInfo.origCurrency
+                    ? `USD (${activeCurrencyInfo.origCurrency})`
+                    : activeRequest?.currency || "USD"}
+                </span>
               </div>
             </div>
 
@@ -1393,8 +1641,7 @@ export default function Administration() {
                 <div className="border border-slate-100 dark:border-zinc-800 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-zinc-800 bg-white dark:bg-zinc-900">
                   {activeLineItems.map((it: any, idx: number) => {
                     const itQty = Number(it.quantity) || 1;
-                    const itPrice = Number(it.unit_price) || 0;
-                    const itTotal = Number(it.total_price) || (itQty * itPrice);
+                    const pricing = getItemPriceInfo(it, activeCurrencyInfo, idx, activeRequest?.quote_data?.items);
                     const itName = it.product_name || it.item_name || it.description || `Item #${idx + 1}`;
                     return (
                       <div key={idx} className="p-3 flex items-start justify-between gap-3">
@@ -1418,11 +1665,27 @@ export default function Administration() {
                           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                             <span>Qty: <strong className="text-slate-700 dark:text-zinc-300">{itQty}</strong></span>
                             <span>•</span>
-                            <span>Unit: <strong className="text-slate-700 dark:text-zinc-300">${itPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong></span>
+                            <span>
+                              Unit: <strong className="text-slate-700 dark:text-zinc-300">
+                                {formatUsd(pricing.usdUnitPrice)}
+                                {pricing.isConverted && pricing.origUnitPrice !== null && pricing.origCurrency && (
+                                  <span className="font-normal text-muted-foreground ml-1">
+                                    ({formatForeignCurrency(pricing.origUnitPrice, pricing.origCurrency)})
+                                  </span>
+                                )}
+                              </strong>
+                            </span>
                           </div>
                         </div>
-                        <div className="text-right shrink-0 font-mono font-bold text-slate-900 dark:text-zinc-100">
-                          ${itTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <div className="text-right shrink-0">
+                          <div className="font-mono font-bold text-slate-900 dark:text-zinc-100">
+                            {formatUsd(pricing.usdTotal)}
+                          </div>
+                          {pricing.isConverted && pricing.origTotal !== null && pricing.origCurrency && (
+                            <div className="text-[10px] font-mono text-muted-foreground font-normal">
+                              ({formatForeignCurrency(pricing.origTotal, pricing.origCurrency)})
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -1469,18 +1732,31 @@ export default function Administration() {
                     </div>
                     <div className="p-2 rounded-lg bg-white dark:bg-zinc-800/80 border border-slate-100 dark:border-zinc-700/60">
                       <span className="text-[10px] text-muted-foreground block">Unit Price</span>
-                      <span className="font-mono font-bold text-slate-800 dark:text-zinc-200">
-                        ${((activeRequest?.unit_price !== undefined && activeRequest?.unit_price !== null && activeRequest?.unit_price > 0)
-                          ? Number(activeRequest.unit_price)
-                          : (Number(activeRequest?.amount) || 0) / (Number(activeRequest?.quantity) || 1)
-                        ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
+                      <div className="font-mono font-bold text-slate-800 dark:text-zinc-200">
+                        {formatUsd(
+                          activeCurrencyInfo.isConverted && activeCurrencyInfo.origAmount !== null && activeCurrencyInfo.exchangeRate
+                            ? (activeCurrencyInfo.usdAmount / (Number(activeRequest?.quantity) || 1))
+                            : ((activeRequest?.unit_price !== undefined && activeRequest?.unit_price !== null && activeRequest?.unit_price > 0)
+                              ? Number(activeRequest.unit_price)
+                              : (Number(activeRequest?.amount) || 0) / (Number(activeRequest?.quantity) || 1))
+                        )}
+                        {activeCurrencyInfo.isConverted && activeCurrencyInfo.origAmount !== null && activeCurrencyInfo.origCurrency && (
+                          <span className="text-[10px] font-normal text-muted-foreground block">
+                            ({formatForeignCurrency(activeCurrencyInfo.origAmount / (Number(activeRequest?.quantity) || 1), activeCurrencyInfo.origCurrency)})
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="p-2 rounded-lg bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100/80 dark:border-indigo-900/40">
                       <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold block">Total Item Cost</span>
-                      <span className="font-mono font-bold text-indigo-700 dark:text-indigo-300">
-                        ${(Number(activeRequest?.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
+                      <div className="font-mono font-bold text-indigo-700 dark:text-indigo-300">
+                        {formatUsd(activeCurrencyInfo.usdAmount)}
+                        {activeCurrencyInfo.isConverted && activeCurrencyInfo.origAmount !== null && activeCurrencyInfo.origCurrency && (
+                          <span className="text-[10px] font-normal text-indigo-500/80 dark:text-indigo-400/80 block">
+                            ({formatForeignCurrency(activeCurrencyInfo.origAmount, activeCurrencyInfo.origCurrency)})
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
