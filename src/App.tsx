@@ -1,4 +1,4 @@
-import { BrowserRouter, MemoryRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+﻿import { BrowserRouter, MemoryRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./lib/AuthContext";
@@ -56,64 +56,64 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ServiceStatusProvider>
-        <View style={styles.root}>
-          <RouterComponent>
-            <Suspense fallback={<FallbackLoader />}>
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/pending-access" element={<PendingAccess />} />
+          <View style={styles.root}>
+            <RouterComponent>
+              <Suspense fallback={<FallbackLoader />}>
+                <Routes>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/pending-access" element={<PendingAccess />} />
 
-                {/* Main app layout routes */}
-                <Route
-                  element={
-                    <ProtectedRoute>
-                      <AppShell>
-                        <Outlet />
-                      </AppShell>
-                    </ProtectedRoute>
-                  }
-                >
+                  {/* Main app layout routes */}
                   <Route
-                    path="/"
                     element={
-                      <ProtectedRoute navigationCode="DASHBOARD">
-                        <Dashboard />
+                      <ProtectedRoute>
+                        <AppShell>
+                          <Outlet />
+                        </AppShell>
                       </ProtectedRoute>
                     }
-                  />
-                  <Route path="/mergers-acquisitions" element={<ProtectedRoute navigationCode="DASHBOARD"><MergersAcquisitions /></ProtectedRoute>} />
-                  <Route
-                    path="/administration"
-                    element={<Administration />}
-                  />
-                  <Route
-                    path="/upload-files"
-                    element={
-                      <ProtectedRoute navigationCode="UPLOAD_FILES">
-                        <UploadFile />
-                      </ProtectedRoute>
-                    }
-                  />
+                  >
+                    <Route
+                      path="/"
+                      element={
+                        <ProtectedRoute navigationCode="DASHBOARD">
+                          <Dashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route path="/mergers-acquisitions" element={<ProtectedRoute navigationCode="DASHBOARD"><MergersAcquisitions /></ProtectedRoute>} />
+                    <Route
+                      path="/administration"
+                      element={<Administration />}
+                    />
+                    <Route
+                      path="/upload-files"
+                      element={
+                        <ProtectedRoute navigationCode="UPLOAD_FILES">
+                          <UploadFile />
+                        </ProtectedRoute>
+                      }
+                    />
 
-                  {/* Logs */}
-                  <Route path="/log" element={<Navigate to="/log/audit-log" replace />} />
-                  <Route
-                    path="/log/audit-log"
-                    element={
-                      <ProtectedRoute navigationCode="AUDIT_LOG">
-                        <AuditLog />
-                      </ProtectedRoute>
-                    }
-                  />
+                    {/* Logs */}
+                    <Route path="/log" element={<Navigate to="/log/audit-log" replace />} />
+                    <Route
+                      path="/log/audit-log"
+                      element={
+                        <ProtectedRoute navigationCode="AUDIT_LOG">
+                          <AuditLog />
+                        </ProtectedRoute>
+                      }
+                    />
 
-                  {/* Settings redirect to dashboard */}
-                  <Route path="/settings" element={<ProtectedRoute navigationCode="DASHBOARD"><Settings /></ProtectedRoute>} />
-                </Route>
-              </Routes>
-            </Suspense>
-          </RouterComponent>
-        </View>
-      </ServiceStatusProvider>
+                    {/* Settings redirect to dashboard */}
+                    <Route path="/settings" element={<ProtectedRoute navigationCode="DASHBOARD"><Settings /></ProtectedRoute>} />
+                  </Route>
+                </Routes>
+              </Suspense>
+            </RouterComponent>
+          </View>
+        </ServiceStatusProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
