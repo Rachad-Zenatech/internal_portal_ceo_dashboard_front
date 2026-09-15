@@ -316,10 +316,31 @@ export default function Dashboard() {
     },
   });
 
-  const isActionable = (status?: string) => {
-    if (!status) return true;
+  const isActionable = (status?: string, isInHistory?: boolean) => {
+    if (isInHistory) return false;
+    if (!status) return false;
     const s = status.trim().toUpperCase().replace(/\s+/g, "_");
-    return !["APPROVED", "REJECTED", "CANCELLED", "CANCEL", "COMPLETED"].includes(s);
+    const nonActionable = [
+      "APPROVED",
+      "REJECTED",
+      "CANCELLED",
+      "CANCEL",
+      "COMPLETED",
+      "DECLINED",
+      "CLOSED",
+      "WAITING_PAYMENT",
+      "PAYMENT_PENDING",
+      "PAID",
+      "ORDERED",
+      "PURCHASED",
+      "SHIPPED",
+      "GOODS_RECEIVED",
+      "INVOICE_RECEIVED",
+      "SENT_TO_AP",
+    ];
+    if (nonActionable.includes(s)) return false;
+    const pending = ["WAITING_APPROVAL", "PENDING_APPROVAL", "PENDING", "UNDER_REVIEW", "NEW", "SUBMITTED"];
+    return pending.includes(s);
   };
 
   const handleOpenAction = (
@@ -812,7 +833,7 @@ export default function Dashboard() {
                   <TouchableOpacity
                     key={req.id}
                     activeOpacity={0.88}
-                    onPress={() => setDetailedRequest(req.rawReq || req)}
+                    onPress={() => setDetailedRequest({ ...(req.rawReq || req), isHistory: true } as any)}
                   >
                     <NativeCard style={[styles.approvalCard, { borderColor: "#bbf7d0", borderWidth: 1.5 }]}>
                       <NativeCardHeader style={[styles.approvalCardHeader, { backgroundColor: "#f0fdf4" }]}>
@@ -1571,7 +1592,7 @@ export default function Dashboard() {
             </ScrollView>
 
             {/* Modal Bottom Action Bar */}
-            {detailedRequest && isActionable(detailedRequest.status) && (
+            {detailedRequest && isActionable(detailedRequest.status, Boolean((detailedRequest as any)?.isHistory)) && (
               <View style={styles.detailFooter}>
                 <TouchableOpacity
                   style={[styles.detailActionBtn, styles.detailApproveBtn]}

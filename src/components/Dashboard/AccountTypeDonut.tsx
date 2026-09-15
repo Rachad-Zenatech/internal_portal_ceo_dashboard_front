@@ -75,8 +75,13 @@ export default function AccountTypeDonut({ filters }: AccountTypeDonutProps) {
           <CardTitle className="text-lg">Account Type Distribution</CardTitle>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <h3 className="text-lg font-semibold">No data</h3>
-          <p className="text-sm text-muted-foreground mt-1">Failed to load account distribution.</p>
+          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-400 mb-2">
+            <span className="text-xs font-semibold">%</span>
+          </div>
+          <h3 className="text-sm font-medium text-slate-700 dark:text-zinc-300">No Data Available</h3>
+          <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+            {isError ? "Unable to reach Finance service. Waiting for connection..." : "Account distribution will display when ledger entries exist."}
+          </p>
         </CardContent>
       </Card>
     );

@@ -9,7 +9,18 @@ import {
   RefreshCw,
   CheckCircle2,
   WifiOff,
+  Building2,
+  User,
+  FileText,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -48,9 +59,15 @@ interface PipelineTask {
   priority_name?: string;
   priority_color?: string;
   analyst_name?: string;
+  analyst_email?: string;
   latest_note?: string;
   created_at?: string;
   updated_at?: string;
+  nda?: string;
+  p_and_l?: string;
+  team_size?: string;
+  first_poc?: string;
+  no_of_calls?: string;
 }
 
 
@@ -78,6 +95,7 @@ function formatSingleRev(valStr: string): string {
 
 export default function MergersAcquisitions() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDeal, setSelectedDeal] = useState<PipelineTask | null>(null);
 
   // Shared Singleton SSE Hook & Event-Driven Service Availability
   const { lastSyncedAt, triggerManualSync } = useCeoRealtimeStream();
@@ -94,7 +112,6 @@ export default function MergersAcquisitions() {
   } = useQuery<PipelineSummary>({
     queryKey: ["ma", "summary"],
     queryFn: ({ signal }) => apiClient.get<PipelineSummary>("/api/v1/ceo/ma/summary", { signal }),
-    enabled: isMaOnline,
     staleTime: 60000,
     retry: false,
     refetchOnWindowFocus: false,
@@ -110,7 +127,6 @@ export default function MergersAcquisitions() {
   } = useQuery<PipelineTask[]>({
     queryKey: ["ma", "pipeline-loi-accepted-deals"],
     queryFn: ({ signal }) => apiClient.get<PipelineTask[]>("/api/v1/ceo/ma/pipeline?limit=100&skip=0&loi_accepted_only=true", { signal }),
-    enabled: isMaOnline,
     staleTime: 60000,
     retry: false,
     refetchOnWindowFocus: false,
@@ -198,7 +214,7 @@ export default function MergersAcquisitions() {
                 </span>
               </h4>
               <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-                The connection to the M&A Microservice (:8000) is currently unreachable. Displaying placeholder skeletons while disconnected. Navigation and other portal pages remain fully active.
+                The connection to the M&A Microservice (:8000) is currently unreachable. Displaying cached pipeline data while disconnected. Navigation and actions remain fully active.
               </p>
             </div>
           </div>
@@ -224,7 +240,7 @@ export default function MergersAcquisitions() {
                 Target Companies
               </span>
               <div className="mt-2.5">
-                {isSummaryLoading || isMaOffline ? (
+                {isSummaryLoading && !isMaOffline ? (
                   <div className="space-y-1.5 py-0.5">
                     <Skeleton className="h-7 w-20 rounded-lg" />
                     <Skeleton className="h-3.5 w-28 rounded" />
@@ -250,7 +266,7 @@ export default function MergersAcquisitions() {
                 LOI Accepted
               </span>
               <div className="mt-2.5">
-                {isSummaryLoading || isMaOffline ? (
+                {isSummaryLoading && !isMaOffline ? (
                   <div className="space-y-1.5 py-0.5">
                     <Skeleton className="h-7 w-20 rounded-lg" />
                     <Skeleton className="h-3.5 w-32 rounded" />
@@ -276,7 +292,7 @@ export default function MergersAcquisitions() {
                 LOI Sent / Pending
               </span>
               <div className="mt-2.5">
-                {isSummaryLoading || isMaOffline ? (
+                {isSummaryLoading && !isMaOffline ? (
                   <div className="space-y-1.5 py-0.5">
                     <Skeleton className="h-7 w-20 rounded-lg" />
                     <Skeleton className="h-3.5 w-28 rounded" />
@@ -302,7 +318,7 @@ export default function MergersAcquisitions() {
                 Target Revenue Pool
               </span>
               <div className="mt-2.5">
-                {isSummaryLoading || isMaOffline ? (
+                {isSummaryLoading && !isMaOffline ? (
                   <div className="space-y-1.5 py-0.5">
                     <Skeleton className="h-7 w-24 rounded-lg" />
                     <Skeleton className="h-3.5 w-32 rounded" />
@@ -330,7 +346,7 @@ export default function MergersAcquisitions() {
                 LOI Accepted Acquisition Deals
               </h3>
               <Badge variant="outline" className="text-[10px] px-2 py-0 bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 font-semibold">
-                {isMaOffline ? "-" : filteredDeals.length} Deals
+                {filteredDeals.length} Deals
               </Badge>
             </div>
 
@@ -338,8 +354,8 @@ export default function MergersAcquisitions() {
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder={isMaOffline ? "Search disabled while offline..." : "Search target company, industry..."}
-                disabled={isMaOffline}
+                placeholder={"Search target company, industry..."}
+
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`h-8 pl-8 text-xs bg-slate-50/60 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 rounded-lg w-full ${
@@ -350,7 +366,7 @@ export default function MergersAcquisitions() {
           </div>
 
           <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800 shadow-2xs overflow-hidden">
-            {isTasksLoading || isMaOffline ? (
+            {isTasksLoading && !isMaOffline ? (
               <div className="w-full overflow-x-auto">
                 <table className="w-full text-xs text-left border-collapse">
                   <thead>
@@ -406,7 +422,7 @@ export default function MergersAcquisitions() {
                     {filteredDeals.map((deal) => (
                       <tr
                         key={deal.id}
-
+                        onClick={() => setSelectedDeal(deal)}
                         className="hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors group"
                       >
                         <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors whitespace-nowrap">
@@ -438,6 +454,189 @@ export default function MergersAcquisitions() {
           </div>
         </div>
       </WidgetErrorBoundary>
+
+      {/* Target Deal Detail Modal */}
+      <Dialog
+        open={Boolean(selectedDeal)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedDeal(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-[640px] max-h-[85vh] overflow-y-auto p-5 sm:p-6 rounded-2xl">
+          <DialogHeader>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900/40 text-indigo-600 dark:text-indigo-400 shrink-0">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <DialogTitle className="text-base sm:text-lg font-bold flex flex-wrap items-center gap-2 text-slate-900 dark:text-zinc-100">
+                    <span>{selectedDeal?.company_name}</span>
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] px-2 py-0 bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 uppercase font-semibold"
+                    >
+                      {selectedDeal?.priority_name || "LOI Accepted"}
+                    </Badge>
+                  </DialogTitle>
+                  <DialogDescription className="text-xs mt-0.5 text-muted-foreground flex items-center gap-2">
+                    <span>Target Deal #{selectedDeal?.id}</span>
+                    <span>•</span>
+                    <span>{selectedDeal?.industry_name || "General"}</span>
+                  </DialogDescription>
+                </div>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-4 py-3 text-xs">
+            {/* Key Metrics Banner */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3.5 bg-slate-50 dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800">
+              <div>
+                <span className="text-muted-foreground block text-[11px]">Revenue</span>
+                <span className="font-bold text-slate-900 dark:text-zinc-100 text-sm font-mono mt-0.5 block">
+                  {formatRevenue(selectedDeal?.revenue)}
+                </span>
+              </div>
+              <div>
+                <span className="text-muted-foreground block text-[11px]">Team Size</span>
+                <span className="font-semibold text-slate-800 dark:text-zinc-200 text-xs mt-0.5 block">
+                  {selectedDeal?.team_size ? `${selectedDeal.team_size} members` : "Not specified"}
+                </span>
+              </div>
+              <div>
+                <span className="text-muted-foreground block text-[11px]">NDA Status</span>
+                <span className={`font-semibold text-xs mt-0.5 inline-flex items-center gap-1 ${
+                  (selectedDeal?.nda || "").toLowerCase().includes("signed")
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-amber-600 dark:text-amber-400"
+                }`}>
+                  {selectedDeal?.nda || "Not Signed"}
+                </span>
+              </div>
+              <div>
+                <span className="text-muted-foreground block text-[11px]">P&L Status</span>
+                <span className={`font-semibold text-xs mt-0.5 inline-flex items-center gap-1 ${
+                  (selectedDeal?.p_and_l || "").toLowerCase().includes("received")
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-slate-600 dark:text-zinc-400"
+                }`}>
+                  {selectedDeal?.p_and_l || "Pending"}
+                </span>
+              </div>
+            </div>
+
+            {/* Primary Contact & Deal Ownership */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Contact Card */}
+              <div className="p-3.5 bg-white dark:bg-zinc-900/60 rounded-xl border border-slate-200/80 dark:border-zinc-800 space-y-2">
+                <span className="font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-1.5 text-xs">
+                  <User className="w-3.5 h-3.5 text-indigo-500" />
+                  Target Leadership / Contact
+                </span>
+                <div className="space-y-1 text-slate-600 dark:text-zinc-400 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Name:</span>
+                    <span className="font-medium text-slate-800 dark:text-zinc-200">{selectedDeal?.name || "N/A"}</span>
+                  </div>
+                  {selectedDeal?.email && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Email:</span>
+                      <a
+                        href={`mailto:${selectedDeal.email}`}
+                        className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                      >
+                        {selectedDeal.email}
+                      </a>
+                    </div>
+                  )}
+                  {selectedDeal?.phone && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Phone:</span>
+                      <a
+                        href={`tel:${selectedDeal.phone}`}
+                        className="font-medium text-slate-800 dark:text-zinc-200 hover:underline"
+                      >
+                        {selectedDeal.phone}
+                      </a>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Location:</span>
+                    <span className="font-medium text-slate-800 dark:text-zinc-200">
+                      {[selectedDeal?.state_name || selectedDeal?.state_code, selectedDeal?.country_name || selectedDeal?.country_code].filter(Boolean).join(", ") || "United States"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Deal Ownership Card */}
+              <div className="p-3.5 bg-white dark:bg-zinc-900/60 rounded-xl border border-slate-200/80 dark:border-zinc-800 space-y-2">
+                <span className="font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-1.5 text-xs">
+                  <Briefcase className="w-3.5 h-3.5 text-indigo-500" />
+                  Deal Ownership & Outreach
+                </span>
+                <div className="space-y-1 text-slate-600 dark:text-zinc-400 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Lead Analyst:</span>
+                    <span className="font-medium text-slate-800 dark:text-zinc-200">
+                      {selectedDeal?.analyst_name || "Unassigned"}
+                    </span>
+                  </div>
+                  {selectedDeal?.analyst_email && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Analyst Email:</span>
+                      <a
+                        href={`mailto:${selectedDeal.analyst_email}`}
+                        className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline truncate max-w-[180px]"
+                      >
+                        {selectedDeal.analyst_email}
+                      </a>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">First Contact:</span>
+                    <span className="font-medium text-slate-800 dark:text-zinc-200">{selectedDeal?.first_poc || "Call"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Interactions:</span>
+                    <span className="font-medium text-slate-800 dark:text-zinc-200">
+                      {selectedDeal?.no_of_calls ? `${selectedDeal.no_of_calls} calls` : "Initial outreach"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Latest Notes & Activity */}
+            <div className="p-3.5 bg-slate-50 dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800 space-y-1.5">
+              <span className="font-semibold text-slate-700 dark:text-zinc-300 text-xs flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-slate-500" />
+                Latest Activity & Analyst Notes
+              </span>
+              <p className="text-slate-600 dark:text-zinc-400 text-xs leading-relaxed whitespace-pre-wrap">
+                {selectedDeal?.latest_note || "LOI formally accepted by target leadership. Pending completion of diligence materials and financial disclosures."}
+              </p>
+            </div>
+
+            {/* Timeline Info */}
+            <div className="flex flex-wrap items-center justify-between text-[11px] text-muted-foreground px-1 pt-1 border-t border-slate-100 dark:border-zinc-800">
+              <span>
+                Created: {selectedDeal?.created_at ? new Date(selectedDeal.created_at).toLocaleDateString(undefined, { dateStyle: "medium" }) : "-"}
+              </span>
+              <span>
+                Last Updated: {selectedDeal?.updated_at ? new Date(selectedDeal.updated_at).toLocaleDateString(undefined, { dateStyle: "medium" }) : "-"}
+              </span>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
+            <Button variant="outline" size="sm" onClick={() => setSelectedDeal(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

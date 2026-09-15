@@ -139,22 +139,42 @@ export function ServiceStatusProvider({ children }: { children: React.ReactNode 
     const qc = queryClientRef.current;
     if (!qc || !event) return;
 
-    const service = normalizeServiceName(event.service || "");
-    const eventType = (event.eventType || event.event_type || "").toUpperCase();
+    const service = normalizeServiceName(event.service || event.target_service || "");
+    const eventType = (event.eventType || event.event_type || event.type || "").toUpperCase();
+
+    // If specific affected query keys were supplied in envelope
+    if (Array.isArray(event.affected_query_keys)) {
+      for (const k of event.affected_query_keys) {
+        qc.invalidateQueries({ queryKey: [k] });
+      }
+    }
 
     if (service === "admin" || eventType.startsWith("PURCHASE_") || eventType.includes("APPROVAL")) {
       qc.invalidateQueries({ queryKey: ["admin"] });
       qc.invalidateQueries({ queryKey: ["pendingApprovals"] });
       qc.invalidateQueries({ queryKey: ["completedApprovalsHistory"] });
+      qc.invalidateQueries({ queryKey: ["approvalDetail"] });
+      qc.invalidateQueries({ queryKey: ["adminTasks"] });
+      qc.invalidateQueries({ queryKey: ["summaryMetrics"] });
       qc.invalidateQueries({ queryKey: ["notifications"] });
+      qc.invalidateQueries({ queryKey: ["unreadNotificationsCount"] });
       qc.invalidateQueries({ queryKey: ["ceoEvents"] });
-    } else if (service === "ma" || eventType.startsWith("MA_") || eventType.includes("LOI")) {
+      qc.invalidateQueries({ queryKey: ["ceoAuditLogs"] });
+    } else if (service === "ma" || eventType.startsWith("MA_") || eventType.includes("LOI") || eventType.includes("DEAL")) {
       qc.invalidateQueries({ queryKey: ["ma"] });
       qc.invalidateQueries({ queryKey: ["ma-summary"] });
       qc.invalidateQueries({ queryKey: ["ma-pipeline-loi-accepted-deals"] });
+      qc.invalidateQueries({ queryKey: ["ma-events"] });
+      qc.invalidateQueries({ queryKey: ["maPipelineTasks"] });
+      qc.invalidateQueries({ queryKey: ["summaryMetrics"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      qc.invalidateQueries({ queryKey: ["unreadNotificationsCount"] });
       qc.invalidateQueries({ queryKey: ["ceoEvents"] });
+      qc.invalidateQueries({ queryKey: ["ceoAuditLogs"] });
     } else if (service) {
       qc.invalidateQueries({ queryKey: [service] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      qc.invalidateQueries({ queryKey: ["ceoEvents"] });
     }
   }, []);
 

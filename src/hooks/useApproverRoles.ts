@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { approverService } from "@/services/approverService";
 import type { ApproverRoleCode } from "@/types/approverRoles";
 import { toast } from "sonner";
+import { useServiceStatus } from "@/lib/ServiceStatusContext";
 
 export function useApproverRoleMembers(roleCode: ApproverRoleCode) {
   return useQuery({
@@ -22,6 +23,8 @@ export function useGraphUserSearch(query: string) {
 
 export function useAssignApproverMember() {
   const queryClient = useQueryClient();
+  const { isOnline } = useServiceStatus();
+  const isAdminOnline = isOnline("admin");
 
   return useMutation({
     mutationFn: async ({
@@ -39,11 +42,16 @@ export function useAssignApproverMember() {
     }) => {
       return approverService.assignRoleMembers(roleCode, members);
     },
-    onSuccess: (_data, variables) => {
-      const roleLabel = variables.roleCode === "HIGH_LEVEL_APPROVER" ? "High-Level (Executive)" : "Low-Level (Manager)";
-      toast.success(`Successfully assigned approver(s) to ${roleLabel} tier`, {
-        description: `Pre-provisioning and workflow routing sync completed.`,
-      });
+    onSuccess: (data: any, variables) => {
+      const isQueued = data?.status === "QUEUED" || !isAdminOnline;
+      if (isQueued) {
+        toast.info("Saved locally. Changes will automatically sync once the service reconnects.");
+      } else {
+        const roleLabel = variables.roleCode === "HIGH_LEVEL_APPROVER" ? "High-Level (Executive)" : "Low-Level (Manager)";
+        toast.success(`Successfully assigned approver(s) to ${roleLabel} tier`, {
+          description: `Pre-provisioning and workflow routing sync completed.`,
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["approverRoleMembers", variables.roleCode] });
       queryClient.invalidateQueries({ queryKey: ["approverRoleMembers"] });
     },
@@ -56,6 +64,8 @@ export function useAssignApproverMember() {
 
 export function useRemoveApproverMember() {
   const queryClient = useQueryClient();
+  const { isOnline } = useServiceStatus();
+  const isAdminOnline = isOnline("admin");
 
   return useMutation({
     mutationFn: async ({
@@ -68,12 +78,17 @@ export function useRemoveApproverMember() {
     }) => {
       return approverService.removeRoleMember(roleCode, userId);
     },
-    onSuccess: (_data, variables) => {
-      const name = variables.userName || "User";
-      const roleLabel = variables.roleCode === "HIGH_LEVEL_APPROVER" ? "High-Level Approvers" : "Low-Level Approvers";
-      toast.success(`${name} removed from ${roleLabel}`, {
-        description: "Pending requests automatically re-routed to remaining role members.",
-      });
+    onSuccess: (data: any, variables) => {
+      const isQueued = data?.status === "QUEUED" || !isAdminOnline;
+      if (isQueued) {
+        toast.info("Saved locally. Changes will automatically sync once the service reconnects.");
+      } else {
+        const name = variables.userName || "User";
+        const roleLabel = variables.roleCode === "HIGH_LEVEL_APPROVER" ? "High-Level Approvers" : "Low-Level Approvers";
+        toast.success(`${name} removed from ${roleLabel}`, {
+          description: "Pending requests automatically re-routed to remaining role members.",
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["approverRoleMembers", variables.roleCode] });
       queryClient.invalidateQueries({ queryKey: ["approverRoleMembers"] });
     },

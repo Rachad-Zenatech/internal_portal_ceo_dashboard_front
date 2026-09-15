@@ -1,4 +1,4 @@
-﻿import { BrowserRouter, MemoryRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./lib/AuthContext";
@@ -50,14 +50,12 @@ function FallbackLoader() {
 }
 
 function App() {
-  const RouterComponent = Platform.OS === "web" ? BrowserRouter : MemoryRouter;
-
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ServiceStatusProvider>
           <View style={styles.root}>
-            <RouterComponent>
+            <BrowserRouter>
               <Suspense fallback={<FallbackLoader />}>
                 <Routes>
                   <Route path="/login" element={<Login />} />
@@ -81,7 +79,14 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
-                    <Route path="/mergers-acquisitions" element={<ProtectedRoute navigationCode="DASHBOARD"><MergersAcquisitions /></ProtectedRoute>} />
+                    <Route
+                      path="/mergers-acquisitions"
+                      element={
+                        <ProtectedRoute navigationCode="DASHBOARD">
+                          <MergersAcquisitions />
+                        </ProtectedRoute>
+                      }
+                    />
                     <Route
                       path="/administration"
                       element={<Administration />}
@@ -107,11 +112,18 @@ function App() {
                     />
 
                     {/* Settings redirect to dashboard */}
-                    <Route path="/settings" element={<ProtectedRoute navigationCode="DASHBOARD"><Settings /></ProtectedRoute>} />
+                    <Route
+                      path="/settings"
+                      element={
+                        <ProtectedRoute navigationCode="DASHBOARD">
+                          <Settings />
+                        </ProtectedRoute>
+                      }
+                    />
                   </Route>
                 </Routes>
               </Suspense>
-            </RouterComponent>
+            </BrowserRouter>
           </View>
         </ServiceStatusProvider>
       </AuthProvider>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { apiClient as api } from "@/services/apiClient";
+import { useServiceStatus } from "@/lib/ServiceStatusContext";
 import {
   Dialog,
   DialogContent,
@@ -105,6 +106,8 @@ export function AssignApproversModal({
   onClose,
   onSuccess,
 }: AssignApproversModalProps) {
+  const { isOnline } = useServiceStatus();
+  const isAdminOnline = isOnline("admin");
   const [workflowAssignments, setWorkflowAssignments] = useState<WorkflowAssignment[]>([]);
   const [allUsers, setAllUsers] = useState<DirectoryUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -324,7 +327,11 @@ export function AssignApproversModal({
 
       await Promise.all(saveTasks);
 
-      toast.success("Approver assignments updated successfully");
+      if (!isAdminOnline) {
+        toast.info("Saved locally. Changes will automatically sync once the service reconnects.");
+      } else {
+        toast.success("Approver assignments updated successfully");
+      }
       onClose();
       if (onSuccess) onSuccess();
     } catch (err: any) {

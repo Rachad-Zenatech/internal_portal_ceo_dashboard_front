@@ -233,7 +233,7 @@ export default function MergersAcquisitions() {
                 <MaterialCommunityIcons name="briefcase-check" size={20} color="#f59e0b" />
               </View>
               <Text style={styles.kpiValue}>
-                {isSummaryLoading ? "-" : (summary?.total_target_companies || 4959).toLocaleString()}
+                {isSummaryLoading ? "-" : (summary?.total_target_companies || summary?.total_active_pipeline_tasks || 0).toLocaleString()}
               </Text>
               <Text style={styles.kpiLabel}>Target DB</Text>
             </NativeCardContent>
