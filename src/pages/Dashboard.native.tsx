@@ -178,7 +178,19 @@ export default function Dashboard() {
   } = useQuery<PurchaseRequest[]>({
     queryKey: ["pendingApprovals"],
     queryFn: () => apiClient.get<PurchaseRequest[]>("/api/v1/ceo/approvals/pending"),
-    refetchInterval: false,
+    refetchInterval: 5000,
+    staleTime: 3000,
+  });
+
+  const {
+    data: rawCompletedHistory = [],
+    isLoading: isHistoryLoading,
+    refetch: refetchHistory,
+  } = useQuery<PurchaseRequest[]>({
+    queryKey: ["completedApprovalsHistory"],
+    queryFn: () => apiClient.get<PurchaseRequest[]>("/api/v1/ceo/approvals/history"),
+    refetchInterval: 5000,
+    staleTime: 3000,
   });
 
   const {
@@ -187,15 +199,34 @@ export default function Dashboard() {
   } = useQuery<any[]>({
     queryKey: ["ceoAuditLogs"],
     queryFn: () => apiClient.get<any[]>("/api/v1/ceo/audit-logs"),
-    refetchInterval: false,
+    refetchInterval: 10000,
+    staleTime: 5000,
   });
 
   const [approvalsSubTab, setApprovalsSubTab] = useState<"pending" | "approved">("pending");
 
-  const pendingApprovals = (rawApprovals || []).filter((r) => !processedIds.includes(r.id));
+  const pendingApprovals = useMemo(
+    () => (rawApprovals || []).filter((r) => !processedIds.includes(String(r.id))),
+    [rawApprovals, processedIds]
+  );
   const displayApprovals = pendingApprovals;
 
   const approvedRequests = useMemo(() => {
+    if (Array.isArray(rawCompletedHistory) && rawCompletedHistory.length > 0) {
+      return rawCompletedHistory.map((r: any) => ({
+        id: String(r.id),
+        department: r.department || "Executive Operations",
+        requester_name: r.requester || r.requester_name || "Staff Requester",
+        amount: Number(r.amount || 0),
+        description: r.product_name || r.description || r.title || `Executive Approved Request #${r.id}`,
+        status: r.status || "APPROVED",
+        approved_at: r.created_at || r.updated_at || new Date().toISOString(),
+        note: r.approval_note || "Approved and synchronized with Admin Portal.",
+        vendor: r.vendor || "Verified Vendor",
+        rawReq: r,
+      }));
+    }
+
     const list: Array<{
       id: string;
       department: string;
@@ -244,7 +275,7 @@ export default function Dashboard() {
     });
 
     return list;
-  }, [auditLogs]);
+  }, [rawCompletedHistory, auditLogs]);
 
   const {
     data: portals = [],
@@ -286,18 +317,13 @@ export default function Dashboard() {
       action: string;
       note: string;
     }) => {
-      try {
-        return await apiClient.post(`/api/v1/ceo/approvals/${requestId}/action`, {
-          action,
-          note,
-        });
-      } catch {
-        return { success: true };
-      }
+      return await apiClient.post(`/api/v1/ceo/approvals/${requestId}/action`, {
+        action,
+        note,
+      });
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       const verb = variables.action === "APPROVE" ? "Approved" : "Rejected";
-      setProcessedIds((prev) => [...prev, variables.requestId]);
       Alert.alert(
         "Action Executed",
         `Purchase Request #${variables.requestId} successfully ${verb.toLowerCase()}. Logged to central audit trail.`
@@ -305,9 +331,15 @@ export default function Dashboard() {
       setSelectedRequest(null);
       setActionType(null);
       setActionNote("");
-      queryClient.invalidateQueries({ queryKey: ["pendingApprovals"] });
-      queryClient.invalidateQueries({ queryKey: ["ceoEvents"] });
-      queryClient.invalidateQueries({ queryKey: ["ceoAuditLogs"] });
+      setProcessedIds((prev) => prev.filter((id) => id !== String(variables.requestId)));
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["pendingApprovals"] }),
+        queryClient.invalidateQueries({ queryKey: ["completedApprovalsHistory"] }),
+        queryClient.invalidateQueries({ queryKey: ["ceoEvents"] }),
+        queryClient.invalidateQueries({ queryKey: ["ceoAuditLogs"] }),
+        refetchApprovals(),
+        refetchHistory(),
+      ]);
     },
     onError: (err: any) => {
       const msg =
@@ -339,7 +371,7 @@ export default function Dashboard() {
       "SENT_TO_AP",
     ];
     if (nonActionable.includes(s)) return false;
-    const pending = ["WAITING_APPROVAL", "PENDING_APPROVAL", "PENDING", "UNDER_REVIEW", "NEW", "SUBMITTED"];
+    const pending = ["WAITING_APPROVAL", "PENDING_APPROVAL", "PENDING"];
     return pending.includes(s);
   };
 
@@ -377,8 +409,10 @@ export default function Dashboard() {
 
   const onRefresh = async () => {
     setRefreshing(true);
+    setProcessedIds([]);
     await Promise.all([
       refetchApprovals(),
+      refetchHistory(),
       refetchAudit(),
       refetchPortals(),
       refetchEvents(),
@@ -817,8 +851,12 @@ export default function Dashboard() {
                 ))
               )
             ) : (
-              /* APPROVED BY CEO LIST */
-              approvedRequests.length === 0 ? (
+              isHistoryLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#059669" />
+                  <Text style={styles.loadingText}>Loading approved history...</Text>
+                </View>
+              ) : approvedRequests.length === 0 ? (
                 <NativeCard style={styles.emptyCard}>
                   <NativeCardContent style={styles.emptyContent}>
                     <Ionicons name="documents-outline" size={48} color="#94a3b8" />
@@ -888,8 +926,8 @@ export default function Dashboard() {
                 ))
               )
             )}
-          </View>
-        )}
+        </View>
+      )}
 
         {/* ========================================================= */}
         {/* TAB 2: PORTALS STATUS                                     */}
