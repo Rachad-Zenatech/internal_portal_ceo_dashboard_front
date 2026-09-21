@@ -128,6 +128,14 @@ jobs:
         run: |
           ID_TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r .value)
           echo $ID_TOKEN | base64
+        
+      - name: Show GitHub repository identity
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Repository ID: ${{ github.repository_id }}"
+          echo "Owner: ${{ github.repository_owner }}"
+          echo "Owner ID: ${{ github.repository_owner_id }}"
+          echo "Environment: Zenatech"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
