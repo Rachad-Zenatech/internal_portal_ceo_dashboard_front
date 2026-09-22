@@ -96,7 +96,7 @@ export default function Dashboard() {
 
   // Connected Systems Telemetry directly synchronized with MQTT / WebSocket Registry
   const portals: PortalStatus[] = useMemo(() => [
-    { name: "Admin Portal", code: "ADMIN", port: 8001, domain: "Purchasing, AP, Tasks, RBAC", status: (getStatus("admin") === "online" ? "online" : getStatus("admin") === "offline" ? "offline" : "unknown"), latency_ms: 1 },
+    { name: "Admin Portal", code: "ADMIN", port: 8002, domain: "Purchasing, AP, Tasks, RBAC", status: (getStatus("admin") === "online" ? "online" : getStatus("admin") === "offline" ? "offline" : "unknown"), latency_ms: 1 },
     { name: "CEO Data Service", code: "CEO_DATA", port: 8005, domain: "Executive Aggregation & Audit", status: "online", latency_ms: 1, is_local: true },
     { name: "M&A System", code: "M7A", port: 8000, domain: "Acquisitions & Pipeline Tracking", status: (getStatus("ma") === "online" ? "online" : getStatus("ma") === "offline" ? "offline" : "unknown"), latency_ms: 1 },
     { name: "Finance & GL", code: "FINANCE", port: 8005, domain: "General Ledger & Accounts", status: "online", latency_ms: 1, is_local: true },

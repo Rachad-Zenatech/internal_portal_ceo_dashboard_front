@@ -31,3 +31,25 @@ Lean rules for this enterprise internal portal.
 - Run `npm run build` after TypeScript or component changes.
 - Run `npm run lint` after broad/shared changes.
 - Backend changes: run the backend suite or touched endpoint tests.
+
+### Server-Sent Events (SSE) & Real-Time Event Streaming
+* **"Wait for Event" Model Only (Mandatory):**
+  * **NEVER** use polling loops (`check -> sleep -> check`) or synthetic busy-wait heartbeats inside SSE streaming endpoints.
+  * **NEVER** query the database repeatedly inside SSE stream generators.
+  * **Always** use `await event_queue.get()` to suspend the coroutine at the event loop level with zero CPU overhead until a published event arrives.
+  * Standard SSE generator implementation:
+    ```python
+    async def event_generator():
+        q = asyncio.Queue()
+        broadcaster.add_listener(q)
+        try:
+            yield ": connected\n\n"
+            while True:
+                msg = await q.get()  # Suspended with zero CPU until an event is pushed
+                if msg.user_id == "*" or str(msg.user_id).lower() == str(user_id).lower():
+                    yield f"data: {msg.model_dump_json()}\n\n"
+        except (asyncio.CancelledError, GeneratorExit):
+            pass
+        finally:
+            broadcaster.remove_listener(q)
+    ```

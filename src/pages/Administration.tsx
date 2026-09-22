@@ -652,7 +652,7 @@ export default function Administration() {
               }`}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${isAdminOnline ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
-              {isAdminOnline ? "Admin Portal Online (:8001)" : "Admin Portal Offline (:8001)"}
+              {isAdminOnline ? "Admin Portal Online (:8002)" : "Admin Portal Offline (:8002)"}
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400">
@@ -725,7 +725,7 @@ export default function Administration() {
                 </span>
               </h4>
               <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-                The connection to Administration Portal (:8001) is currently unreachable. Displaying cached data while disconnected. You can queue actions and they will be processed upon reconnection.
+                The connection to Administration Portal (:8002) is currently unreachable. Displaying cached data while disconnected. You can queue actions and they will be processed upon reconnection.
               </p>
             </div>
           </div>

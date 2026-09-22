@@ -288,7 +288,7 @@ export default function Administration() {
                 <Ionicons name="cloud-offline" size={18} color="#dc2626" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.offlineTitle}>Admin Portal (:8001) Disconnected</Text>
+                <Text style={styles.offlineTitle}>Admin Portal (:8002) Disconnected</Text>
                 <Text style={styles.offlineSubtitle}>
                   Live purchasing approvals are paused until the administration backend is online.
                 </Text>
