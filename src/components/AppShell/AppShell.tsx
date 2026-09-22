@@ -1,11 +1,10 @@
-import type { ReactNode } from "react";
+﻿import type { ReactNode } from "react";
 import { useState, useEffect } from "react";
 import { View, StyleSheet } from "@/components/native";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import FloatingChat from "./FloatingChat";
 import Breadcrumbs from "./Breadcrumbs";
-import SessionTimeout from "./SessionTimeout";
 
 interface Props {
   children: ReactNode;
@@ -45,8 +44,6 @@ export default function AppShell({ children }: Props) {
         </View>
         <FloatingChat />
       </View>
-
-      <SessionTimeout />
     </View>
   );
 }
