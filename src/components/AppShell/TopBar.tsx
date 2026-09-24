@@ -159,8 +159,8 @@ export default function TopBar() {
       <div className="flex-1 flex items-center min-w-0">
         <div ref={containerRef} className="relative w-full max-w-md z-50">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search for anything here..." 
+          <Input
+            placeholder="Search for anything here..."
             className="w-full pl-11 bg-muted border-none rounded-full h-11 text-sm shadow-inner focus-visible:ring-1 focus-visible:ring-ring"
             value={inputValue}
             onChange={(e) => {
@@ -171,7 +171,7 @@ export default function TopBar() {
               if (inputValue.trim().length > 0) setIsOpen(true);
             }}
           />
-          
+
           {isOpen && debouncedValue.length > 0 && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border shadow-lg rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
               {isLoading || isFetching ? (
@@ -182,7 +182,7 @@ export default function TopBar() {
               ) : results.length > 0 ? (
                 <div className="max-h-[400px] overflow-y-auto py-2">
                   {results.map((result, idx) => (
-                    <div 
+                    <div
                       key={`${result.type}-${result.id}-${idx}`}
                       className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 cursor-pointer transition-colors"
                       onClick={() => handleResultClick(result.url || "/")}
@@ -198,10 +198,10 @@ export default function TopBar() {
                       </div>
                     </div>
                   ))}
-                  
+
                   <div className="px-4 py-2 border-t border-border/50 mt-2">
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       className="w-full justify-start gap-3 h-14 rounded-xl text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-700 dark:hover:text-blue-300"
                       onClick={() => {
                         setIsOpen(false);
@@ -225,8 +225,8 @@ export default function TopBar() {
                   <span className="text-sm text-muted-foreground mb-4">
                     No results found for "{debouncedValue}"
                   </span>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="gap-2 rounded-xl border-blue-200 hover:border-blue-300 hover:bg-blue-50 dark:border-blue-900/50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 transition-colors"
                     onClick={() => {
                       setIsOpen(false);
@@ -244,7 +244,7 @@ export default function TopBar() {
           )}
         </div>
       </div>
-      
+
       <div className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
         {/* TopBar Ask AI Copilot Button */}
         <Button
@@ -327,9 +327,8 @@ export default function TopBar() {
                             navigate(notification.link_url);
                           }
                         }}
-                        className={`px-5 py-5 cursor-pointer transition-colors duration-200 flex gap-4 group ${
-                          isUnread ? "bg-slate-50/50 hover:bg-slate-50 dark:bg-zinc-900/30 dark:hover:bg-zinc-900/50" : "hover:bg-slate-50 dark:hover:bg-zinc-900/30"
-                        }`}
+                        className={`px-5 py-5 cursor-pointer transition-colors duration-200 flex gap-4 group ${isUnread ? "bg-slate-50/50 hover:bg-slate-50 dark:bg-zinc-900/30 dark:hover:bg-zinc-900/50" : "hover:bg-slate-50 dark:hover:bg-zinc-900/30"
+                          }`}
                       >
                         {/* Avatar */}
                         <div className="shrink-0 relative">
@@ -399,17 +398,17 @@ export default function TopBar() {
               {/* Footer Actions */}
               <div className="p-4 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between bg-white dark:bg-zinc-950">
                 <div className="flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    className="h-9 px-3 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-bold tracking-tight transition-colors gap-2" 
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); markAllAsRead(); }} 
+                  <Button
+                    variant="ghost"
+                    className="h-9 px-3 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-bold tracking-tight transition-colors gap-2"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); markAllAsRead(); }}
                     disabled={isMarkingAll}
                   >
                     <CheckCheck className={`h-4 w-4 ${isMarkingAll ? "animate-pulse" : ""}`} />
                     Mark all as read
                   </Button>
                 </div>
-                <Button 
+                <Button
                   className="h-9 px-5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition-colors"
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); clearAll(); }}
                   disabled={notifications.length === 0 || isClearingAll}
@@ -440,8 +439,8 @@ export default function TopBar() {
               <span>Profile</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={() => setIsLogoutOpen(true)} 
+            <DropdownMenuItem
+              onClick={() => setIsLogoutOpen(true)}
               className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-100 dark:focus:bg-red-900/30"
             >
               <LogOut className="mr-2 h-4 w-4" />
@@ -464,7 +463,7 @@ export default function TopBar() {
               </DialogDescription>
             </div>
           </div>
-          
+
           <Tabs defaultValue="general" className="w-full flex-1 flex flex-col">
             <div className="px-8 pt-6">
               <TabsList className="grid w-full grid-cols-2 h-11 bg-muted/50">
@@ -480,7 +479,7 @@ export default function TopBar() {
                     <Label htmlFor="firstName" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Full Name</Label>
                     <Input id="firstName" readOnly defaultValue={user?.full_name || ""} className="bg-muted/30 border-border focus-visible:ring-primary/30 h-11" />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-1.5">
                       <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Department</Label>
@@ -529,7 +528,7 @@ export default function TopBar() {
                       </Label>
                       <p className="text-xs text-muted-foreground">Show push notifications</p>
                     </div>
-                    <div 
+                    <div
                       className={`h-5 w-9 rounded-full relative cursor-pointer transition-colors ${inAppAlerts ? 'bg-primary' : 'bg-muted-foreground/30'}`}
                       onClick={() => {
                         const newVal = !inAppAlerts;
@@ -544,7 +543,7 @@ export default function TopBar() {
               </TabsContent>
             </div>
           </Tabs>
-          
+
         </DialogContent>
       </Dialog>
 
@@ -564,12 +563,12 @@ export default function TopBar() {
             <Button variant="outline" onClick={() => setIsLogoutOpen(false)} className="flex-1 rounded-xl h-11 font-semibold">
               Cancel
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={() => {
                 setIsLogoutOpen(false);
                 logout();
-              }} 
+              }}
               className="flex-1 rounded-xl h-11 bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg transition-all font-semibold"
             >
               Log Out
