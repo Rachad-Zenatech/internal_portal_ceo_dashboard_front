@@ -101,7 +101,7 @@ export default function TopBar() {
 
       eventSource.onmessage = (event) => {
         try {
-          const newNotif = JSON.parse(event.data);
+          JSON.parse(event.data);
           queryClient.invalidateQueries({ queryKey: ["notifications"] });
           queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
         } catch {
