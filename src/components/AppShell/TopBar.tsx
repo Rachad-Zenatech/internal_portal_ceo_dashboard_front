@@ -1,3 +1,4 @@
+import { ConnectionStatusLight } from "./ConnectionStatusLight";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { Search, Bell, Building2, BookText, FileText, Banknote, Loader2, LogOut, User, Bot, Sparkles, Mail, BellRing, Settings2, CheckCheck, X, CloudDownload } from "lucide-react";
@@ -263,6 +264,7 @@ export default function TopBar() {
           </span>
         </Button>
 
+        <ConnectionStatusLight />
         <TopBarClock />
         <TooltipProvider delayDuration={0}>
           <Tooltip>
