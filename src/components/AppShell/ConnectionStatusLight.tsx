@@ -42,9 +42,25 @@ export function ConnectionStatusLight({ className = "" }: { className?: string }
   const { data, refetch, isError } = useQuery<IntegrationStatusResponse>({
     queryKey: ["integration-status"],
     queryFn: async () => {
+      // 1. Try standard /api/integration/status
       try {
         const res = await apiClient.get<IntegrationStatusResponse>("/api/integration/status");
         if (res && Array.isArray(res.services)) return res;
+      } catch {
+        // Fallthrough to alternative paths
+      }
+
+      // 2. Try /api/purchasing/integration/status (for m7a router prefix)
+      try {
+        const res = await apiClient.get<IntegrationStatusResponse>("/api/purchasing/integration/status");
+        if (res && Array.isArray(res.services)) return res;
+      } catch {
+        // Fallthrough
+      }
+
+      // 3. Fallback to basic alive indicators
+      try {
+        await apiClient.get("/health/live");
         return {
           status: "healthy",
           services: [
@@ -54,7 +70,7 @@ export function ConnectionStatusLight({ className = "" }: { className?: string }
               state: "CONNECTED",
               status: "online",
               mode: "Live API",
-              description: "FastAPI business logic & database gateway",
+              description: "FastAPI business logic gateway",
             },
             {
               id: "realtime_sse",
@@ -93,164 +109,154 @@ export function ConnectionStatusLight({ className = "" }: { className?: string }
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     await refetch();
-    setTimeout(() => setIsRefreshing(false), 500);
+    setTimeout(() => setIsRefreshing(false), 600);
   };
 
-  const statusConfig = {
-    healthy: {
-      color: "bg-emerald-500",
-      pingColor: "bg-emerald-400",
-      borderColor: "border-emerald-500/30",
-      badgeBg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
-      label: "Connected",
-      badgeText: "Live",
-      icon: CheckCircle2,
-    },
-    recovering: {
-      color: "bg-amber-500",
-      pingColor: "bg-amber-400",
-      borderColor: "border-amber-500/30",
-      badgeBg: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30",
-      label: "Recovering",
-      badgeText: "Recovering",
-      icon: AlertTriangle,
-    },
-    degraded: {
-      color: "bg-amber-500",
-      pingColor: "bg-amber-400",
-      borderColor: "border-amber-500/30",
-      badgeBg: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30",
-      label: "Fallback Mode",
-      badgeText: "Fallback",
-      icon: AlertTriangle,
-    },
-    offline: {
-      color: "bg-rose-500",
-      pingColor: "bg-rose-400",
-      borderColor: "border-rose-500/30",
-      badgeBg: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30",
-      label: "Disconnected",
-      badgeText: "Offline",
-      icon: XCircle,
-    },
-  }[overallStatus] ?? {
-    color: "bg-emerald-500",
-    pingColor: "bg-emerald-400",
-    borderColor: "border-emerald-500/30",
-    badgeBg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
-    label: "Connected",
-    badgeText: "Live",
-    icon: CheckCircle2,
+  const getStatusDot = (status: string) => {
+    switch (status) {
+      case "healthy":
+      case "online":
+        return "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)] animate-pulse";
+      case "degraded":
+      case "recovering":
+        return "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.7)] animate-pulse";
+      case "offline":
+      default:
+        return "bg-rose-500 shadow-[0_0_8px_rgba(239,68,68,0.7)]";
+    }
   };
 
-  const StatusIcon = statusConfig.icon;
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "healthy":
+      case "online":
+        return (
+          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[10px] px-1.5 py-0">
+            Live API
+          </Badge>
+        );
+      case "degraded":
+      case "recovering":
+        return (
+          <Badge variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 text-[10px] px-1.5 py-0">
+            Fallback Mode
+          </Badge>
+        );
+      case "offline":
+      default:
+        return (
+          <Badge variant="outline" className="bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 text-[10px] px-1.5 py-0">
+            Offline
+          </Badge>
+        );
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "healthy":
+      case "online":
+        return <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />;
+      case "degraded":
+      case "recovering":
+        return <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />;
+      case "offline":
+      default:
+        return <XCircle className="h-4 w-4 text-rose-500 flex-shrink-0" />;
+    }
+  };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200 hover:bg-muted/80 border ${statusConfig.borderColor} bg-background/60 shadow-sm ${className}`}
-          title={`Connection Status: ${statusConfig.label}`}
+          aria-label="Application Connection Status"
+          className={`flex items-center gap-2 px-2.5 py-1.5 rounded-full text-xs font-medium border border-border/60 bg-background/80 hover:bg-muted/60 transition-all duration-150 cursor-pointer shadow-sm ${className}`}
         >
-          <span className="relative flex h-2.5 w-2.5">
-            {overallStatus === "healthy" && (
-              <span
-                className={`animate-ping absolute inline-flex h-full w-full rounded-full ${statusConfig.pingColor} opacity-75`}
-              />
-            )}
-            <span
-              className={`relative inline-flex rounded-full h-2.5 w-2.5 ${statusConfig.color}`}
-            />
+          <span className={`h-2.5 w-2.5 rounded-full ${getStatusDot(overallStatus)}`} />
+          <span className="hidden sm:inline-block text-muted-foreground font-mono text-[11px]">
+            {overallStatus === "healthy" ? "Live" : overallStatus === "degraded" ? "Fallback" : "Offline"}
           </span>
-
-          <span className="hidden sm:inline-block font-semibold text-[11px] tracking-tight">
-            {statusConfig.badgeText}
-          </span>
-
-          <ChevronDown className="h-3 w-3 text-muted-foreground opacity-60" />
+          <ChevronDown className="h-3 w-3 text-muted-foreground/70" />
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-80 p-3 shadow-xl rounded-xl z-50">
-        <div className="flex items-center justify-between pb-2 border-b">
+      <DropdownMenuContent align="end" className="w-84 p-3 bg-popover/95 backdrop-blur border-border shadow-xl rounded-xl">
+        <div className="flex items-center justify-between pb-2">
           <div className="flex items-center gap-2">
             <Radio className="h-4 w-4 text-primary animate-pulse" />
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Connection Matrix
+            <span className="font-semibold text-xs text-foreground uppercase tracking-wider">
+              Integration Matrix
             </span>
           </div>
-          <Badge variant="outline" className={`text-[10px] px-2 py-0.5 ${statusConfig.badgeBg}`}>
-            <StatusIcon className="h-3 w-3 mr-1 inline" />
-            {statusConfig.label}
-          </Badge>
-        </div>
-
-        <div className="py-2.5 space-y-2">
-          {services.map((svc) => {
-            const isOnline = svc.status === "online";
-            const isDegraded = svc.status === "degraded" || svc.status === "recovering";
-            return (
-              <div
-                key={svc.id}
-                className="p-2.5 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors border border-border/50 text-xs"
-              >
-                <div className="flex items-center justify-between font-semibold">
-                  <div className="flex items-center gap-1.5">
-                    {svc.id.includes("db") ? (
-                      <Database className="h-3.5 w-3.5 text-blue-500" />
-                    ) : svc.id.includes("sse") ? (
-                      <Radio className="h-3.5 w-3.5 text-purple-500" />
-                    ) : (
-                      <Server className="h-3.5 w-3.5 text-emerald-500" />
-                    )}
-                    <span>{svc.name}</span>
-                  </div>
-                  <span
-                    className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                      isOnline
-                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                        : isDegraded
-                        ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
-                        : "bg-rose-500/15 text-rose-700 dark:text-rose-400"
-                    }`}
-                  >
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full mr-1 ${
-                        isOnline ? "bg-emerald-500" : isDegraded ? "bg-amber-500" : "bg-rose-500"
-                      }`}
-                    />
-                    {svc.mode || svc.state}
-                  </span>
-                </div>
-                {svc.description && (
-                  <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
-                    {svc.description}
-                  </p>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        <DropdownMenuSeparator />
-
-        <div className="pt-2 flex items-center justify-between text-[11px] text-muted-foreground">
-          <span>Real-time keep-alive active</span>
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 px-2 text-[10px]"
             onClick={handleManualRefresh}
             disabled={isRefreshing}
+            className="h-6 px-2 text-[11px] gap-1 text-muted-foreground hover:text-foreground"
           >
-            <RefreshCw className={`h-3 w-3 mr-1 ${isRefreshing ? "animate-spin" : ""}`} />
-            Check Now
+            <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin text-primary" : ""}`} />
+            Refresh
           </Button>
+        </div>
+
+        <DropdownMenuSeparator className="my-1" />
+
+        <div className="space-y-2 pt-1">
+          {services.length === 0 ? (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/40 text-xs text-muted-foreground">
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              <span>All direct connections active & healthy</span>
+            </div>
+          ) : (
+            services.map((svc) => (
+              <div
+                key={svc.id}
+                className="p-2 rounded-lg bg-muted/30 border border-border/40 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    {svc.id.includes("db") || svc.id.includes("database") ? (
+                      <Database className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                    ) : (
+                      <Server className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                    )}
+                    <span className="font-medium text-xs text-foreground truncate">
+                      {svc.name}
+                    </span>
+                  </div>
+                  {getStatusBadge(svc.status)}
+                </div>
+
+                {svc.description && (
+                  <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
+                    {svc.description}
+                  </p>
+                )}
+
+                {svc.mode && (
+                  <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground/80 font-mono">
+                    <span>Mode: {svc.mode}</span>
+                    <span className="uppercase">{svc.state}</span>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+
+        <DropdownMenuSeparator className="my-2" />
+
+        <div className="flex items-center justify-between text-[10px] text-muted-foreground px-1">
+          <span>Overall Health</span>
+          <div className="flex items-center gap-1">
+            {getStatusIcon(overallStatus)}
+            <span className="capitalize font-medium">{overallStatus}</span>
+          </div>
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
-
-export default ConnectionStatusLight;
