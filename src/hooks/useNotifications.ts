@@ -21,50 +21,60 @@ export interface Notification {
 }
 
 /**
- * Hook to subscribe to real-time notifications via SSE with automatic reconnect
- * and 30-60s zero-DB heartbeat support.
+ * Hook to subscribe to real-time notifications over WebSocket with automatic
+ * reconnect.
+ *
+ * This previously used SSE (/api/notifications/stream). CloudFront caps the
+ * total duration of a streaming HTTP response at ~60s, so the stream was
+ * severed every minute and the browser reconnected in a permanent loop
+ * (ERR_HTTP2_PROTOCOL_ERROR alongside a 200). WebSockets are not subject to
+ * that cap, so the connection stays up.
  */
 export function useNotificationStream() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    let eventSource: EventSource | null = null;
+    let socket: WebSocket | null = null;
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
     let isMounted = true;
+
+    const toWebSocketScheme = (url: string) => url.replace(/^http/i, "ws");
 
     const connect = () => {
       if (!isMounted) return;
       try {
+        const base = /^https?:\/\//i.test(BASE_URL)
+          ? toWebSocketScheme(BASE_URL)
+          : `${toWebSocketScheme(window.location.origin)}${BASE_URL}`;
         const token = sessionStorage.getItem("token");
-        const streamUrl = new URL(`${BASE_URL}/api/notifications/stream`, window.location.origin);
-        if (token) {
-          streamUrl.searchParams.set("token", token);
-        }
+        const tokenParam = token ? `?token=${encodeURIComponent(token)}` : "";
 
-        eventSource = new EventSource(streamUrl.toString(), { withCredentials: true });
+        socket = new WebSocket(`${base}/ws/notifications${tokenParam}`);
 
-        eventSource.onmessage = (event) => {
-          if (!event.data || event.data.trim() === "") return;
+        socket.onmessage = (event) => {
+          if (!event.data) return;
           try {
             const data = JSON.parse(event.data);
-            if (data) {
-              // Real-time notification event received: invalidate cache for instant reactive update
-              queryClient.invalidateQueries({ queryKey: ["notifications"] });
-              queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
-            }
+            // Keep-alive frames carry no notification payload.
+            if (!data || data.type === "ping") return;
+            // Real-time notification event received: invalidate cache for instant reactive update
+            queryClient.invalidateQueries({ queryKey: ["notifications"] });
+            queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
           } catch {
-            // Ignore keep-alive or non-JSON comments
+            // Ignore non-JSON frames
           }
         };
 
-        eventSource.onerror = () => {
-          if (eventSource) {
-            eventSource.close();
-            eventSource = null;
-          }
+        socket.onclose = () => {
+          socket = null;
           if (isMounted) {
             reconnectTimeout = setTimeout(connect, 5000);
           }
+        };
+
+        socket.onerror = () => {
+          // onclose always follows and owns the reconnect.
+          socket?.close();
         };
       } catch {
         if (isMounted) {
@@ -78,8 +88,11 @@ export function useNotificationStream() {
     return () => {
       isMounted = false;
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
-      if (eventSource) {
-        eventSource.close();
+      if (socket) {
+        // Detach before closing so unmount does not schedule a reconnect and
+        // leave an extra socket behind.
+        socket.onclose = null;
+        socket.close();
       }
     };
   }, [queryClient]);

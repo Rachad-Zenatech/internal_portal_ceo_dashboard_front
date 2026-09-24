@@ -1,5 +1,4 @@
 import { ConnectionStatusLight } from "./ConnectionStatusLight";
-import { useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { Search, Bell, Building2, BookText, FileText, Banknote, Loader2, LogOut, User, Bot, Sparkles, Mail, BellRing, Settings2, CheckCheck, X, CloudDownload } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -89,40 +88,9 @@ export default function TopBar() {
   const { mutate: clearAll, isPending: isClearingAll } = useClearAllNotifications();
   const unreadCount = unreadCountData?.count ?? 0;
 
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const token = sessionStorage.getItem("token") || "";
-    if (!token) return;
-
-    let eventSource: EventSource | null = null;
-    try {
-      eventSource = new EventSource(`/api/notifications/stream?token=${encodeURIComponent(token)}`, { withCredentials: true });
-
-      eventSource.onmessage = (event) => {
-        try {
-          JSON.parse(event.data);
-          queryClient.invalidateQueries({ queryKey: ["notifications"] });
-          queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
-        } catch {
-          // ignore parsing non-JSON or heartbeat
-        }
-      };
-
-      eventSource.onerror = () => {
-        // EventSource will automatically retry in background
-      };
-    } catch {
-      // ignore initialization error
-    }
-
-    return () => {
-      if (eventSource) {
-        eventSource.close();
-      }
-    };
-  }, [queryClient]);
-
+  // Real-time notification delivery and cache invalidation are handled by
+  // useNotificationStream(), reached via useNotifications() above. This
+  // component previously opened a second, duplicate SSE connection here.
 
   // Close dropdown when clicking outside
   useEffect(() => {
