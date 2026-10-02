@@ -1,60 +1,77 @@
-# CEO Dashboard - Frontend (Web & Mobile)
+﻿# CEO Dashboard - Frontend (Universal Web & Mobile App)
 
-Cross-platform frontend portal for the **ZenaTech CEO Dashboard**, supporting both a modern web application (React + Vite + Tailwind CSS + shadcn UI) and a native mobile application (Expo + React Native).
+Cross-platform executive frontend portal for the **ZenaTech CEO Dashboard**. Engineered with platform-specific extensions (`.tsx` for Desktop Web and `.native.tsx` for iOS / Android Mobile) to deliver an optimized experience across all executive devices.
+
+Built with **React 19**, **Vite 8**, **Tailwind CSS v4**, **shadcn/ui**, **Expo 52+**, and **React Native 0.76+**.
 
 ---
 
-## Architecture Overview
+## System Architecture Diagram
 
-The frontend codebase is architected with platform-specific extensions (`.tsx` for Web and `.native.tsx` for Mobile / React Native) ensuring full feature parity across desktop and mobile:
+```mermaid
+flowchart TD
+    subgraph ClientPlatforms [Executive Devices]
+        WebBrowser[Desktop Web Browser :5175]
+        MobileApp[iOS / Android Mobile Devices :8090]
+        Emulator[Android Emulator via ADB Reverse]
+    end
 
-* **Web Portal (Vite)**: Runs as a single-page application at `http://localhost:5175`.
-* **Mobile App (Expo / React Native)**: Runs via Metro Bundler on port `8090` targeting iOS & Android devices/emulators.
+    subgraph DualBuildSystem [Dual Bundling Architecture]
+        ViteBundler[Vite 8 Web Bundler + react-native-web]
+        MetroBundler[Expo Metro Bundler on Port 8090]
+    end
 
-### Project Structure
+    subgraph UniversalSharedCode [Universal Component & State Fabric]
+        UniversalAuth[AuthContext & Secure Token Storage]
+        UniversalEnv[Universal Env Configuration Loader]
+        QueryCache[TanStack React Query v5 Data Layer]
+        StorageLayer[Unified Storage: LocalStorage / AsyncStorage]
+    end
 
-```txt
-frontend/internal_portal_ceo_dashboard_front/
-├── index.html                     # Web HTML entry point
-├── index.js                       # Mobile Expo entry point
-├── app.json                       # Expo configuration & app scheme
-├── vite.config.ts                 # Vite configuration (port 5175, proxy to backend)
-├── scripts/
-│   └── start-android.js           # Automated Android emulator & ADB reverse startup script
-├── src/
-│   ├── App.tsx                    # Web root navigation & layout
-│   ├── App.native.tsx             # Mobile root navigation (NativeStack)
-│   ├── components/
-│   │   ├── native/                # Universal & native UI primitives (Cards, Buttons, Badges)
-│   │   └── ui/                    # Web shadcn UI components
-│   ├── lib/
-│   │   ├── AuthContext.tsx        # Universal authentication context & permissions state
-│   │   ├── env.ts                 # Universal environment config reader
-│   │   └── storage.ts             # Unified storage (localStorage for Web / AsyncStorage for Native)
-│   ├── pages/
-│   │   ├── Dashboard.tsx          # Web CEO Dashboard
-│   │   ├── Dashboard.native.tsx   # Mobile CEO Dashboard (with Portals Hub & Executive Drawer)
-│   │   ├── Login.tsx              # Web Microsoft SSO Login
-│   │   ├── Login.native.tsx       # Mobile Microsoft SSO & Direct Dev Login
-│   │   ├── MergersAcquisitions.tsx         # Web M&A Target Pipeline (Paginated 50/page)
-│   │   ├── MergersAcquisitions.native.tsx  # Mobile M&A Target Pipeline (Paginated 50/page)
-│   │   ├── UploadFiles.tsx                 # Web File Ingestion & Archive (Paginated 50/page)
-│   │   ├── UploadFiles.native.tsx          # Mobile File Ingestion & Archive (Paginated 50/page)
-│   │   ├── PendingAccess.tsx               # Web Pending Access screen
-│   │   ├── PendingAccess.native.tsx        # Mobile Pending Access screen
-│   │   └── Log/
-│   │       ├── AuditLog.tsx                # Web Administrative Audit Trail (Paginated 50/page)
-│   │       └── AuditLog.native.tsx         # Mobile Administrative Audit Trail (Paginated 50/page)
-│   └── services/
-│       ├── apiClient.ts           # Central Axios client (routes requests to API base URL)
-│       ├── mergersAcquisitionsService.ts   # M&A Pipeline & LOI tracking API
-│       ├── uploadArchiveService.ts          # File upload & ingestion archive API
-│       └── auditService.ts                  # Audit log & security events API
+    subgraph ScreenImplementations [Platform-Optimized Views]
+        WebViews[Web Pages: Dashboard, M&A, Ingest, Audit]
+        NativeViews[Native Views: Executive Drawer, Touch Badges]
+    end
+
+    subgraph BackendAPI [FastAPI CEO Gateway :8005]
+        RESTEndpoints[/api/dashboard, /api/mergers-acquisitions]
+        SSEEndpoint[/api/notifications/stream]
+    end
+
+    WebBrowser --> ViteBundler
+    MobileApp --> MetroBundler
+    Emulator --> MetroBundler
+
+    ViteBundler --> WebViews
+    MetroBundler --> NativeViews
+
+    WebViews --> UniversalSharedCode
+    NativeViews --> UniversalSharedCode
+
+    UniversalSharedCode --> QueryCache
+    QueryCache --> RESTEndpoints
+    UniversalSharedCode <--> SSEEndpoint
 ```
 
 ---
 
-## Port Allocation
+## Technologies & System Specifications
+
+| Category | Technology | Description |
+| :--- | :--- | :--- |
+| **Web Framework & Build** | [React 19](https://react.dev/), [Vite 8](https://vitejs.dev/) | High-speed single page web application running on port `5175` |
+| **Mobile Framework** | [Expo 52+](https://expo.dev/), [React Native 0.76+](https://reactnative.dev/) | Cross-platform native mobile engine targeting Android & iOS on port `8090` |
+| **Universal Web Polyfill**| `react-native-web`, `codegenShim.ts` | Allows universal primitives to render seamlessly across DOM and Native targets |
+| **Language** | [TypeScript](https://www.typescriptlang.org/) | Shared schemas and unified prop definitions across web and mobile views |
+| **Web Styling & Design** | [Tailwind CSS v4](https://tailwindcss.com/), `@shadcn/react`, `next-themes` | Modern utility-first CSS tokens, dark mode toggle, and glassmorphic card styles |
+| **Native Navigation** | `@react-navigation/native`, `@react-navigation/native-stack` | High-performance 60fps native screen transitions and gesture navigation |
+| **Data Fetching & Cache**| [TanStack React Query v5](https://tanstack.com/query) | Stale-while-revalidate client caching, optimistic updates, and background refetching |
+| **Visualizations** | [Recharts](https://recharts.org/), `react-native-svg` | Executive KPI charts, deal valuation breakdowns, and latency metrics |
+| **Authentication & SSO**| `expo-web-browser`, `expo-linking`, `AuthContext` | Microsoft Entra ID SSO with automatic browser-to-app deep linking |
+
+---
+
+## Port Allocation & Dev Scripts
 
 | Service | Port | Description |
 | :--- | :--- | :--- |
@@ -64,126 +81,89 @@ frontend/internal_portal_ceo_dashboard_front/
 
 ---
 
-## Getting Started
+## Quick Start & Running Options
 
 ### 1. Install Dependencies
-
 ```bash
 npm install
 ```
 
-### 2. Environment Variables
-
-Create a `.env` file in the root if custom endpoints are needed (defaults are built-in):
-
+### 2. Environment Variables (.env)
 ```env
-# Web API base URL (defaults to http://localhost:8005)
 VITE_API_BASE_URL=http://localhost:8005
-
-# Expo / React Native API URL
 EXPO_PUBLIC_API_BASE_URL=http://localhost:8005
 ```
 
----
-
-## Running the Application
-
-### Option A: Run Both Web & Mobile Concurrently (Recommended)
-
-Starts both the **Expo Metro Bundler** (for Android emulator / mobile) on port `8090` and the **Vite Web Dev Server** on port `5175` concurrently:
-
+### 3. Run Web & Mobile Concurrently (Recommended)
+Starts both the **Expo Metro Bundler** (port `8090`) and the **Vite Web Dev Server** (port `5175`):
 ```bash
 npm start
 ```
 
-### Option B: Run Web Application Only
-
-Start the Vite development server on `http://localhost:5175`:
-
+### 4. Run Web Application Only
 ```bash
 npm run dev
 ```
+Open `http://localhost:5175`.
 
-### Option C: Run Mobile Application (Android Emulator)
-
-Detects/launches the **Pixel 7** Android emulator, configures ADB reverse port forwarding (`8090`, `8005`, `5175`), and starts Expo Metro:
-
+### 5. Run Mobile on Android Emulator
+Auto-launches Android emulator, sets up ADB reverse port forwarding (`8090`, `8005`, `5175`), and boots Expo:
 ```bash
 npm run android
 ```
 
-### Option D: Reload Mobile App on Android Emulator (Instant)
-
-Re-syncs ADB reverse port forwarding and hot-reloads the Expo app on the connected emulator with the fresh bundle:
-
+### 6. Instant Reload on Emulator
 ```bash
 npm run reload
 ```
 
-### Option E: Full Clean Restart (Web & Mobile)
+---
 
-Clears Metro bundler and Vite caches and restarts both dev servers cleanly:
+## Directory Structure
 
-```bash
-npm run restart
+```text
+internal_portal_ceo_dashboard_front/
+├── index.html                   # Web HTML entry point
+├── index.js                     # Mobile Expo entry point
+├── app.json                     # Expo mobile app configuration & URL scheme
+├── vite.config.ts               # Vite configuration with aliases for react-native-web
+├── scripts/
+│   └── start-android.js         # Automated emulator launch & ADB reverse forwarder
+├── src/
+│   ├── App.tsx                  # Web root navigation
+│   ├── App.native.tsx           # Mobile root navigation (NativeStack)
+│   ├── components/
+│   │   ├── native/              # Universal primitives (Cards, Buttons, Badges)
+│   │   └── ui/                  # Web shadcn UI primitives
+│   ├── lib/
+│   │   ├── AuthContext.tsx      # Universal auth state & deep link handler
+│   │   ├── env.ts               # Universal environment variables reader
+│   │   └── storage.ts           # Unified storage abstraction
+│   ├── pages/
+│   │   ├── Dashboard.tsx / Dashboard.native.tsx
+│   │   ├── Login.tsx / Login.native.tsx
+│   │   ├── MergersAcquisitions.tsx / MergersAcquisitions.native.tsx
+│   │   ├── UploadFiles.tsx / UploadFiles.native.tsx
+│   │   ├── PendingAccess.tsx / PendingAccess.native.tsx
+│   │   └── Log/ (AuditLog.tsx / AuditLog.native.tsx)
+│   └── services/
+│       ├── apiClient.ts         # Central API requester
+│       └── mergersAcquisitionsService.ts
+├── package.json
+└── tsconfig.json
 ```
 
-### In-Terminal Hotkeys (when `npm start` is running)
-* Press **`r`** in the Metro terminal to reload the mobile app.
-* Press **`a`** to open/connect to the Android emulator.
-* Press **`m`** to toggle the Expo Dev Menu.
-
 ---
 
-## Features & Modules
-
-### 1. CEO Dashboard (`/dashboard`)
-* Executive KPI stat chips (Pending Approvals, Financials, Active Initiatives).
-* Live System Status cards with auto-refresh and latency monitoring.
-* Financial overview charts and breakdown widgets.
-* Mobile Navigation Drawer and Quick Workflows Hub for instant portal access.
-
-### 2. M&A Pipeline (`/mergers-acquisitions`)
-* Acquisition candidates discovery and deal tracking.
-* Metric cards (Total Deals, Under Review, LOI Accepted, Total Valuation).
-* Search, sector filter chips, and clean 50-item pagination.
-* Detailed deal inspection modals with valuation, EBITDA, and synergy ratings.
-
-### 3. File & Data Ingestion (`/upload-files`)
-* Multi-file ingestion and cloud archive tracking.
-* Storage analytics KPIs (Total Ingested, Storage Used, Compression Ratio).
-* Search, category filtering, and clean 50-item pagination.
-* File detail inspection with metadata, byte sizes, and checksums.
-
-### 4. System Audit Trail (`/log/audit-log`)
-* Comprehensive administrative audit log and user authentication event tracker.
-* Severity badge tagging (`INFO`, `WARNING`, `CRITICAL`, `ERROR`).
-* Search and action filtering with clean 50-item pagination.
-* Detail inspection modals with raw JSON metadata viewing.
-
----
-
-## Authentication & Mobile Deep-Linking
-
-* **Microsoft Entra SSO**:
-  * The user taps **"Sign in with Microsoft"**, opening an in-app browser (`WebBrowser.openAuthSessionAsync`).
-  * After Microsoft authenticates, the backend redirects to `http://localhost:5175/login?status=success&token=...`.
-  * The callback triggers an Expo deep link (`exp://localhost:8090/--/login?token=...`), automatically dismissing Chrome and returning session control to React Native.
-* **Developer Direct Login**:
-  * In `Login.native.tsx`, a **"Direct Dev Sign In"** button is available for local testing to immediately authenticate without opening external browser windows.
-
----
-
-## Build & Linting
+## Build & Quality Checks
 
 ```bash
-# Type check and build web production bundle
+# Type-check and build web bundle
 npm run build
 
-# Run ESLint
+# Run linter
 npm run lint
 
-# Preview production build
+# Preview production web build
 npm run preview
 ```
-
