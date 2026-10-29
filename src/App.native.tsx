@@ -5,13 +5,13 @@ import { SafeAreaProvider, initialWindowMetrics } from "react-native-safe-area-c
 import { AuthProvider, useAuth } from "./lib/AuthContext";
 import { View, ActivityIndicator, StyleSheet } from "@/components/native";
 
-import Login from "./pages/Login.native";
-import PendingAccess from "./pages/PendingAccess.native";
-import Dashboard from "./pages/Dashboard.native";
-import MergersAcquisitions from "./pages/MergersAcquisitions.native";
-import UploadFiles from "./pages/UploadFiles.native";
+import Login from "./pages/Auth/Login.native";
+import PendingAccess from "./pages/Auth/PendingAccess.native";
+import Dashboard from "./pages/Dashboard/Dashboard.native";
+import MergersAcquisitions from "./pages/MergersAcquisitions/MergersAcquisitions.native";
+import UploadFiles from "./pages/UploadFiles/UploadFiles.native";
 import AuditLog from "./pages/Log/AuditLog.native";
-import Administration from "./pages/Administration.native";
+import Administration from "./pages/Administration/Administration.native";
 
 const Stack = createNativeStackNavigator();
 

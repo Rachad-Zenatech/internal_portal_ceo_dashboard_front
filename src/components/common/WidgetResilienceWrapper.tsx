@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { RefreshCw, AlertTriangle, WifiOff, Clock } from "lucide-react";
-import { Button } from "./ui/button";
-import { Skeleton } from "./ui/skeleton";
+import { Button } from "../ui/button";
+import { Skeleton } from "../ui/skeleton";
 import { WidgetErrorBoundary } from "./WidgetErrorBoundary";
 
 export type IntegrationStatus =

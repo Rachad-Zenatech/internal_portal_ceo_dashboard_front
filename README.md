@@ -119,38 +119,56 @@ npm run reload
 
 ---
 
-## Directory Structure
+<!-- project-structure:start -->
+## Project Structure
 
 ```text
-internal_portal_ceo_dashboard_front/
-├── index.html                   # Web HTML entry point
-├── index.js                     # Mobile Expo entry point
-├── app.json                     # Expo mobile app configuration & URL scheme
-├── vite.config.ts               # Vite configuration with aliases for react-native-web
-├── scripts/
-│   └── start-android.js         # Automated emulator launch & ADB reverse forwarder
-├── src/
-│   ├── App.tsx                  # Web root navigation
-│   ├── App.native.tsx           # Mobile root navigation (NativeStack)
-│   ├── components/
-│   │   ├── native/              # Universal primitives (Cards, Buttons, Badges)
-│   │   └── ui/                  # Web shadcn UI primitives
-│   ├── lib/
-│   │   ├── AuthContext.tsx      # Universal auth state & deep link handler
-│   │   ├── env.ts               # Universal environment variables reader
-│   │   └── storage.ts           # Unified storage abstraction
-│   ├── pages/
-│   │   ├── Dashboard.tsx / Dashboard.native.tsx
-│   │   ├── Login.tsx / Login.native.tsx
-│   │   ├── MergersAcquisitions.tsx / MergersAcquisitions.native.tsx
-│   │   ├── UploadFiles.tsx / UploadFiles.native.tsx
-│   │   ├── PendingAccess.tsx / PendingAccess.native.tsx
-│   │   └── Log/ (AuditLog.tsx / AuditLog.native.tsx)
-│   └── services/
-│       ├── apiClient.ts         # Central API requester
-│       └── mergersAcquisitionsService.ts
-├── package.json
-└── tsconfig.json
+src/
+  assets/                   # Images and icons
+  components/               # Reusable UI, one folder per feature
+    Administration/         # Administration widgets (assign approvers modal)
+    AppShell/               # Layout chrome: sidebar, top bar, navigation, breadcrumbs, floating AI chat, session timeout
+    Dashboard/              # Dashboard KPI cards, charts and tables
+    common/                 # Shared by several pages: error boundaries, widget resilience wrapper, route guard
+    native/                 # Universal React Native primitives for the mobile app
+    ui/                     # shadcn/ui primitives (button, dialog, ...); don't put feature code here
+  hooks/                    # Custom React hooks
+  lib/                      # App-wide helpers: auth context, env, storage, utils
+  pages/                    # One folder per feature/route group
+    Administration/         # Administration portal view: approvals, approver assignment
+    Auth/                   # Login and pending-access screens
+    Dashboard/              # Home dashboard
+    Log/                    # Audit log
+    MergersAcquisitions/    # Mergers & Acquisitions deals and pipeline
+    Reports/                # Reports page (not routed yet)
+    Settings/               # User settings
+    UploadFiles/            # File uploads and upload archive
+  services/                 # API calls: apiClient + one <feature>Service.ts per backend area
+  template/                 # Excel templates (bank reconciliation)
+  types/                    # TypeScript types, one file per feature
+  App.native.tsx            # Mobile (Expo) entry and navigation
+  App.tsx                   # Web routes (React Router)
+  main.tsx                  # Web entry: providers and router
+```
+
+### Where new code goes
+
+* **New page:** `src/pages/<Feature>/`. Pages that belong together share a folder; a `.native.tsx` variant sits next to its web file.
+* **Components:** used by one feature go in `src/components/<Feature>/`; used by several go in `src/components/common/`. `src/components/ui/` is only for shadcn primitives.
+* **New API calls** go in `src/services/<feature>Service.ts` through `apiClient`, not `fetch` inside components (some older pages still do this; move those calls when you touch them). Types go in `src/types/<feature>.ts`.
+* **Don't add loose files** to `src/pages/` or `src/components/`.
+* **When you move a file,** update every import to it (and the imports inside it), then run `npm run build` (`tsc -b && vite build`).
+<!-- project-structure:end -->
+
+Root files outside `src/`:
+
+```text
+index.html                  # Web HTML entry point
+index.js                    # Mobile Expo entry (registers src/App.native.tsx)
+app.json                    # Expo app configuration
+metro.config.js             # Metro (mobile) bundler config, `@/` alias
+vite.config.ts              # Vite config with react-native-web aliases
+scripts/                    # Android emulator launch, ADB reverse and reload helpers
 ```
 
 ---

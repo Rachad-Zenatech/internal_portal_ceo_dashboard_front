@@ -23,7 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
+import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import {
   Dialog,
   DialogContent,

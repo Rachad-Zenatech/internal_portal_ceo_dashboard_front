@@ -22,8 +22,8 @@ import {
   Building2,
   WifiOff,
 } from "lucide-react";
-import { AssignApproversModal } from "@/components/AssignApproversModal";
-import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
+import { AssignApproversModal } from "@/components/Administration/AssignApproversModal";
+import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import {
   Card,
   CardContent,

@@ -16,7 +16,7 @@ import {
   Server,
   ArrowRight,
 } from "lucide-react";
-import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
+import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import {
   Card,
   CardHeader,

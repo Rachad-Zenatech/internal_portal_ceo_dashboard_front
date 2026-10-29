@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
+import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import { toast } from "sonner";
 
 interface PipelineSummary {

@@ -4,17 +4,17 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./lib/AuthContext";
 import { ServiceStatusProvider } from "./lib/ServiceStatusContext";
 import { View, ActivityIndicator, StyleSheet, Platform } from "@/components/native";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/common/ProtectedRoute";
 
 import AppShell from "./components/AppShell/AppShell";
-import Dashboard from "./pages/Dashboard";
-import MergersAcquisitions from "./pages/MergersAcquisitions";
-import Administration from "./pages/Administration";
-import UploadFile from "./pages/UploadFiles";
+import Dashboard from "./pages/Dashboard/Dashboard";
+import MergersAcquisitions from "./pages/MergersAcquisitions/MergersAcquisitions";
+import Administration from "./pages/Administration/Administration";
+import UploadFile from "./pages/UploadFiles/UploadFiles";
 import AuditLog from "./pages/Log/AuditLog";
-import Login from "./pages/Login";
-import PendingAccess from "./pages/PendingAccess";
-import Settings from "./pages/Settings";
+import Login from "./pages/Auth/Login";
+import PendingAccess from "./pages/Auth/PendingAccess";
+import Settings from "./pages/Settings/Settings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
