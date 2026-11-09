@@ -66,7 +66,7 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
 - `ChatMessageRendererProps` (interface)
 - `ChatMessageRenderer` (export const)
 
-## src/components/AppShell/ConnectionStatusLight.tsx (263 lines) - connection status light (components  app shell)
+## src/components/AppShell/ConnectionStatusLight.tsx (262 lines) - connection status light (components  app shell)
 - `IntegratedService` (export interface)
 - `IntegrationStatusResponse` (export interface)
 - `ConnectionStatusLight` (export function)
@@ -85,6 +85,26 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
     - `handleAskAi` (fn)
     - `handleCopy` (fn)
     - `handleResetChat` (fn)
+
+## src/components/AppShell/MessageHubStatusDropdown.tsx (581 lines) - message hub status dropdown (components  app shell)
+- `HubQueueOrStreamItem` (export interface)
+- `HubChannelGroupStatus` (export interface)
+- `HubConnectedServer` (export interface)
+- `MessageHubStatusResponse` (export interface)
+- `forceServerOffline` (function)
+- `buildOfflineServer` (function)
+    - `q` (fn)
+- `buildAllOfflineFallback` (function)
+- `fetchWithTimeout` (function)
+- `useMessageHubLiveStatus` (export function) - Shared live hub status query (local backend -> peer backend -> all-offline fallback).
+    - `queryClient` (fn)
+- `MessageHubStatusDropdown` (export function)
+    - `queryClient` (fn)
+    - `handleActiveTest` (fn)
+    - `getStatusDot` (fn)
+    - `getServerBadge` (fn)
+    - `formatLastSeen` (fn)
+    - `renderMetric` (fn)
 
 ## src/components/AppShell/Navigation.tsx (68 lines) - navigation (components  app shell)
 - `NavigationItem` (export interface)
@@ -531,13 +551,22 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
     - `totalPendingAmount` (fn)
     - `totalApprovedAmount` (fn)
 
-## src/pages/Administration/Administration.tsx (2027 lines) - administration (pages  administration)
+## src/pages/Administration/Administration.tsx (2205 lines) - administration (pages  administration)
 - `PurchaseRequestLineItem` (interface)
 - `PurchaseRequest` (interface)
 - `formatUsd` (function)
 - `formatForeignCurrency` (function)
 - `CurrencyInfo` (interface)
 - `getRequestCurrencyInfo` (function)
+- `getPaymentMethodLabel` (function)
+- `TaxInfo` (interface)
+- `getAfterTaxInfo` (function) - Total after tax.
+    - `round2` (fn)
+- `formatShortDate` (function)
+- `describeApprovalLevel` (function)
+- `getRequestQuantity` (function)
+- `renderRequestMetaCells` (function) - Table cells: quantity, payment method and Level 1 approver (kept in sync across the three request tables).
+- `renderRequestAmountCell` (function)
 - `ItemPriceInfo` (interface)
 - `getItemPriceInfo` (function)
 - `isRequestActionable` (const)
@@ -546,6 +575,7 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
     - `pendingApprovals` (fn)
     - `activeRequest` (fn)
     - `activeCurrencyInfo` (fn)
+    - `activeTaxInfo` (fn)
     - `selectedCurrencyInfo` (fn)
     - `approvalMutation` (fn) - Single Item Approval / Rejection Mutation
     - `bulkApprovalMutation` (fn) - Bulk Approval / Rejection Mutation
@@ -617,8 +647,7 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
     - `handleLogoutPress` (fn)
     - `navigateToTab` (fn)
 
-## src/pages/Dashboard/Dashboard.tsx (567 lines) - dashboard (pages  dashboard)
-- `PortalStatus` (interface)
+## src/pages/Dashboard/Dashboard.tsx (556 lines) - dashboard (pages  dashboard)
 - `SummaryData` (interface)
 - `PurchaseRequest` (interface)
 - `CeoEvent` (interface)

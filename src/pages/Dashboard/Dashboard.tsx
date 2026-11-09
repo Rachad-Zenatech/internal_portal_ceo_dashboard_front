@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { apiClient } from "@/services/apiClient";
 import { useCeoRealtimeStream } from "@/hooks/useCeoRealtimeStream";
-import { useServiceStatus } from "@/lib/ServiceStatusContext";
+import { useMessageHubLiveStatus } from "@/components/AppShell/MessageHubStatusDropdown";
 import {
   Activity,
   CheckCircle2,
@@ -34,17 +34,6 @@ import RevenueExpenseChart from "@/components/Dashboard/RevenueExpenseChart";
 import BankBalancesChart from "@/components/Dashboard/BankBalancesChart";
 import AccountTypeDonut from "@/components/Dashboard/AccountTypeDonut";
 import RecentTransactionsTable from "@/components/Dashboard/RecentTransactionsTable";
-
-interface PortalStatus {
-  name: string;
-  code: string;
-  port: number;
-  domain: string;
-  status: "online" | "degraded" | "offline" | "unknown";
-  status_code?: number;
-  latency_ms: number;
-  is_local?: boolean;
-}
 
 interface SummaryData {
   assets: number;
@@ -92,18 +81,12 @@ export default function Dashboard() {
 
   // Real-time Event Stream & Event-Driven Service Availability
   const { isConnected, lastSyncedAt, triggerManualSync } = useCeoRealtimeStream();
-  const { getStatus } = useServiceStatus();
 
-  // Connected Systems Telemetry directly synchronized with MQTT / WebSocket Registry
-  const portals: PortalStatus[] = useMemo(() => [
-    { name: "Admin Portal", code: "ADMIN", port: 8002, domain: "Purchasing, AP, Tasks, RBAC", status: (getStatus("admin") === "online" ? "online" : getStatus("admin") === "offline" ? "offline" : "unknown"), latency_ms: 1 },
-    { name: "CEO Data Service", code: "CEO_DATA", port: 8005, domain: "Executive Aggregation & Audit", status: "online", latency_ms: 1, is_local: true },
-    { name: "M&A System", code: "M7A", port: 8000, domain: "Acquisitions & Pipeline Tracking", status: (getStatus("ma") === "online" ? "online" : getStatus("ma") === "offline" ? "offline" : "unknown"), latency_ms: 1 },
-    { name: "Finance & GL", code: "FINANCE", port: 8005, domain: "General Ledger & Accounts", status: "online", latency_ms: 1, is_local: true },
-  ], [getStatus]);
-
-  const totalPortals = 4;
-  const onlinePortalsCount = portals.filter((p) => p.status === "online").length;
+  // Connected Systems Telemetry: the same live server list the Message Hub dropdown shows
+  const { data: hubStatus } = useMessageHubLiveStatus();
+  const hubServers = hubStatus?.servers ?? [];
+  const totalPortals = hubServers.length;
+  const onlinePortalsCount = hubServers.filter((srv) => srv.status === "online").length;
 
   const { data: rawApprovals = [], isLoading: isApprovalsLoading, refetch: refetchApprovals, isFetching: isFetchingApprovals } = useQuery<PurchaseRequest[]>({
     queryKey: ["admin", "pendingApprovals"],
@@ -243,33 +226,39 @@ export default function Dashboard() {
         </div>
 
         {/* Ticker Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {portals.map((portal) => {
-            const isOnline = portal.status === "online";
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2">
+          {hubServers.length === 0 && (
+            <span className="col-span-full text-[11px] text-muted-foreground px-1">Message Hub status unavailable</span>
+          )}
+          {hubServers.map((srv) => {
+            const isOnline = srv.status === "online";
+            const isDegraded = srv.status === "degraded";
             return (
               <div
-                key={portal.code}
+                key={srv.id}
                 className="flex items-center justify-between p-2.5 rounded-lg border text-xs bg-slate-50/80 dark:bg-zinc-800/40 border-slate-100 dark:border-zinc-800/80 select-none"
               >
                 <div className="min-w-0 pr-2 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-semibold truncate block text-[11px] sm:text-xs text-slate-800 dark:text-zinc-200">
-                      {portal.name}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-mono">:{portal.port}</span>
+                  <span className="font-semibold truncate block text-[11px] sm:text-xs text-slate-800 dark:text-zinc-200">
+                    {srv.name}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-mono">:{srv.port}</span>
                 </div>
                 <div className="text-right shrink-0">
                   <span
                     className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
                       isOnline
                         ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300"
-                        : "bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300"
+                        : isDegraded
+                          ? "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300"
+                          : "bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300"
                     }`}
                   >
-                    {portal.status}
+                    {srv.status}
                   </span>
-                  <div className="text-[9px] text-slate-400 font-mono mt-0.5">{portal.latency_ms}ms</div>
+                  <div className="text-[9px] text-slate-400 font-mono mt-0.5">
+                    {srv.connections_count} {srv.connections_count === 1 ? "conn" : "conns"}
+                  </div>
                 </div>
               </div>
             );

@@ -126,6 +126,9 @@
     }
   html {
     @apply font-sans;
+    /* Tailwind spacing, padding, margins, gaps and text sizes are all rem-based, so a fluid root size scales
+       the whole UI with the screen: ~12px on small laptops up to ~14.5px on large monitors (browser default is 16px). */
+    font-size: clamp(12px, 0.35vw + 7.5px, 14.5px);
     }
   .dark {
     color-scheme: dark;

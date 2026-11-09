@@ -1,6 +1,6 @@
-import { ConnectionStatusLight } from "./ConnectionStatusLight";
 import { useState, useEffect, useRef } from "react";
 import { Search, Bell, Building2, BookText, FileText, Banknote, Loader2, LogOut, User, Bot, Sparkles, Mail, BellRing, Settings2, CheckCheck, X, CloudDownload } from "lucide-react";
+import { MessageHubStatusDropdown } from "./MessageHubStatusDropdown";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -232,7 +232,7 @@ export default function TopBar() {
           </span>
         </Button>
 
-        <ConnectionStatusLight />
+        <MessageHubStatusDropdown />
         <TopBarClock />
         <TooltipProvider delayDuration={0}>
           <Tooltip>

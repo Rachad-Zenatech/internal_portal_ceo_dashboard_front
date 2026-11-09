@@ -176,7 +176,7 @@ export function ConnectionStatusLight({ className = "" }: { className?: string }
         >
           <span className={`h-2.5 w-2.5 rounded-full ${getStatusDot(overallStatus)}`} />
           <span className="hidden sm:inline-block text-muted-foreground font-mono text-[11px]">
-            {overallStatus === "healthy" ? "Live" : overallStatus === "degraded" ? "Fallback" : "Offline"}
+            {overallStatus === "healthy" ? "Live" : overallStatus === "degraded" ? "Degraded" : "Offline"}
           </span>
           <ChevronDown className="h-3 w-3 text-muted-foreground/70" />
         </button>
@@ -236,9 +236,8 @@ export function ConnectionStatusLight({ className = "" }: { className?: string }
                   </p>
                 )}
 
-                {svc.mode && (
-                  <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground/80 font-mono">
-                    <span>Mode: {svc.mode}</span>
+                {svc.state && (
+                  <div className="mt-1 flex items-center justify-end text-[10px] text-muted-foreground/80 font-mono">
                     <span className="uppercase">{svc.state}</span>
                   </div>
                 )}

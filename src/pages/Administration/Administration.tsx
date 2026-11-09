@@ -98,6 +98,22 @@ interface PurchaseRequest {
   hold_reason?: string;
   approved_at?: string;
   note?: string;
+  request_date?: string;
+  payment_method?: string | null;
+  // After-tax amount decided by the Administration server
+  amount_after_tax?: number | null;
+  tax_rate?: number | null;
+  tax_source?: "routing" | "default" | string | null;
+  level_1_approver_name?: string | null;
+  level_1_approved_at?: string | null;
+  level_1_comment?: string | null;
+  level_2_approver_name?: string | null;
+  level_2_approved_at?: string | null;
+  requires_second_level?: boolean;
+  // Present on the detail response (merged in from the Administration request detail)
+  purchase_order?: { payment_method?: string | null; vendor?: string | null; shipped_to_location?: string | null } | null;
+  invoice?: { actual_cost_after_tax?: number | null } | null;
+  wire_transfer?: unknown;
   rawReq?: any;
   attachments?: Array<{
     name: string;
@@ -185,6 +201,135 @@ function getRequestCurrencyInfo(req?: PurchaseRequest | null): CurrencyInfo {
     origCurrency,
     exchangeRate,
   };
+}
+
+// Same default estimate Administration uses when no address-based sales tax rate applies
+const DEFAULT_TAX_RATE = 0.08;
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  CC: "Credit Card",
+  DC: "Debit Card",
+  W: "Wire",
+  WIRE: "Wire Transfer",
+};
+
+function getPaymentMethodLabel(req?: PurchaseRequest | null): string {
+  const raw = req?.purchase_order?.payment_method || req?.payment_method;
+  if (raw && String(raw).trim()) {
+    const key = String(raw).trim();
+    return PAYMENT_METHOD_LABELS[key.toUpperCase()] || key;
+  }
+  return req?.wire_transfer ? "Wire Transfer" : "-";
+}
+
+interface TaxInfo {
+  subtotal: number;
+  tax: number;
+  total: number;
+  ratePercent: number;
+  source: "invoice" | "administration" | "quote" | "estimate";
+}
+
+/**
+ * Total after tax. Order: actual invoiced cost, then the figure decided by the Administration server
+ * (amount_after_tax / tax_rate), then the quote's own tax rate, then a local default estimate (last resort,
+ * only when the server did not send a figure).
+ */
+function getAfterTaxInfo(req: PurchaseRequest | null | undefined, usdSubtotal: number): TaxInfo {
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+
+  // Pass the Administration server's stored after-tax amount through unchanged.
+  const serverTotal = Number(req?.amount_after_tax);
+  const serverRate = Number(req?.tax_rate);
+  if (serverTotal > 0 && Number.isFinite(serverRate)) {
+    const tax = Math.max(0, round2(serverTotal - usdSubtotal));
+    const source = req?.tax_source === "default" ? "estimate" : "administration";
+    return { subtotal: usdSubtotal, tax, total: serverTotal, ratePercent: round2(serverRate * 100), source };
+  }
+
+  const quoteTax = Number(req?.quote_data?.tax);
+  const quoteSubtotal = Number(req?.quote_data?.subtotal);
+  if (quoteTax > 0 && quoteSubtotal > 0) {
+    const rate = quoteTax / quoteSubtotal;
+    const tax = round2(usdSubtotal * rate);
+    return { subtotal: usdSubtotal, tax, total: round2(usdSubtotal + tax), ratePercent: round2(rate * 100), source: "quote" };
+  }
+
+  const tax = round2(usdSubtotal * DEFAULT_TAX_RATE);
+  return { subtotal: usdSubtotal, tax, total: round2(usdSubtotal + tax), ratePercent: DEFAULT_TAX_RATE * 100, source: "estimate" };
+}
+
+function formatShortDate(value?: string | null): string {
+  if (!value) return "-";
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? "-" : d.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+}
+
+function describeApprovalLevel(name?: string | null, approvedAt?: string | null): string {
+  if (name && approvedAt) return `${name} - ${formatShortDate(approvedAt)}`;
+  if (name) return `${name} (pending)`;
+  return "Pending";
+}
+
+function getRequestQuantity(req: PurchaseRequest): number {
+  const items = Array.isArray(req.items) ? req.items : [];
+  return items.length > 0 ? items.reduce((sum, it) => sum + (Number(it.quantity) || 1), 0) : Number(req.quantity) || 1;
+}
+
+/** Table cells: quantity, payment method and Level 1 approver (kept in sync across the three request tables). */
+function renderRequestMetaCells(req: PurchaseRequest) {
+  const l1Name = req.level_1_approver_name;
+  const l1At = req.level_1_approved_at;
+  return (
+    <>
+      <td className="py-3 px-4 text-center whitespace-nowrap font-mono text-slate-700 dark:text-zinc-300">
+        {getRequestQuantity(req)}
+      </td>
+      <td className="py-3 px-4 whitespace-nowrap">
+        <span
+          className="block truncate max-w-[130px] text-slate-700 dark:text-zinc-300"
+          title={getPaymentMethodLabel(req)}
+        >
+          {getPaymentMethodLabel(req)}
+        </span>
+      </td>
+      <td className="py-3 px-4 whitespace-nowrap">
+        {l1At ? (
+          <>
+            <span className="block truncate max-w-[130px] font-medium text-slate-800 dark:text-zinc-200">
+              {l1Name || "Approved"}
+            </span>
+            <span className="text-[10px] text-slate-400 block">{formatShortDate(l1At)}</span>
+          </>
+        ) : (
+          <>
+            <span className="block truncate max-w-[130px] text-slate-500 dark:text-zinc-400">{l1Name || "Pending"}</span>
+            {l1Name && <span className="text-[10px] text-slate-400 block">awaiting approval</span>}
+          </>
+        )}
+      </td>
+    </>
+  );
+}
+
+function renderRequestAmountCell(req: PurchaseRequest) {
+  const cInfo = getRequestCurrencyInfo(req);
+  const tax = getAfterTaxInfo(req, cInfo.usdAmount);
+  return (
+    <td className="py-3 px-4 text-right font-mono whitespace-nowrap">
+      <div className="flex flex-col items-end">
+        <span className="font-bold text-slate-900 dark:text-zinc-100">{formatUsd(tax.total)}</span>
+        <span className="text-[10px] font-normal text-muted-foreground font-sans">
+          {formatUsd(tax.subtotal)} + tax{tax.source === "estimate" ? " (est.)" : ""}
+        </span>
+        {cInfo.isConverted && cInfo.origAmount !== null && cInfo.origCurrency && (
+          <span className="text-[10px] font-normal text-muted-foreground font-sans">
+            ({formatForeignCurrency(cInfo.origAmount, cInfo.origCurrency)})
+          </span>
+        )}
+      </div>
+    </td>
+  );
 }
 
 interface ItemPriceInfo {
@@ -392,7 +537,16 @@ export default function Administration() {
     queryFn: async ({ signal }) => {
       if (!detailedRequestId) return null;
       const res = await apiClient.get<any>(`/api/v1/ceo/approvals/${detailedRequestId}`, { signal });
-      return res?.request || res;
+      if (res?.request) {
+        // Keep the purchase order / invoice / wire details that sit beside the request in the response
+        return {
+          ...res.request,
+          purchase_order: res.purchase_order ?? null,
+          invoice: res.invoice ?? null,
+          wire_transfer: res.wire_transfer ?? null,
+        };
+      }
+      return res;
     },
     enabled: Boolean(detailedRequestId),
     staleTime: 60000,
@@ -410,6 +564,11 @@ export default function Administration() {
   const activeCurrencyInfo = useMemo(() => {
     return getRequestCurrencyInfo(activeRequest);
   }, [activeRequest]);
+
+  const activeTaxInfo = useMemo(
+    () => getAfterTaxInfo(activeRequest, activeCurrencyInfo.usdAmount),
+    [activeRequest, activeCurrencyInfo.usdAmount],
+  );
 
   const selectedCurrencyInfo = useMemo(() => {
     return getRequestCurrencyInfo(selectedRequest);
@@ -1200,7 +1359,10 @@ export default function Administration() {
                       <th className="py-3 px-4 min-w-[280px]">Item Description & Purpose</th>
                       <th className="py-3 px-4 w-[90px] text-center">Priority</th>
                       <th className="py-3 px-4 w-[130px] text-center">Tier</th>
-                      <th className="py-3 px-4 w-[130px] text-right">Amount</th>
+                      <th className="py-3 px-4 w-[70px] text-center">Qty</th>
+                      <th className="py-3 px-4 w-[150px]">Payment Method</th>
+                      <th className="py-3 px-4 w-[150px]">Level 1 Approver</th>
+                      <th className="py-3 px-4 w-[150px] text-right">Total (After Tax)</th>
                       <th className="py-3 px-4 w-[160px] text-center">Status</th>
                       <th className="py-3 px-4 w-[190px] text-right">Actions</th>
                     </tr>
@@ -1216,6 +1378,9 @@ export default function Administration() {
                         <td className="py-3.5 px-4"><Skeleton className="h-4 w-52 rounded" /></td>
                         <td className="py-3.5 px-4 text-center"><Skeleton className="h-4 w-14 mx-auto rounded" /></td>
                         <td className="py-3.5 px-4 text-center"><Skeleton className="h-4 w-16 mx-auto rounded" /></td>
+                        <td className="py-3.5 px-4 text-center"><Skeleton className="h-4 w-6 mx-auto rounded" /></td>
+                        <td className="py-3.5 px-4"><Skeleton className="h-4 w-24 rounded" /></td>
+                        <td className="py-3.5 px-4"><Skeleton className="h-4 w-24 rounded" /></td>
                         <td className="py-3.5 px-4 text-right"><Skeleton className="h-4 w-20 ml-auto rounded" /></td>
                         <td className="py-3.5 px-4 text-center"><Skeleton className="h-5 w-24 mx-auto rounded-full" /></td>
                         <td className="py-3.5 px-4 text-right"><Skeleton className="h-7 w-28 ml-auto rounded-lg" /></td>
@@ -1263,7 +1428,10 @@ export default function Administration() {
                       <th className="py-3 px-4 min-w-[280px]">Item Description & Purpose</th>
                       <th className="py-3 px-4 w-[90px] text-center whitespace-nowrap">Priority</th>
                       <th className="py-3 px-4 w-[130px] text-center whitespace-nowrap">Tier</th>
-                      <th className="py-3 px-4 w-[130px] text-right whitespace-nowrap">Amount</th>
+                      <th className="py-3 px-4 w-[70px] text-center whitespace-nowrap">Qty</th>
+                      <th className="py-3 px-4 w-[150px] whitespace-nowrap">Payment Method</th>
+                      <th className="py-3 px-4 w-[150px] whitespace-nowrap">Level 1 Approver</th>
+                      <th className="py-3 px-4 w-[150px] text-right whitespace-nowrap">Total (After Tax)</th>
                       <th className="py-3 px-4 w-[160px] text-center whitespace-nowrap">Status</th>
                       <th className="py-3 px-4 w-[190px] text-right whitespace-nowrap">
                         {approvalViewMode === "pending" ? "Actions" : "Record Info"}
@@ -1332,24 +1500,11 @@ export default function Administration() {
                                     : "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300"
                                 }`}
                               >
-                                {(Number(req.amount) || 0) >= 10000 ? "â‰¥ $10k Exec" : "< $10k Mgr"}
+                                {(Number(req.amount) || 0) >= 10000 ? "≥ $10k Exec" : "< $10k Mgr"}
                               </Badge>
                             </td>
-                            <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-zinc-100 whitespace-nowrap">
-                              {(() => {
-                                const cInfo = getRequestCurrencyInfo(req);
-                                return (
-                                  <div className="flex flex-col items-end">
-                                    <span>{formatUsd(cInfo.usdAmount)}</span>
-                                    {cInfo.isConverted && cInfo.origAmount !== null && cInfo.origCurrency && (
-                                      <span className="text-[10px] font-normal text-muted-foreground font-sans">
-                                        ({formatForeignCurrency(cInfo.origAmount, cInfo.origCurrency)})
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              })()}
-                            </td>
+                            {renderRequestMetaCells(req)}
+                            {renderRequestAmountCell(req)}
                             <td className="py-3 px-4 text-center whitespace-nowrap">
                               <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/80 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900/60 uppercase">
                                 {req.status}
@@ -1427,24 +1582,11 @@ export default function Administration() {
                                   : "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300"
                               }`}
                             >
-                              {(Number(req.amount) || 0) >= 10000 ? "â‰¥ $10k Exec" : "< $10k Mgr"}
+                              {(Number(req.amount) || 0) >= 10000 ? "≥ $10k Exec" : "< $10k Mgr"}
                             </Badge>
                           </td>
-                          <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-zinc-100 whitespace-nowrap">
-                            {(() => {
-                              const cInfo = getRequestCurrencyInfo(req);
-                              return (
-                                <div className="flex flex-col items-end">
-                                  <span>{formatUsd(cInfo.usdAmount)}</span>
-                                  {cInfo.isConverted && cInfo.origAmount !== null && cInfo.origCurrency && (
-                                    <span className="text-[10px] font-normal text-muted-foreground font-sans">
-                                      ({formatForeignCurrency(cInfo.origAmount, cInfo.origCurrency)})
-                                    </span>
-                                  )}
-                                </div>
-                              );
-                            })()}
-                          </td>
+                          {renderRequestMetaCells(req)}
+                            {renderRequestAmountCell(req)}
                           <td className="py-3 px-4 text-center whitespace-nowrap">
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-300 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800 uppercase">
                               <Clock className="w-2.5 h-2.5 animate-spin text-amber-600" />
@@ -1503,24 +1645,11 @@ export default function Administration() {
                                   : "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300"
                               }`}
                             >
-                              {(Number(req.amount) || 0) >= 10000 ? "â‰¥ $10k Exec" : "< $10k Mgr"}
+                              {(Number(req.amount) || 0) >= 10000 ? "≥ $10k Exec" : "< $10k Mgr"}
                             </Badge>
                           </td>
-                          <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-zinc-100 whitespace-nowrap">
-                            {(() => {
-                              const cInfo = getRequestCurrencyInfo(req);
-                              return (
-                                <div className="flex flex-col items-end">
-                                  <span>{formatUsd(cInfo.usdAmount)}</span>
-                                  {cInfo.isConverted && cInfo.origAmount !== null && cInfo.origCurrency && (
-                                    <span className="text-[10px] font-normal text-muted-foreground font-sans">
-                                      ({formatForeignCurrency(cInfo.origAmount, cInfo.origCurrency)})
-                                    </span>
-                                  )}
-                                </div>
-                              );
-                            })()}
-                          </td>
+                          {renderRequestMetaCells(req)}
+                            {renderRequestAmountCell(req)}
                           <td className="py-3 px-4 text-center whitespace-nowrap">
                             {req.status === "REJECTED" || req.status === "CANCELLED" || req.status === "DECLINED" ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900/60 uppercase">
@@ -1627,7 +1756,7 @@ export default function Administration() {
                   {actionType === "APPROVE" ? "Confirm Purchase Approval" : "Reject Purchase Request"}
                 </DialogTitle>
                 <DialogDescription className="text-xs mt-0.5">
-                  Purchase Request #{selectedRequest?.id} â€¢ ${(Number(selectedRequest?.amount) || 0).toLocaleString()}
+                  Purchase Request #{selectedRequest?.id} • ${(Number(selectedRequest?.amount) || 0).toLocaleString()}
                 </DialogDescription>
               </div>
             </div>
@@ -1903,6 +2032,44 @@ export default function Administration() {
                 )}
               </div>
 
+              {/* Key facts: quantity, requested date, payment method, approvals */}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 p-3.5 rounded-xl border border-slate-100 dark:border-zinc-800">
+                <div>
+                  <span className="block text-[11px] text-muted-foreground font-medium">Quantity</span>
+                  <span className="font-semibold text-slate-800 dark:text-zinc-200">
+                    {activeLineItems.length > 0
+                      ? activeLineItems.reduce((sum, it) => sum + (Number(it.quantity) || 1), 0)
+                      : Number(activeRequest?.quantity) || 1}
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-[11px] text-muted-foreground font-medium">Requested Date</span>
+                  <span className="font-semibold text-slate-800 dark:text-zinc-200">
+                    {formatShortDate(activeRequest?.request_date || activeRequest?.created_at)}
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-[11px] text-muted-foreground font-medium">Payment Method</span>
+                  <span className="font-semibold text-slate-800 dark:text-zinc-200 break-words">
+                    {getPaymentMethodLabel(activeRequest)}
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-[11px] text-muted-foreground font-medium">Level 1 Approved By</span>
+                  <span className="font-semibold text-slate-800 dark:text-zinc-200 break-words">
+                    {describeApprovalLevel(activeRequest?.level_1_approver_name, activeRequest?.level_1_approved_at)}
+                  </span>
+                </div>
+                {(activeRequest?.requires_second_level || activeRequest?.level_2_approver_name) && (
+                  <div className="col-span-2">
+                    <span className="block text-[11px] text-muted-foreground font-medium">Level 2 Approved By</span>
+                    <span className="font-semibold text-slate-800 dark:text-zinc-200 break-words">
+                      {describeApprovalLevel(activeRequest?.level_2_approver_name, activeRequest?.level_2_approved_at)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
               {/* Line Items Table */}
               {activeLineItems.length > 0 && (
                 <div className="space-y-1.5">
@@ -1946,41 +2113,53 @@ export default function Administration() {
               )}
 
               {/* Total & Multi-Currency Summary */}
-              <div className="p-3 bg-indigo-50/50 dark:bg-indigo-950/30 rounded-xl border border-indigo-100 dark:border-indigo-900/60 flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-semibold text-indigo-950 dark:text-indigo-200 block">Total Authorization Amount</span>
-                  {activeCurrencyInfo.isConverted && activeCurrencyInfo.exchangeRate && (
-                    <span className="text-[10px] text-muted-foreground">
+              <div className="p-3.5 bg-indigo-50/50 dark:bg-indigo-950/30 rounded-xl border border-indigo-100 dark:border-indigo-900/60 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-indigo-950 dark:text-indigo-200">Total Amount</span>
+                  <span className="text-sm font-semibold font-mono text-indigo-900 dark:text-indigo-100">
+                    {formatUsd(activeTaxInfo.subtotal)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    Tax ({activeTaxInfo.ratePercent}%
+                    {activeTaxInfo.source === "estimate" ? " est." : activeTaxInfo.source === "invoice" ? " actual" : ""})
+                  </span>
+                  <span className="text-xs font-mono text-muted-foreground">{formatUsd(activeTaxInfo.tax)}</span>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-indigo-100 dark:border-indigo-900/60">
+                  <span className="text-xs font-semibold text-indigo-950 dark:text-indigo-200">Total After Tax</span>
+                  <span className="text-base font-bold font-mono text-indigo-900 dark:text-indigo-100">
+                    {formatUsd(activeTaxInfo.total)}
+                  </span>
+                </div>
+                {activeCurrencyInfo.isConverted && activeCurrencyInfo.exchangeRate && (
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                    <span>
                       Exchange Rate: 1 {activeCurrencyInfo.origCurrency} = {activeCurrencyInfo.exchangeRate.toFixed(4)} USD
                     </span>
-                  )}
-                </div>
-                <div className="text-right">
-                  <span className="text-base font-bold font-mono text-indigo-900 dark:text-indigo-100">
-                    {formatUsd(activeCurrencyInfo.usdAmount)}
-                  </span>
-                  {activeCurrencyInfo.isConverted && activeCurrencyInfo.origAmount !== null && activeCurrencyInfo.origCurrency && (
-                    <span className="block text-[11px] font-mono text-muted-foreground">
-                      ({formatForeignCurrency(activeCurrencyInfo.origAmount, activeCurrencyInfo.origCurrency)})
-                    </span>
-                  )}
-                </div>
+                    {activeCurrencyInfo.origAmount !== null && activeCurrencyInfo.origCurrency && (
+                      <span className="font-mono">
+                        ({formatForeignCurrency(activeCurrencyInfo.origAmount, activeCurrencyInfo.origCurrency)})
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          <DialogFooter className="pt-3 border-t border-slate-100 dark:border-zinc-800 gap-2 sm:gap-0">
+          <DialogFooter className="mt-1 flex-col-reverse gap-2 border-t border-slate-100 pt-4 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
             <Button
               variant="outline"
-              size="sm"
               onClick={() => setDetailedRequest(null)}
+              className="h-9 min-w-[7.5rem] rounded-xl px-4 text-xs font-semibold cursor-pointer"
             >
               Close
             </Button>
             {activeRequest && isRequestActionable(activeRequest.status, isDetailedInApproveHistory) && (
-              <div className="flex items-center gap-2">
+              <>
                 <Button
-                  size="sm"
                   variant="outline"
                   onClick={() => {
                     const req = activeRequest;
@@ -1988,23 +2167,22 @@ export default function Administration() {
                     setSelectedRequest(req);
                     setActionType("REJECT");
                   }}
-                  className="text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 rounded-xl cursor-pointer"
+                  className="h-9 min-w-[7.5rem] rounded-xl border-rose-200 px-4 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:border-rose-900/60 dark:hover:bg-rose-950/40 cursor-pointer"
                 >
                   Reject Request
                 </Button>
                 <Button
-                  size="sm"
                   onClick={() => {
                     const req = activeRequest;
                     setDetailedRequest(null);
                     setSelectedRequest(req);
                     setActionType("APPROVE");
                   }}
-                  className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-2xs gap-1 cursor-pointer"
+                  className="h-9 min-w-[7.5rem] gap-1.5 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-700 cursor-pointer"
                 >
-                  <Check className="w-3.5 h-3.5" /> Approve Request
+                  <Check className="h-3.5 w-3.5" /> Approve Request
                 </Button>
-              </div>
+              </>
             )}
           </DialogFooter>
         </DialogContent>
