@@ -513,7 +513,7 @@ export function MessageHubStatusDropdown({ className = "" }: { className?: strin
                           )}
                         </div>
                         <span className="block truncate font-mono text-[10px] text-muted-foreground">
-                          {srv.service_user} • :{srv.port}
+                          {srv.service_user}
                         </span>
                       </div>
                     </div>
@@ -548,7 +548,6 @@ export function MessageHubStatusDropdown({ className = "" }: { className?: strin
                   <div className="flex min-w-0 items-center gap-2">
                     <Server className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
                     <span className="truncate text-xs font-medium text-foreground/80">{srv.name}</span>
-                    <span className="shrink-0 font-mono text-[10px] text-muted-foreground">:{srv.port}</span>
                   </div>
                   {getServerBadge(srv.online, srv.status)}
                 </div>

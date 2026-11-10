@@ -18,7 +18,7 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
 - `NavigationContent` (function)
 - `App` (export function)
 
-## src/App.tsx (150 lines) - app
+## src/App.tsx (179 lines) - Customizable boards pull in the grid/drag library, so load them on demand.
 - `FallbackLoader` (function)
 - `App` (function)
 
@@ -86,7 +86,7 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
     - `handleCopy` (fn)
     - `handleResetChat` (fn)
 
-## src/components/AppShell/MessageHubStatusDropdown.tsx (581 lines) - message hub status dropdown (components  app shell)
+## src/components/AppShell/MessageHubStatusDropdown.tsx (580 lines) - message hub status dropdown (components  app shell)
 - `HubQueueOrStreamItem` (export interface)
 - `HubChannelGroupStatus` (export interface)
 - `HubConnectedServer` (export interface)
@@ -106,7 +106,7 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
     - `formatLastSeen` (fn)
     - `renderMetric` (fn)
 
-## src/components/AppShell/Navigation.tsx (68 lines) - navigation (components  app shell)
+## src/components/AppShell/Navigation.tsx (91 lines) - navigation (components  app shell)
 - `NavigationItem` (export interface)
 - `navigation` (export const)
 
@@ -439,7 +439,7 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
 - `useAssignApproverMember` (export function)
 - `useRemoveApproverMember` (export function)
 
-## src/hooks/useCeoRealtimeStream.ts (39 lines) - use ceo realtime stream (hooks)
+## src/hooks/useCeoRealtimeStream.ts (49 lines) - Time the last query successfully received fresh data (not the render time).
 - `ConnectionState` (export type)
 - `RealtimeSyncState` (export interface)
 - `useCeoRealtimeStream` (export function)
@@ -551,7 +551,7 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
     - `totalPendingAmount` (fn)
     - `totalApprovedAmount` (fn)
 
-## src/pages/Administration/Administration.tsx (2205 lines) - administration (pages  administration)
+## src/pages/Administration/Administration.tsx (2064 lines) - administration (pages  administration)
 - `PurchaseRequestLineItem` (interface)
 - `PurchaseRequest` (interface)
 - `formatUsd` (function)
@@ -647,19 +647,12 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
     - `handleLogoutPress` (fn)
     - `navigateToTab` (fn)
 
-## src/pages/Dashboard/Dashboard.tsx (556 lines) - dashboard (pages  dashboard)
+## src/pages/Dashboard/Dashboard.tsx (364 lines) - dashboard (pages  dashboard)
 - `SummaryData` (interface)
 - `PurchaseRequest` (interface)
 - `CeoEvent` (interface)
 - `AuditLog` (interface)
 - `Dashboard` (export function)
-    - `navigate` (fn)
-    - `pendingApprovals` (fn)
-    - `syncedApprovedRequests` (fn)
-    - `pendingSyncRequests` (fn)
-    - `totalPendingAmount` (fn)
-    - `totalApprovedAmount` (fn)
-    - `refreshAll` (fn)
 
 ## src/pages/Log/AuditLog.native.tsx (904 lines) - audit log.native (pages  log)
 - `AuditLogItem` (interface)
@@ -693,7 +686,7 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
     - `totalAcceptedRevenueNum` (fn) - Compute total revenue of accepted deals
     - `filteredTasks` (fn) - Filter LOI Accepted tasks based on search query for seamless endless scrolling
 
-## src/pages/MergersAcquisitions/MergersAcquisitions.tsx (643 lines) - mergers acquisitions (pages  mergers acquisitions)
+## src/pages/MergersAcquisitions/MergersAcquisitions.tsx (522 lines) - mergers acquisitions (pages  mergers acquisitions)
 - `PipelineSummary` (interface)
 - `PipelineTask` (interface)
 - `formatRevenue` (function)

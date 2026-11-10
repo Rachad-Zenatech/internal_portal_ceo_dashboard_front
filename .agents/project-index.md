@@ -8,15 +8,15 @@ For detailed function and route definitions, see `.agents/code-map.md`.
 - scripts/reload-android.js (86 lines) - Check ANDROID_HOME or ANDROID_SDK_ROOT first
 - scripts/start-android.js (196 lines) - Check ANDROID_HOME or ANDROID_SDK_ROOT environment variables first
 - src/App.native.tsx (115 lines) - app.native
-- src/App.tsx (150 lines) - app
+- src/App.tsx (179 lines) - Customizable boards pull in the grid/drag library, so load them on demand.
 - src/components/Administration/AssignApproversModal.tsx (1844 lines) - assign approvers modal (components  administration)
 - src/components/AppShell/AppShell.tsx (80 lines) - app shell (components  app shell)
 - src/components/AppShell/Breadcrumbs.tsx (77 lines) - Define custom mapping for breadcrumb names to ensure they look pretty
 - src/components/AppShell/ChatMessageRenderer.tsx (357 lines) - chat message renderer (components  app shell)
 - src/components/AppShell/ConnectionStatusLight.tsx (262 lines) - connection status light (components  app shell)
 - src/components/AppShell/FloatingChat.tsx (527 lines) - floating chat (components  app shell)
-- src/components/AppShell/MessageHubStatusDropdown.tsx (581 lines) - message hub status dropdown (components  app shell)
-- src/components/AppShell/Navigation.tsx (68 lines) - navigation (components  app shell)
+- src/components/AppShell/MessageHubStatusDropdown.tsx (580 lines) - message hub status dropdown (components  app shell)
+- src/components/AppShell/Navigation.tsx (91 lines) - navigation (components  app shell)
 - src/components/AppShell/SessionTimeout.tsx (4 lines) - session timeout (components  app shell)
 - src/components/AppShell/Sidebar.tsx (191 lines) - sidebar (components  app shell)
 - src/components/AppShell/ThemeSwitch.tsx (41 lines) - theme switch (components  app shell)
@@ -67,7 +67,7 @@ For detailed function and route definitions, see `.agents/code-map.md`.
 - src/components/ui/toggle.tsx (46 lines) - toggle (components ui)
 - src/components/ui/tooltip.tsx (56 lines) - tooltip (components ui)
 - src/hooks/useApproverRoles.ts (101 lines) - use approver roles (hooks)
-- src/hooks/useCeoRealtimeStream.ts (39 lines) - use ceo realtime stream (hooks)
+- src/hooks/useCeoRealtimeStream.ts (49 lines) - Time the last query successfully received fresh data (not the render time).
 - src/hooks/useDashboard.ts (93 lines) - use dashboard (hooks)
 - src/hooks/useHeartbeat.ts (37 lines) - use heartbeat (hooks)
 - src/hooks/useNotifications.ts (296 lines) - use notifications (hooks)
@@ -81,17 +81,17 @@ For detailed function and route definitions, see `.agents/code-map.md`.
 - src/lib/storage.ts (74 lines) - Universal storage adapter for Web and Native
 - src/lib/utils.ts (7 lines) - utils (lib)
 - src/pages/Administration/Administration.native.tsx (1106 lines) - administration.native (pages  administration)
-- src/pages/Administration/Administration.tsx (2205 lines) - administration (pages  administration)
+- src/pages/Administration/Administration.tsx (2064 lines) - administration (pages  administration)
 - src/pages/Auth/Login.native.tsx (288 lines) - login.native (pages  auth)
 - src/pages/Auth/Login.tsx (215 lines) - login (pages  auth)
 - src/pages/Auth/PendingAccess.native.tsx (132 lines) - pending access.native (pages  auth)
 - src/pages/Auth/PendingAccess.tsx (146 lines) - pending access (pages  auth)
 - src/pages/Dashboard/Dashboard.native.tsx (3783 lines) - dashboard.native (pages  dashboard)
-- src/pages/Dashboard/Dashboard.tsx (556 lines) - dashboard (pages  dashboard)
+- src/pages/Dashboard/Dashboard.tsx (364 lines) - dashboard (pages  dashboard)
 - src/pages/Log/AuditLog.native.tsx (904 lines) - audit log.native (pages  log)
 - src/pages/Log/AuditLog.tsx (474 lines) - audit log (pages  log)
 - src/pages/MergersAcquisitions/MergersAcquisitions.native.tsx (1057 lines) - mergers acquisitions.native (pages  mergers acquisitions)
-- src/pages/MergersAcquisitions/MergersAcquisitions.tsx (643 lines) - mergers acquisitions (pages  mergers acquisitions)
+- src/pages/MergersAcquisitions/MergersAcquisitions.tsx (522 lines) - mergers acquisitions (pages  mergers acquisitions)
 - src/pages/Reports/Reports.tsx (96 lines) - src/pages/Reports.tsx
 - src/pages/Settings/Settings.tsx (276 lines) - settings (pages  settings)
 - src/pages/UploadFiles/UploadFiles.native.tsx (884 lines) - upload files.native (pages  upload files)
