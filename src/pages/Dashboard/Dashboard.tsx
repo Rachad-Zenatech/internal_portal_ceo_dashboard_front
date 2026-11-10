@@ -11,10 +11,7 @@ import {
   Clock,
   TrendingUp,
   CreditCard,
-  ArrowUpRight,
   RefreshCw,
-  Server,
-  ArrowRight,
 } from "lucide-react";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import {
@@ -34,6 +31,8 @@ import RevenueExpenseChart from "@/components/Dashboard/RevenueExpenseChart";
 import BankBalancesChart from "@/components/Dashboard/BankBalancesChart";
 import AccountTypeDonut from "@/components/Dashboard/AccountTypeDonut";
 import RecentTransactionsTable from "@/components/Dashboard/RecentTransactionsTable";
+import { KpiCard, formatMoney } from "@/components/Dashboard/KpiCard";
+import { SystemsStrip } from "@/components/Dashboard/SystemsStrip";
 
 interface SummaryData {
   assets: number;
@@ -85,8 +84,6 @@ export default function Dashboard() {
   // Connected Systems Telemetry: the same live server list the Message Hub dropdown shows
   const { data: hubStatus } = useMessageHubLiveStatus();
   const hubServers = hubStatus?.servers ?? [];
-  const totalPortals = hubServers.length;
-  const onlinePortalsCount = hubServers.filter((srv) => srv.status === "online").length;
 
   const { data: rawApprovals = [], isLoading: isApprovalsLoading, refetch: refetchApprovals, isFetching: isFetchingApprovals } = useQuery<PurchaseRequest[]>({
     queryKey: ["admin", "pendingApprovals"],
@@ -164,290 +161,101 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="w-full flex flex-col gap-4 sm:gap-5 p-4 sm:p-6 lg:p-7 min-h-screen bg-slate-50/40 dark:bg-zinc-950 transition-colors">
-      {/* Executive Seamless Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-zinc-800/80">
-        <div className="space-y-1">
+    <div className="mx-auto w-full max-w-[1600px] flex flex-col gap-4 sm:gap-6 p-4 sm:p-6 lg:p-8 min-h-screen bg-background">
+      {/* Page header */}
+      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div className="space-y-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
-              Executive Command Center
-            </h1>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80">
-              <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : "bg-amber-400"}`} />
-              <span>{isConnected ? "Live Connected" : "Connecting..."}</span>
-            </div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Executive Overview</h1>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-0.5 text-xs text-muted-foreground">
+              <span className={`h-1.5 w-1.5 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : "bg-amber-400"}`} />
+              {isConnected ? "Live" : "Reconnecting"}
+            </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400">
-            Welcome back, <span className="font-semibold text-slate-800 dark:text-zinc-200">{user?.full_name || "Chief Executive Officer"}</span>. Unified executive governance, real-time approval pipelines, and financial telemetry.
+          <p className="text-sm text-muted-foreground truncate">
+            Welcome back, <span className="font-medium text-foreground">{user?.full_name || "Chief Executive Officer"}</span>
           </p>
         </div>
-
-        {/* Quick Action Executive Toolbar */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={refreshAll}
-            disabled={ isFetchingApprovals}
-            className="text-xs h-9 px-3.5 rounded-xl border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 gap-1.5 transition-all shadow-2xs cursor-pointer"
-            title={`Last synced: ${lastSyncedAt.toLocaleTimeString()}`}
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${(isFetchingApprovals) ? "animate-spin text-indigo-600" : ""}`} />
-            <span className="hidden sm:inline">Sync Feeds</span>
-            <span className="text-[10px] text-muted-foreground font-mono hidden md:inline">
-              ({lastSyncedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })})
-            </span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Multi-Portal Health Ticker - Clean Non-clickable Telemetry Ribbon */}
-      <div className="bg-white dark:bg-zinc-900 p-3 sm:p-4 rounded-xl border border-slate-200/80 dark:border-zinc-800 shadow-2xs transition-all">
-        {/* Header Bar */}
-        <div className="flex items-center justify-between gap-2 mb-2.5 px-1 select-none">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
-            <Server className="w-3.5 h-3.5 text-slate-400" />
-            Connected Systems Telemetry
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={refreshAll}
+          disabled={isFetchingApprovals}
+          className="h-10 sm:h-9 rounded-xl gap-2 self-start sm:self-auto cursor-pointer"
+          title={`Last synced: ${lastSyncedAt.toLocaleTimeString()}`}
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${isFetchingApprovals ? "animate-spin" : ""}`} />
+          <span>Refresh</span>
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {lastSyncedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>
+        </Button>
+      </header>
 
-          <div className="flex items-center gap-2">
-            {onlinePortalsCount === totalPortals ? (
-              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                All Pipelines Active ({onlinePortalsCount}/{totalPortals})
-              </span>
-            ) : (
-              <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                {onlinePortalsCount}/{totalPortals} Systems Online
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Ticker Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2">
-          {hubServers.length === 0 && (
-            <span className="col-span-full text-[11px] text-muted-foreground px-1">Message Hub status unavailable</span>
-          )}
-          {hubServers.map((srv) => {
-            const isOnline = srv.status === "online";
-            const isDegraded = srv.status === "degraded";
-            return (
-              <div
-                key={srv.id}
-                className="flex items-center justify-between p-2.5 rounded-lg border text-xs bg-slate-50/80 dark:bg-zinc-800/40 border-slate-100 dark:border-zinc-800/80 select-none"
-              >
-                <div className="min-w-0 pr-2 flex-1">
-                  <span className="font-semibold truncate block text-[11px] sm:text-xs text-slate-800 dark:text-zinc-200">
-                    {srv.name}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground font-mono">:{srv.port}</span>
-                </div>
-                <div className="text-right shrink-0">
-                  <span
-                    className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
-                      isOnline
-                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300"
-                        : isDegraded
-                          ? "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300"
-                          : "bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300"
-                    }`}
-                  >
-                    {srv.status}
-                  </span>
-                  <div className="text-[9px] text-slate-400 font-mono mt-0.5">
-                    {srv.connections_count} {srv.connections_count === 1 ? "conn" : "conns"}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 4 Executive KPI Ribbon */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Treasury Card */}
+      {/* KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <WidgetErrorBoundary widgetName="Treasury & Liquid Assets">
-          <Card className="border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs hover:shadow-xs transition-shadow">
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Treasury & Liquid Assets
-                </span>
-                <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
-                  <CreditCard className="h-4 w-4" />
-                </div>
-              </div>
-              <div className="mt-2.5">
-                {isSummaryLoading ? (
-                  <div className="space-y-1.5 py-0.5">
-                    <Skeleton className="h-7 w-36 rounded-lg" />
-                    <Skeleton className="h-3.5 w-24 rounded" />
-                  </div>
-                ) : (
-                  <>
-                    <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-zinc-100">
-                      ${(summary?.assets ?? 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                    </div>
-                    <div className="flex items-center gap-1 mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                      <ArrowUpRight className="h-3 w-3" />
-                      <span>Real-Time Cash Telemetry</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <KpiCard
+            label="Liquid assets"
+            tone="emerald"
+            icon={<CreditCard className="h-4 w-4" />}
+            loading={isSummaryLoading}
+            value={formatMoney(summary?.assets)}
+            hint="Cash position"
+          />
         </WidgetErrorBoundary>
-
-        {/* Monthly Net Income */}
         <WidgetErrorBoundary widgetName="Monthly Net Income">
-          <Card className="border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs hover:shadow-xs transition-shadow">
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Monthly Net Income
-                </span>
-                <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
-                  <TrendingUp className="h-4 w-4" />
-                </div>
-              </div>
-              <div className="mt-2.5">
-                {isSummaryLoading ? (
-                  <div className="space-y-1.5 py-0.5">
-                    <Skeleton className="h-7 w-36 rounded-lg" />
-                    <Skeleton className="h-3.5 w-24 rounded" />
-                  </div>
-                ) : (
-                  <>
-                    <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-zinc-100">
-                      ${(summary?.netIncome ?? 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                    </div>
-                    <div className="flex items-center gap-1 mt-1 text-xs text-blue-600 dark:text-blue-400 font-medium">
-                      <ArrowUpRight className="h-3 w-3" />
-                      <span>General Ledger Net</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <KpiCard
+            label="Net income"
+            tone="blue"
+            icon={<TrendingUp className="h-4 w-4" />}
+            loading={isSummaryLoading}
+            value={formatMoney(summary?.netIncome)}
+            hint="General ledger"
+          />
         </WidgetErrorBoundary>
-
-        {/* Pending Approvals */}
         <WidgetErrorBoundary widgetName="Pending Approvals">
-          <Card
+          <KpiCard
+            label="Pending approvals"
+            tone="amber"
+            icon={<Clock className="h-4 w-4" />}
+            loading={isApprovalsLoading}
+            value={pendingApprovals.length}
+            hint={`${formatMoney(totalPendingAmount)} awaiting`}
             onClick={() => navigate("/administration")}
-            className="border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 cursor-pointer transition-all group"
-          >
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                  Pending Approvals
-                </span>
-                <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
-                  <Clock className="h-4 w-4" />
-                </div>
-              </div>
-              <div className="mt-2.5">
-                {isApprovalsLoading ? (
-                  <div className="space-y-1.5 py-0.5">
-                    <Skeleton className="h-7 w-28 rounded-lg" />
-                    <Skeleton className="h-3.5 w-32 rounded" />
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-zinc-100">
-                        {pendingApprovals.length}
-                      </span>
-                      <span className="text-xs sm:text-sm font-semibold text-amber-600 dark:text-amber-400">
-                        (${totalPendingAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })})
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[11px] text-indigo-600 dark:text-indigo-400 font-medium mt-1 group-hover:underline">
-                      <span>Manage in Administration</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </div>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          />
         </WidgetErrorBoundary>
-
-        {/* Approved Decisions */}
         <WidgetErrorBoundary widgetName="Approved Decisions">
-          <Card
+          <KpiCard
+            label="Approved decisions"
+            tone="emerald"
+            icon={<CheckCircle2 className="h-4 w-4" />}
+            loading={isHistoryLoading}
+            value={syncedApprovedRequests.length}
+            hint={
+              pendingSyncRequests.length > 0
+                ? `${pendingSyncRequests.length} waiting reconnect`
+                : `${formatMoney(totalApprovedAmount)} approved`
+            }
             onClick={() => navigate("/administration")}
-            className="border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 cursor-pointer transition-all group"
-          >
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                  Approved Decisions
-                </span>
-                <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
-                  <CheckCircle2 className="h-4 w-4" />
-                </div>
-              </div>
-              <div className="mt-2.5">
-                {isHistoryLoading ? (
-                  <div className="space-y-1.5 py-0.5">
-                    <Skeleton className="h-7 w-28 rounded-lg" />
-                    <Skeleton className="h-3.5 w-36 rounded" />
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                        {syncedApprovedRequests.length}
-                      </span>
-                      <span className="text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-                        (${totalApprovedAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })})
-                      </span>
-                    </div>
-                    {pendingSyncRequests.length > 0 ? (
-                      <div className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-1">
-                        <Clock className="w-3 h-3" />
-                        <span>{pendingSyncRequests.length} waiting reconnect</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1 text-[11px] text-indigo-600 dark:text-indigo-400 font-medium mt-1 group-hover:underline">
-                        <span>View history in Administration</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          />
         </WidgetErrorBoundary>
       </div>
+
+      <SystemsStrip servers={hubServers} />
 
       {/* Main Tabs Container */}
       <Tabs defaultValue="financials" className="w-full space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white dark:bg-zinc-900 p-2 sm:p-2.5 rounded-xl border border-slate-200/80 dark:border-zinc-800 shadow-2xs">
-          <TabsList className="bg-slate-100/80 dark:bg-zinc-800/80 p-1 rounded-lg w-full sm:w-auto">
-            <TabsTrigger
-              value="financials"
-              className="text-xs font-semibold px-3 py-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-900 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 data-[state=active]:shadow-2xs rounded-md transition-all gap-1.5 cursor-pointer"
-            >
-              <TrendingUp className="w-3.5 h-3.5" />
-              <span>Financial Overview & General Ledger</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="events"
-              className="text-xs font-semibold px-3 py-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-900 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 data-[state=active]:shadow-2xs rounded-md transition-all gap-1.5 cursor-pointer"
-            >
-              <Activity className="w-3.5 h-3.5" />
-              <span>System Audit Trail ({events.length + auditLogs.length})</span>
-            </TabsTrigger>
-          </TabsList>
-        </div>
+        <TabsList className="w-full sm:w-auto bg-muted/60 p-1 rounded-xl h-auto">
+          <TabsTrigger value="financials" className="flex-1 sm:flex-none gap-1.5 rounded-lg px-4 py-2 text-sm cursor-pointer">
+            <TrendingUp className="h-3.5 w-3.5" />
+            Financials
+          </TabsTrigger>
+          <TabsTrigger value="events" className="flex-1 sm:flex-none gap-1.5 rounded-lg px-4 py-2 text-sm cursor-pointer">
+            <Activity className="h-3.5 w-3.5" />
+            Audit trail ({events.length + auditLogs.length})
+          </TabsTrigger>
+        </TabsList>
 
         {/* Tab 1: Financial Overview */}
         <TabsContent value="financials" className="space-y-4 outline-none">

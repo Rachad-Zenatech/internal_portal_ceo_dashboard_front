@@ -21,12 +21,22 @@ For detailed function and route definitions, see `.agents/code-map.md`.
 - src/components/AppShell/Sidebar.tsx (191 lines) - sidebar (components  app shell)
 - src/components/AppShell/ThemeSwitch.tsx (41 lines) - theme switch (components  app shell)
 - src/components/AppShell/TopBar.tsx (550 lines) - top bar (components  app shell)
+- src/components/Customize/CustomBoard.native.tsx (166 lines) - custom board.native (components  customize)
+- src/components/Customize/CustomBoard.tsx (174 lines) - Phones get a single column, so widgets stack full-width.
+- src/components/Customize/WidgetPanel.native.tsx (301 lines) - widget panel.native (components  customize)
+- src/components/Customize/WidgetPanel.tsx (296 lines) - widget panel (components  customize)
+- src/components/Customize/WidgetRenderer.native.tsx (244 lines) - widget renderer.native (components  customize)
+- src/components/Customize/WidgetRenderer.tsx (205 lines) - widget renderer (components  customize)
+- src/components/Customize/WidgetSkeleton.native.tsx (87 lines) - Placeholder shaped like the widget that is loading.
+- src/components/Customize/WidgetSkeleton.tsx (69 lines) - Placeholder shaped like the widget that is loading, so the page doesn't jump when data arrives.
 - src/components/Dashboard/AccountTypeDonut.tsx (137 lines) - account type donut (components  dashboard)
 - src/components/Dashboard/BankBalancesChart.tsx (160 lines) - bank balances chart (components  dashboard)
 - src/components/Dashboard/FinancialPosition.tsx (121 lines) - financial position (components  dashboard)
+- src/components/Dashboard/KpiCard.tsx (67 lines) - Secondary line under the value (amount, status, hint).
 - src/components/Dashboard/RecentTransactionsTable.tsx (157 lines) - recent transactions table (components  dashboard)
 - src/components/Dashboard/RevenueExpenseChart.tsx (170 lines) - revenue expense chart (components  dashboard)
 - src/components/Dashboard/SummaryCards.tsx (155 lines) - Simple SVG sparklines matching the mockup aesthetics
+- src/components/Dashboard/SystemsStrip.tsx (49 lines) - Compact connected-systems status: one wrapped row of pills instead of a card grid.
 - src/components/common/ErrorBoundary.tsx (48 lines) - error boundary (components common)
 - src/components/common/ProtectedRoute.tsx (64 lines) - protected route (components common)
 - src/components/common/WidgetErrorBoundary.tsx (73 lines) - widget error boundary (components common)
@@ -67,25 +77,36 @@ For detailed function and route definitions, see `.agents/code-map.md`.
 - src/components/ui/toggle.tsx (46 lines) - toggle (components ui)
 - src/components/ui/tooltip.tsx (56 lines) - tooltip (components ui)
 - src/hooks/useApproverRoles.ts (101 lines) - use approver roles (hooks)
+- src/hooks/useBoardState.ts (185 lines) - Next free slot at the bottom of the grid for a new widget.
 - src/hooks/useCeoRealtimeStream.ts (49 lines) - Time the last query successfully received fresh data (not the render time).
 - src/hooks/useDashboard.ts (93 lines) - use dashboard (hooks)
+- src/hooks/useDataSource.ts (27 lines) - use data source (hooks)
 - src/hooks/useHeartbeat.ts (37 lines) - use heartbeat (hooks)
 - src/hooks/useNotifications.ts (296 lines) - use notifications (hooks)
 - src/hooks/useSearch.ts (16 lines) - use search (hooks)
 - src/hooks/useServiceCommand.ts (124 lines) - use service command (hooks)
 - src/hooks/useStreamingChat.ts (163 lines) - use streaming chat (hooks)
+- src/hooks/useWidgetData.ts (25 lines) - Everything a widget needs to draw itself: live rows (filtered), grouped chart points and its columns.
+- src/hooks/useWidgetDraft.ts (88 lines) - The editing logic behind the "add / edit widget" panel, shared by web and native so they behave the same.
 - src/lib/AuthContext.tsx (239 lines) - auth context (lib)
 - src/lib/ServiceStatusContext.tsx (352 lines) - Service Name Normalization Map
+- src/lib/aggregate.ts (85 lines) - aggregate (lib)
+- src/lib/boardDefaults.ts (52 lines) - board defaults (lib)
 - src/lib/codegenShim.ts (4 lines) - codegen shim (lib)
+- src/lib/dataSources.ts (217 lines) - Live pass-through catalog.
 - src/lib/env.ts (64 lines) - Universal environment variable reader for Vite and Metro / React Native
 - src/lib/storage.ts (74 lines) - Universal storage adapter for Web and Native
 - src/lib/utils.ts (7 lines) - utils (lib)
+- src/lib/widgetLogic.ts (126 lines) - Plain-language names and one-line descriptions for every display type (shared by web and native).
 - src/pages/Administration/Administration.native.tsx (1106 lines) - administration.native (pages  administration)
 - src/pages/Administration/Administration.tsx (2064 lines) - administration (pages  administration)
 - src/pages/Auth/Login.native.tsx (288 lines) - login.native (pages  auth)
 - src/pages/Auth/Login.tsx (215 lines) - login (pages  auth)
 - src/pages/Auth/PendingAccess.native.tsx (132 lines) - pending access.native (pages  auth)
 - src/pages/Auth/PendingAccess.tsx (146 lines) - pending access (pages  auth)
+- src/pages/Customization/Customization.tsx (14 lines) - customization (pages  customization)
+- src/pages/Customization/CustomizeAdministration.tsx (14 lines) - customize administration (pages  customization)
+- src/pages/Customization/CustomizeMA.tsx (14 lines) - customize m a (pages  customization)
 - src/pages/Dashboard/Dashboard.native.tsx (3816 lines) - dashboard.native (pages  dashboard)
 - src/pages/Dashboard/Dashboard.tsx (364 lines) - dashboard (pages  dashboard)
 - src/pages/Log/AuditLog.native.tsx (904 lines) - audit log.native (pages  log)
@@ -109,6 +130,7 @@ For detailed function and route definitions, see `.agents/code-map.md`.
 - src/types/bankFeedRule.ts (39 lines) - bank feed rule (types)
 - src/types/chartOfAccount.ts (13 lines) - chart of account (types)
 - src/types/classification.ts (149 lines) - classification (types)
+- src/types/customize.ts (69 lines) - dimension = something you group/label by; measure = something you add up or average.
 - src/types/dashboard.ts (45 lines) - dashboard (types)
 - src/types/search.ts (8 lines) - search (types)
 - src/types/uploadArchive.ts (26 lines) - upload archive (types)

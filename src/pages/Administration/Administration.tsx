@@ -19,15 +19,10 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Lock,
-  Building2,
   WifiOff,
 } from "lucide-react";
 import { AssignApproversModal } from "@/components/Administration/AssignApproversModal";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -44,6 +39,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { getEnv } from "@/lib/env";
+import { useApproverRoleMembers } from "@/hooks/useApproverRoles";
+import { KpiCard, formatMoney } from "@/components/Dashboard/KpiCard";
 
 interface PurchaseRequestLineItem {
   id?: string | number;
@@ -473,7 +470,7 @@ export default function Administration() {
   const [tierFilter, setTierFilter] = useState<string>("ALL");
   const [approvalViewMode, setApprovalViewMode] = useState<"pending" | "pending_sync" | "approved">("pending");
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 8;
+  const pageSize = 50;
 
   // Selected single request for single-action modal
   const [selectedRequest, setSelectedRequest] = useState<PurchaseRequest | null>(null);
@@ -896,261 +893,123 @@ export default function Administration() {
   const isServerDisconnected = !isAdminOnline || isApprovalsError;
   const isRefreshingAny = isFetchingApprovals || isFetchingHistory;
 
+  const { data: highApprovers } = useApproverRoleMembers("HIGH_LEVEL_APPROVER");
+  const { data: lowApprovers } = useApproverRoleMembers("LOW_LEVEL_APPROVER");
+  const executiveCount = Array.isArray(highApprovers) ? highApprovers.length : 0;
+  const managerCount = Array.isArray(lowApprovers) ? lowApprovers.length : 0;
+
   return (
-    <div className="w-full flex flex-col gap-4 sm:gap-5 p-4 sm:p-6 lg:p-7 min-h-screen bg-slate-50/40 dark:bg-zinc-950 transition-colors">
-      {/* Header Bar */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-3 border-b border-slate-200/80 dark:border-zinc-800/80">
-        <div className="space-y-1">
+    <div className="mx-auto w-full max-w-[1600px] flex flex-col gap-4 sm:gap-6 p-4 sm:p-6 lg:p-8 min-h-screen bg-background">
+      {/* Page header */}
+      <header className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+        <div className="space-y-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100 flex items-center gap-2.5">
-              <Building2 className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-              Administration & Governance
-            </h1>
-            <span
-              className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 ${
-                isAdminOnline
-                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300"
-                  : "bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300"
-              }`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${isAdminOnline ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
-              {isAdminOnline ? "Admin Portal Online (:8002)" : "Admin Portal Offline (:8002)"}
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Administration</h1>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-0.5 text-xs text-muted-foreground">
+              <span className={`h-1.5 w-1.5 rounded-full ${isAdminOnline ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
+              {isAdminOnline ? "Live" : "Offline"}
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400">
-            Executive purchasing approval pipelines, PBAC role delegations, and synchronized administration portal governance.
-          </p>
+          <p className="text-sm text-muted-foreground">Purchase approvals and approver delegation, synced with the Administration portal.</p>
         </div>
 
-        {/* Action Toolbar */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0 w-full lg:w-auto">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
-            onClick={() => {
-              setIsAssignApproversOpen(true);
-            }}
-            className={`text-xs font-medium h-9 px-4 rounded-xl gap-2 transition-all flex-1 sm:flex-initial justify-center ${
-              isAdminOnline
-                ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs cursor-pointer active:scale-98"
-                : "bg-slate-200 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 border border-slate-200 dark:border-zinc-800 cursor-not-allowed opacity-60"
-            }`}
-            title={!isAdminOnline ? "Admin Portal is offline. Connect Admin Portal to assign approvers." : "Assign Approvers"}
+            onClick={() => setIsAssignApproversOpen(true)}
+            disabled={!isAdminOnline}
+            className="h-10 sm:h-9 rounded-xl gap-2 bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
+            title={!isAdminOnline ? "Administration portal is offline. Connect to assign approvers." : "Assign approvers"}
           >
-            {isAdminOnline ? (
-              <UserCheck className="w-4 h-4" />
-            ) : (
-              <Lock className="w-4 h-4 text-slate-400" />
-            )}
-            <span>Assign Approver</span>
+            {isAdminOnline ? <UserCheck className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+            Assign approver
           </Button>
-
           <Button
             variant="outline"
             size="sm"
             onClick={() => window.open(getEnv("VITE_ADMIN_PORTAL_URL", "http://localhost:5174") + "/purchasing/requests", "_blank")}
-            className={`text-xs h-9 px-3 rounded-xl border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 gap-1.5 ${
-              isServerDisconnected ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-            }`}
+            disabled={isServerDisconnected}
+            className="h-10 sm:h-9 rounded-xl gap-2 cursor-pointer"
           >
-            <span className="hidden xs:inline">Open</span> Admin Portal
-            <ExternalLink className="w-3.5 h-3.5" />
+            Admin portal
+            <ExternalLink className="h-3.5 w-3.5" />
           </Button>
-
           <Button
             variant="outline"
             size="sm"
             onClick={refreshAll}
             disabled={isRefreshingAny}
-            className="text-xs h-9 px-3.5 rounded-xl border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 gap-1.5 transition-all shadow-2xs cursor-pointer"
+            className="h-10 sm:h-9 rounded-xl gap-2 cursor-pointer"
             title={`Last synced: ${lastSyncedAt.toLocaleTimeString()}`}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingAny ? "animate-spin text-indigo-600" : ""}`} />
-            <span className="hidden sm:inline">Sync Feeds</span>
+            <RefreshCw className={`h-3.5 w-3.5 ${isRefreshingAny ? "animate-spin" : ""}`} />
+            Refresh
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {lastSyncedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
           </Button>
         </div>
-      </div>
+      </header>
 
-      {/* Disconnected Notice Banner with Retry Connection Button */}
       {isServerDisconnected && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-xl border border-amber-200/80 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 shadow-2xs transition-all">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 shrink-0">
-              <WifiOff className="w-5 h-5" />
-            </div>
+        <div role="alert" className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 p-4 text-amber-900 dark:text-amber-200">
+          <div className="flex items-start gap-3">
+            <WifiOff className="h-5 w-5 mt-0.5 shrink-0" />
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2">
-                <span>Administration Service Disconnected</span>
-                <span className="text-[10px] font-semibold px-2 py-0.2 rounded bg-amber-200/70 dark:bg-amber-900/80 text-amber-800 dark:text-amber-200 uppercase">
-                  Offline
-                </span>
-              </h4>
-              <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-                The connection to Administration Portal (:8002) is currently unreachable. Displaying cached data while disconnected. You can queue actions and they will be processed upon reconnection.
-              </p>
+              <p className="text-sm font-semibold">Administration service unreachable</p>
+              <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">Showing the last loaded data. Actions are queued and sent when the service reconnects.</p>
             </div>
           </div>
-          <Button
-            size="sm"
-            onClick={refreshAll}
-            disabled={isRefreshingAny}
-            className="h-8 px-4 text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white rounded-lg shadow-2xs gap-1.5 shrink-0 cursor-pointer active:scale-98"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingAny ? "animate-spin" : ""}`} />
-            <span>Retry Connection</span>
+          <Button size="sm" onClick={refreshAll} disabled={isRefreshingAny} className="h-10 sm:h-9 rounded-xl bg-amber-600 hover:bg-amber-700 text-white gap-1.5 shrink-0 cursor-pointer">
+            <RefreshCw className={`h-3.5 w-3.5 ${isRefreshingAny ? "animate-spin" : ""}`} />
+            Retry
           </Button>
         </div>
       )}
 
-      {/* 3 Executive Administration KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        {/* Pending Approvals Card */}
+      {/* KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <WidgetErrorBoundary widgetName="Pending Approvals">
-          <Card className="border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs hover:shadow-xs transition-shadow">
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Pending Review
-                </span>
-                <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
-                  <Clock className="h-4 w-4" />
-                </div>
-              </div>
-              <div className="mt-2.5">
-                {isApprovalsLoading && !isServerDisconnected ? (
-                  <div className="space-y-2 py-0.5">
-                    <Skeleton className="h-7 w-28 rounded-lg" />
-                    <Skeleton className="h-3.5 w-36 rounded" />
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-zinc-100">
-                        {pendingApprovals.length}
-                      </span>
-                      <span className="text-xs sm:text-sm font-semibold text-amber-600 dark:text-amber-400">
-                        (${totalPendingAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })})
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground mt-1">Requires executive sign-off</p>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <KpiCard
+            label="Pending review"
+            tone="amber"
+            icon={<Clock className="h-4 w-4" />}
+            loading={isApprovalsLoading && !isServerDisconnected}
+            value={pendingApprovals.length}
+            hint={`${formatMoney(totalPendingAmount)} awaiting sign-off`}
+          />
         </WidgetErrorBoundary>
-
-        {/* Approved Decisions Card */}
         <WidgetErrorBoundary widgetName="Approved Decisions">
-          <Card className="border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs hover:shadow-xs transition-shadow">
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Approved Decisions
-                </span>
-                <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
-                  <CheckCircle2 className="h-4 w-4" />
-                </div>
-              </div>
-              <div className="mt-2.5">
-                {isHistoryLoading && !isServerDisconnected ? (
-                  <div className="space-y-2 py-0.5">
-                    <Skeleton className="h-7 w-28 rounded-lg" />
-                    <Skeleton className="h-3.5 w-40 rounded" />
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                        {syncedApprovedRequests.length}
-                      </span>
-                      <span className="text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-                        (${totalApprovedAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })})
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between mt-1">
-                      <p className="text-[11px] text-muted-foreground">Synchronized with Admin Portal</p>
-                      {pendingSyncRequests.length > 0 && (
-                        <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-200/60">
-                          {pendingSyncRequests.length} waiting reconnect (${totalPendingSyncAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })})
-                        </span>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <KpiCard
+            label="Approved decisions"
+            tone="emerald"
+            icon={<CheckCircle2 className="h-4 w-4" />}
+            loading={isHistoryLoading && !isServerDisconnected}
+            value={syncedApprovedRequests.length}
+            hint={
+              pendingSyncRequests.length > 0
+                ? `${pendingSyncRequests.length} waiting reconnect (${formatMoney(totalPendingSyncAmount)})`
+                : `${formatMoney(totalApprovedAmount)} approved`
+            }
+          />
         </WidgetErrorBoundary>
-
-        {/* Governance & Approver Delegation Card */}
-        <WidgetErrorBoundary widgetName="Governance & RBAC">
-          <Card
-            onClick={() => {
-              setIsAssignApproversOpen(true);
-            }}
-            className="border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all cursor-pointer group"
-          >
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                  Approver Delegation
-                </span>
-                <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950/60 group-hover:text-indigo-600 transition-colors">
-                  <ShieldCheck className="h-4 w-4" />
-                </div>
-              </div>
-              <div className="mt-2.5 flex items-end justify-between gap-2">
-                <div>
-                  <div className="text-xl sm:text-2xl font-bold text-purple-700 dark:text-purple-300">
-                    5 Roles Active
-                  </div>
-                  <div className="flex items-center gap-1 mt-1 text-xs text-purple-600 dark:text-purple-400 font-medium">
-                    <span>Executive & Manager tiers</span>
-                  </div>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsAssignApproversOpen(true);
-                  }}
-                  className="h-8 px-2.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg gap-1 shadow-2xs cursor-pointer active:scale-95 shrink-0"
-                >
-                  <UserCheck className="w-3.5 h-3.5" />
-                  <span>Assign</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </WidgetErrorBoundary>
+        <div className="col-span-2 lg:col-span-1">
+          <WidgetErrorBoundary widgetName="Governance & RBAC">
+            <KpiCard
+              label="Approver delegation"
+              tone="indigo"
+              icon={<ShieldCheck className="h-4 w-4" />}
+              value={executiveCount + managerCount}
+              hint={`${executiveCount} executive · ${managerCount} manager`}
+              onClick={() => setIsAssignApproversOpen(true)}
+            />
+          </WidgetErrorBoundary>
+        </div>
       </div>
 
       {/* Main Approvals Table Section */}
       <WidgetErrorBoundary widgetName="Approvals Pipeline" onReset={refetchApprovals}>
         <div className="space-y-3 outline-none">
-          {/* Mobile-Only Quick Action Bar */}
-          <div className="sm:hidden flex items-center justify-between gap-2 p-3 bg-indigo-50/80 dark:bg-indigo-950/40 rounded-xl border border-indigo-100 dark:border-indigo-900/60 shadow-2xs">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-indigo-600 text-white">
-                <UserCheck className="w-4 h-4" />
-              </div>
-              <div>
-                <span className="text-xs font-bold text-slate-900 dark:text-zinc-100 block">Approver Role Delegation</span>
-                <span className="text-[10px] text-muted-foreground">Assign PBAC review tiers</span>
-              </div>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => {
-                setIsAssignApproversOpen(true);
-              }}
-              className="h-8 px-3 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold shadow-2xs gap-1 cursor-pointer shrink-0"
-            >
-              <UserCheck className="w-3.5 h-3.5" />
-              <span>Assign</span>
-            </Button>
-          </div>
-
           {/* Controls Bar: Search, Filters & View Mode */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-3 sm:p-3.5 rounded-xl border border-slate-200/80 dark:border-zinc-800 shadow-2xs">
             {/* View Mode Toggle */}

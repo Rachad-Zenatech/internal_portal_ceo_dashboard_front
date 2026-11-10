@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
-import { Suspense } from "react";
+import { Suspense, lazy } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./lib/AuthContext";
 import { ServiceStatusProvider } from "./lib/ServiceStatusContext";
@@ -15,6 +15,11 @@ import AuditLog from "./pages/Log/AuditLog";
 import Login from "./pages/Auth/Login";
 import PendingAccess from "./pages/Auth/PendingAccess";
 import Settings from "./pages/Settings/Settings";
+
+// Customizable boards pull in the grid/drag library, so load them on demand.
+const Customization = lazy(() => import("./pages/Customization/Customization"));
+const CustomizeMA = lazy(() => import("./pages/Customization/CustomizeMA"));
+const CustomizeAdministration = lazy(() => import("./pages/Customization/CustomizeAdministration"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,6 +95,30 @@ function App() {
                     <Route
                       path="/administration"
                       element={<Administration />}
+                    />
+                    <Route
+                      path="/customization"
+                      element={
+                        <ProtectedRoute navigationCode="DASHBOARD">
+                          <Customization />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/customize-ma"
+                      element={
+                        <ProtectedRoute navigationCode="DASHBOARD">
+                          <CustomizeMA />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/customize-administration"
+                      element={
+                        <ProtectedRoute navigationCode="DASHBOARD">
+                          <CustomizeAdministration />
+                        </ProtectedRoute>
+                      }
                     />
                     <Route
                       path="/upload-files"

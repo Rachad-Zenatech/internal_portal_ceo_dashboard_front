@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/services/apiClient";
 import { useCeoRealtimeStream } from "@/hooks/useCeoRealtimeStream";
@@ -12,6 +12,9 @@ import {
   Building2,
   User,
   FileText,
+  Target,
+  Send,
+  DollarSign,
 } from "lucide-react";
 import {
   Dialog,
@@ -21,16 +24,22 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
+import { KpiCard } from "@/components/Dashboard/KpiCard";
 import { toast } from "sonner";
+
+// The deal list loads this many rows at a time as you scroll.
+const BATCH_SIZE = 10;
 
 interface PipelineSummary {
   status: string;
+  /** "saved" means the backend could not reach the M&A service and is showing its stored copy. */
+  data_source?: "live" | "saved";
+  as_of?: string | null;
   total_active_pipeline_tasks: number;
   total_target_companies: number;
   total_call_interactions: number;
@@ -63,6 +72,8 @@ interface PipelineTask {
   latest_note?: string;
   created_at?: string;
   updated_at?: string;
+  /** Set by the backend on rows served from its saved copy because the live M&A call failed. */
+  _stale?: boolean;
   nda?: string;
   p_and_l?: string;
   team_size?: string;
@@ -95,14 +106,16 @@ function formatSingleRev(valStr: string): string {
 
 export default function MergersAcquisitions() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const [selectedDeal, setSelectedDeal] = useState<PipelineTask | null>(null);
 
-  // Shared Singleton SSE Hook & Event-Driven Service Availability
   const { lastSyncedAt, triggerManualSync } = useCeoRealtimeStream();
   const { isOnline } = useServiceStatus();
   const isMaOnline = isOnline("ma");
 
-  // 1. Fetch Executive Summary KPIs
+  // 1. Executive summary KPIs. Kept fresh by WebSocket invalidation of ["ma"], plus refetch on focus.
   const {
     data: summary,
     isLoading: isSummaryLoading,
@@ -112,12 +125,12 @@ export default function MergersAcquisitions() {
   } = useQuery<PipelineSummary>({
     queryKey: ["ma", "summary"],
     queryFn: ({ signal }) => apiClient.get<PipelineSummary>("/api/v1/ceo/ma/summary", { signal }),
-    staleTime: 60000,
+    staleTime: 30000,
     retry: false,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 
-  // 2. Fetch LOI Accepted Deals via server-side filter
+  // 2. LOI accepted deals via server-side filter
   const {
     data: rawTasks = [],
     isLoading: isTasksLoading,
@@ -127,332 +140,229 @@ export default function MergersAcquisitions() {
   } = useQuery<PipelineTask[]>({
     queryKey: ["ma", "pipeline-loi-accepted-deals"],
     queryFn: ({ signal }) => apiClient.get<PipelineTask[]>("/api/v1/ceo/ma/pipeline?limit=100&skip=0&loi_accepted_only=true", { signal }),
-    staleTime: 60000,
+    staleTime: 30000,
     retry: false,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 
-  const isMaOffline = !isMaOnline || summary?.status === "offline" || isSummaryError || isTasksError;
+  // "Saved" is judged from both responses: the KPI summary and the deal rows each say whether they are live.
+  const dealsAreSaved = Array.isArray(rawTasks) && rawTasks.some((d) => d._stale);
+  const showingSaved = summary?.data_source === "saved" || dealsAreSaved;
+  const isMaOffline = !isMaOnline || summary?.status === "offline" || dealsAreSaved || isSummaryError || isTasksError;
   const isRefreshingAny = isSummaryFetching || isTasksFetching;
 
   const refreshAll = () => {
     triggerManualSync();
     refetchSummary();
     refetchTasks();
-    toast.info("Retrying M&A connection and refreshing pipeline feeds...");
+    toast.info("Refreshing M&A pipeline...");
   };
 
-  const loiAcceptedDeals = useMemo(() => {
-    return Array.isArray(rawTasks) ? rawTasks : [];
-  }, [rawTasks]);
+  const loiAcceptedDeals = useMemo(() => (Array.isArray(rawTasks) ? rawTasks : []), [rawTasks]);
 
   const filteredDeals = useMemo(() => {
-    return loiAcceptedDeals.filter((t) => {
-      const q = searchQuery.toLowerCase();
-      return (
+    const q = searchQuery.toLowerCase();
+    return loiAcceptedDeals.filter(
+      (t) =>
         (t.company_name || "").toLowerCase().includes(q) ||
         (t.industry_name || "").toLowerCase().includes(q) ||
         (t.analyst_name || "").toLowerCase().includes(q) ||
-        (t.state_name || "").toLowerCase().includes(q)
-      );
-    });
+        (t.state_name || "").toLowerCase().includes(q),
+    );
   }, [loiAcceptedDeals, searchQuery]);
 
+  // A new search starts again from the first 10 matches.
+  useEffect(() => setVisibleCount(BATCH_SIZE), [searchQuery]);
+
+  const visibleDeals = filteredDeals.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredDeals.length;
+  const loadMore = () => setVisibleCount((c) => c + BATCH_SIZE);
+
+  // Infinite scroll: when the marker at the bottom of the list scrolls into view, reveal the next 10. The effect
+  // re-runs after each batch, so a tall screen keeps filling until the list overflows.
+  useEffect(() => {
+    const root = scrollRef.current;
+    const marker = sentinelRef.current;
+    if (!root || !marker || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) setVisibleCount((c) => c + BATCH_SIZE);
+      },
+      { root, rootMargin: "120px" },
+    );
+    observer.observe(marker);
+    return () => observer.disconnect();
+  }, [hasMore, visibleCount]);
+  const showSkeleton = isTasksLoading && !isMaOffline;
+  const kpiLoading = isSummaryLoading && !isMaOffline;
+
   return (
-    <div className="w-full flex flex-col gap-4 sm:gap-5 p-4 sm:p-6 lg:p-7 min-h-screen bg-slate-50/40 dark:bg-zinc-950 transition-colors">
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200/80 dark:border-zinc-800/80">
-        <div className="space-y-1">
+    <div className="mx-auto w-full max-w-[1600px] flex flex-col gap-4 sm:gap-6 p-4 sm:p-6 lg:p-8 min-h-screen bg-background">
+      {/* Page header */}
+      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div className="space-y-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100 flex items-center gap-2.5">
-              <Briefcase className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-              Mergers & Acquisitions Pipeline
-            </h1>
-            <span
-              className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 ${
-                !isMaOffline
-                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300"
-                  : "bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300"
-              }`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${!isMaOffline ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
-              {!isMaOffline ? "M&A Service Online (:8000)" : "M&A Service Offline (:8000)"}
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">M&A Pipeline</h1>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-0.5 text-xs text-muted-foreground">
+              <span className={`h-1.5 w-1.5 rounded-full ${isMaOffline ? "bg-rose-500" : "bg-emerald-500 animate-pulse"}`} />
+              {isMaOffline ? "Offline" : "Live"}
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400">
-            Real-time acquisition target pipeline, LOI accepted tracker, and synchronized cross-service deal telemetry.
-          </p>
+          <p className="text-sm text-muted-foreground">Acquisition targets and LOI-accepted deals, synced from the M&A service.</p>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={refreshAll}
+          disabled={isRefreshingAny}
+          className="h-10 sm:h-9 rounded-xl gap-2 self-start sm:self-auto cursor-pointer"
+          title={`Last synced: ${lastSyncedAt.toLocaleTimeString()}`}
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${isRefreshingAny ? "animate-spin" : ""}`} />
+          <span>Refresh</span>
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {lastSyncedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          </span>
+        </Button>
+      </header>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={refreshAll}
-            disabled={isRefreshingAny}
-            className="text-xs h-9 px-3.5 rounded-xl border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 gap-1.5 shadow-2xs cursor-pointer"
-            title={`Last synced: ${lastSyncedAt.toLocaleTimeString()}`}
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingAny ? "animate-spin text-indigo-600" : ""}`} />
-            <span className="hidden sm:inline">Sync Pipeline</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Disconnected Notice Banner with Retry Connection Button */}
       {isMaOffline && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-xl border border-amber-200/80 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 shadow-2xs transition-all">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 shrink-0">
-              <WifiOff className="w-5 h-5" />
-            </div>
+        <div role="alert" className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 p-4 text-amber-900 dark:text-amber-200">
+          <div className="flex items-start gap-3">
+            <WifiOff className="h-5 w-5 mt-0.5 shrink-0" />
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2">
-                <span>M&A Microservice Disconnected</span>
-                <span className="text-[10px] font-semibold px-2 py-0.2 rounded bg-amber-200/70 dark:bg-amber-900/80 text-amber-800 dark:text-amber-200 uppercase">
-                  Offline
-                </span>
-              </h4>
+              <p className="text-sm font-semibold">{showingSaved ? "Showing saved M&A data, not live" : "M&A service unreachable"}</p>
               <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-                The connection to the M&A Microservice (:8000) is currently unreachable. Displaying cached pipeline data while disconnected. Navigation and actions remain fully active.
+                {showingSaved
+                  ? `The M&A service did not answer the live request${summary?.as_of ? `, so this is the copy saved on ${new Date(summary.as_of).toLocaleString()}` : ""}. It refreshes automatically once the connection works.`
+                  : "Showing the last loaded data. It will refresh automatically when the service returns."}
               </p>
             </div>
           </div>
-          <Button
-            size="sm"
-            onClick={refreshAll}
-            disabled={isRefreshingAny}
-            className="h-8 px-4 text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white rounded-lg shadow-2xs gap-1.5 shrink-0 cursor-pointer active:scale-98"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingAny ? "animate-spin" : ""}`} />
-            <span>Retry Connection</span>
+          <Button size="sm" onClick={refreshAll} disabled={isRefreshingAny} className="h-10 sm:h-9 rounded-xl bg-amber-600 hover:bg-amber-700 text-white gap-1.5 shrink-0 cursor-pointer">
+            <RefreshCw className={`h-3.5 w-3.5 ${isRefreshingAny ? "animate-spin" : ""}`} />
+            Retry
           </Button>
         </div>
       )}
 
-      {/* 4 Executive KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Total Pipeline Target Companies */}
+      {/* KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <WidgetErrorBoundary widgetName="Total Target Companies">
-          <Card className="border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
-            <CardContent className="p-4 sm:p-5">
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider block">
-                Target Companies
-              </span>
-              <div className="mt-2.5">
-                {isSummaryLoading && !isMaOffline ? (
-                  <div className="space-y-1.5 py-0.5">
-                    <Skeleton className="h-7 w-20 rounded-lg" />
-                    <Skeleton className="h-3.5 w-28 rounded" />
-                  </div>
-                ) : (
-                  <>
-                    <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-zinc-100">
-                      {summary?.total_target_companies || summary?.total_active_pipeline_tasks || 0}
-                    </div>
-                    <p className="text-[11px] text-muted-foreground mt-1">Active prospective targets</p>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <KpiCard label="Target companies" tone="indigo" icon={<Target className="h-4 w-4" />} loading={kpiLoading}
+            value={summary?.total_target_companies ?? summary?.total_active_pipeline_tasks ?? 0} hint="Active prospects" />
         </WidgetErrorBoundary>
-
-        {/* LOI Accepted Deals */}
         <WidgetErrorBoundary widgetName="LOI Accepted Deals">
-          <Card className="border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
-            <CardContent className="p-4 sm:p-5">
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider block">
-                LOI Accepted
-              </span>
-              <div className="mt-2.5">
-                {isSummaryLoading && !isMaOffline ? (
-                  <div className="space-y-1.5 py-0.5">
-                    <Skeleton className="h-7 w-20 rounded-lg" />
-                    <Skeleton className="h-3.5 w-32 rounded" />
-                  </div>
-                ) : (
-                  <>
-                    <div className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                      {summary?.loi_accepted_count || loiAcceptedDeals.length || 0}
-                    </div>
-                    <p className="text-[11px] text-muted-foreground mt-1">Ready for due diligence</p>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <KpiCard label="LOI accepted" tone="emerald" icon={<CheckCircle2 className="h-4 w-4" />} loading={kpiLoading}
+            value={summary?.loi_accepted_count ?? loiAcceptedDeals.length} hint="Ready for diligence" />
         </WidgetErrorBoundary>
-
-        {/* LOI In-Flight (Sent) */}
         <WidgetErrorBoundary widgetName="LOI Sent In-Flight">
-          <Card className="border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
-            <CardContent className="p-4 sm:p-5">
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider block">
-                LOI Sent / Pending
-              </span>
-              <div className="mt-2.5">
-                {isSummaryLoading && !isMaOffline ? (
-                  <div className="space-y-1.5 py-0.5">
-                    <Skeleton className="h-7 w-20 rounded-lg" />
-                    <Skeleton className="h-3.5 w-28 rounded" />
-                  </div>
-                ) : (
-                  <>
-                    <div className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400">
-                      {summary?.loi_sent_count || 0}
-                    </div>
-                    <p className="text-[11px] text-muted-foreground mt-1">Pending target response</p>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <KpiCard label="LOI sent" tone="amber" icon={<Send className="h-4 w-4" />} loading={kpiLoading}
+            value={summary?.loi_sent_count ?? 0} hint="Awaiting response" />
         </WidgetErrorBoundary>
-
-        {/* Estimated Pipeline Revenue */}
         <WidgetErrorBoundary widgetName="Pipeline Revenue">
-          <Card className="border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
-            <CardContent className="p-4 sm:p-5">
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider block">
-                Target Revenue Pool
-              </span>
-              <div className="mt-2.5">
-                {isSummaryLoading && !isMaOffline ? (
-                  <div className="space-y-1.5 py-0.5">
-                    <Skeleton className="h-7 w-24 rounded-lg" />
-                    <Skeleton className="h-3.5 w-32 rounded" />
-                  </div>
-                ) : (
-                  <>
-                    <div className="text-xl sm:text-2xl font-bold text-indigo-600 dark:text-indigo-400 font-mono">
-                      {summary?.total_pipeline_revenue || "$0"}
-                    </div>
-                    <p className="text-[11px] text-muted-foreground mt-1">Aggregate annual run-rate</p>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <KpiCard label="Revenue pool" tone="blue" icon={<DollarSign className="h-4 w-4" />} loading={kpiLoading}
+            value={summary?.total_pipeline_revenue || "$0"} hint="Annual run-rate" />
         </WidgetErrorBoundary>
       </div>
 
-      {/* Main Deals List & Detail Section */}
+      {/* Deals */}
       <WidgetErrorBoundary widgetName="LOI Accepted Target List" onReset={refetchTasks}>
-        <div className="space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-3 sm:p-3.5 rounded-xl border border-slate-200/80 dark:border-zinc-800 shadow-2xs">
+        <section className="rounded-2xl border border-border bg-card shadow-2xs overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 border-b border-border">
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-zinc-100">
-                LOI Accepted Acquisition Deals
-              </h3>
-              <Badge variant="outline" className="text-[10px] px-2 py-0 bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 font-semibold">
-                {filteredDeals.length} Deals
-              </Badge>
+              <h2 className="text-sm font-semibold text-foreground">LOI accepted deals</h2>
+              <Badge variant="secondary" className="text-xs">{filteredDeals.length}</Badge>
             </div>
-
-            <div className="relative w-full sm:w-64">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <div className="relative w-full sm:w-72">
+              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
-                type="text"
-                placeholder={"Search target company, industry..."}
-
+                type="search"
+                placeholder="Search company, industry, analyst…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`h-8 pl-8 text-xs bg-slate-50/60 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 rounded-lg w-full ${
-                  isMaOffline ? "opacity-50 cursor-not-allowed bg-slate-100 dark:bg-zinc-900" : ""
-                }`}
+                className="h-10 sm:h-9 pl-9 text-sm rounded-xl w-full"
               />
             </div>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800 shadow-2xs overflow-hidden">
-            {isTasksLoading && !isMaOffline ? (
-              <div className="w-full overflow-x-auto">
-                <table className="w-full text-xs text-left border-collapse">
+          {showSkeleton ? (
+            <div className="p-4 space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-12 w-full rounded-xl" />)}
+            </div>
+          ) : filteredDeals.length === 0 ? (
+            <div className="p-12 text-center space-y-2">
+              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <p className="text-sm font-medium text-foreground">No LOI accepted deals</p>
+              <p className="text-xs text-muted-foreground">{searchQuery ? "Nothing matches your search." : "No accepted LOI records are registered yet."}</p>
+            </div>
+          ) : (
+            <>
+              {/* One scroll area for both layouts: the header stays put and more rows load as you reach the bottom */}
+              <div ref={scrollRef} className="max-h-[60vh] overflow-auto">
+                {/* Phones: tappable cards */}
+                <ul className="md:hidden divide-y divide-border">
+                  {visibleDeals.map((deal) => (
+                    <li key={deal.id}>
+                      <button type="button" onClick={() => setSelectedDeal(deal)} className="w-full text-left p-4 active:bg-muted/60 cursor-pointer">
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="font-semibold text-foreground">{deal.company_name}</span>
+                          <span className="font-mono text-sm font-semibold text-foreground shrink-0">{formatRevenue(deal.revenue)}</span>
+                        </div>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {[deal.industry_name || "General", deal.state_name || deal.state_code || deal.country_name].filter(Boolean).join(" · ")}
+                        </p>
+                        <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{deal.latest_note || "LOI formally accepted by target management."}</p>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Tablet / desktop: table */}
+                <table className="hidden md:table w-full text-sm text-left">
                   <thead>
-                    <tr className="bg-slate-50/80 dark:bg-zinc-800/60 border-b border-slate-200/80 dark:border-zinc-800 text-slate-500 dark:text-zinc-400 font-semibold">
-                      <th className="py-3 px-4 w-[200px]">Target Company</th>
-                      <th className="py-3 px-4 w-[160px]">Industry</th>
-                      <th className="py-3 px-4 w-[130px]">Location</th>
-                      <th className="py-3 px-4 w-[140px] text-right">Revenue</th>
-                      <th className="py-3 px-4 w-[160px] text-center">Status</th>
-                      <th className="py-3 px-4 min-w-[200px]">Latest Activity</th>
+                    <tr className="text-xs text-muted-foreground">
+                      <th className="sticky top-0 z-10 bg-muted py-3 px-4 font-medium">Target company</th>
+                      <th className="sticky top-0 z-10 bg-muted py-3 px-4 font-medium">Industry</th>
+                      <th className="sticky top-0 z-10 bg-muted py-3 px-4 font-medium">Location</th>
+                      <th className="sticky top-0 z-10 bg-muted py-3 px-4 font-medium text-right">Revenue</th>
+                      <th className="sticky top-0 z-10 bg-muted py-3 px-4 font-medium">Latest activity</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/80">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <tr key={i} className="hover:bg-slate-50/40 dark:hover:bg-zinc-800/30">
-                        <td className="py-3.5 px-4"><Skeleton className="h-4 w-32 rounded" /></td>
-                        <td className="py-3.5 px-4"><Skeleton className="h-4 w-24 rounded" /></td>
-                        <td className="py-3.5 px-4"><Skeleton className="h-4 w-20 rounded" /></td>
-                        <td className="py-3.5 px-4 text-right"><Skeleton className="h-4 w-16 ml-auto rounded" /></td>
-                        <td className="py-3.5 px-4 text-center"><Skeleton className="h-5 w-24 mx-auto rounded-full" /></td>
-                        <td className="py-3.5 px-4"><Skeleton className="h-4 w-48 rounded" /></td>
+                  <tbody className="divide-y divide-border">
+                    {visibleDeals.map((deal) => (
+                      <tr key={deal.id} onClick={() => setSelectedDeal(deal)} className="hover:bg-muted/40 cursor-pointer transition-colors">
+                        <td className="py-3.5 px-4 font-medium text-foreground whitespace-nowrap">{deal.company_name}</td>
+                        <td className="py-3.5 px-4 text-muted-foreground whitespace-nowrap">{deal.industry_name || "General"}</td>
+                        <td className="py-3.5 px-4 text-muted-foreground whitespace-nowrap">{deal.state_name || deal.state_code || deal.country_name || "United States"}</td>
+                        <td className="py-3.5 px-4 text-right font-mono font-semibold text-foreground whitespace-nowrap">{formatRevenue(deal.revenue)}</td>
+                        <td className="py-3.5 px-4 text-muted-foreground max-w-xs truncate">{deal.latest_note || "LOI formally accepted by target management."}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+
+                {/* Scrolling to this marker loads the next batch */}
+                <div ref={sentinelRef} aria-hidden="true" className="h-px" />
               </div>
-            ) : filteredDeals.length === 0 ? (
-              <div className="p-12 text-center space-y-2">
-                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-400 flex items-center justify-center mx-auto">
-                  <CheckCircle2 className="w-5 h-5" />
-                </div>
-                <h4 className="text-xs font-semibold text-slate-800 dark:text-zinc-200">
-                  No LOI Accepted Deals
-                </h4>
-                <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
-                  No accepted LOI records are currently registered in the pipeline.
-                </p>
+
+              <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-2.5 text-xs text-muted-foreground" aria-live="polite">
+                <span>
+                  Showing <span className="font-medium text-foreground">{visibleDeals.length}</span> of <span className="font-medium text-foreground">{filteredDeals.length}</span> records
+                </span>
+                {hasMore ? (
+                  <button type="button" onClick={loadMore} className="cursor-pointer font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+                    Scroll or load {Math.min(BATCH_SIZE, filteredDeals.length - visibleCount)} more
+                  </button>
+                ) : (
+                  <span>All records loaded</span>
+                )}
               </div>
-            ) : (
-              <div className="w-full overflow-x-auto">
-                <table className="w-full text-xs text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50/80 dark:bg-zinc-800/60 border-b border-slate-200/80 dark:border-zinc-800 text-slate-500 dark:text-zinc-400 font-semibold">
-                      <th className="py-3 px-4 w-[200px] whitespace-nowrap">Target Company</th>
-                      <th className="py-3 px-4 w-[160px] whitespace-nowrap">Industry</th>
-                      <th className="py-3 px-4 w-[130px] whitespace-nowrap">Location</th>
-                      <th className="py-3 px-4 w-[140px] text-right whitespace-nowrap">Revenue</th>
-                      <th className="py-3 px-4 w-[160px] text-center whitespace-nowrap">Status</th>
-                      <th className="py-3 px-4 min-w-[200px]">Latest Activity</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/80">
-                    {filteredDeals.map((deal) => (
-                      <tr
-                        key={deal.id}
-                        onClick={() => setSelectedDeal(deal)}
-                        className="hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors group"
-                      >
-                        <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors whitespace-nowrap">
-                          {deal.company_name}
-                        </td>
-                        <td className="py-3.5 px-4 text-slate-600 dark:text-zinc-300 whitespace-nowrap">
-                          {deal.industry_name || "General"}
-                        </td>
-                        <td className="py-3.5 px-4 text-slate-500 dark:text-zinc-400 whitespace-nowrap">
-                          {deal.state_name || deal.state_code || deal.country_name || "United States"}
-                        </td>
-                        <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 dark:text-zinc-100 whitespace-nowrap">
-                          {formatRevenue(deal.revenue)}
-                        </td>
-                        <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                          <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 uppercase">
-                            LOI Accepted
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 text-slate-600 dark:text-zinc-300 line-clamp-1">
-                          {deal.latest_note || "LOI formally accepted by target management."}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
+            </>
+          )}
+        </section>
       </WidgetErrorBoundary>
 
       {/* Target Deal Detail Modal */}

@@ -128,6 +128,49 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
     - `getIcon` (fn)
     - `handleResultClick` (fn)
 
+## src/components/Customize/CustomBoard.native.tsx (166 lines) - custom board.native (components  customize)
+- `Props` (interface)
+- `filterTag` (function)
+- `CustomBoard` (export function) - Phone layout: one column, in the same order as the desktop grid (top to bottom, left to right).
+
+## src/components/Customize/CustomBoard.tsx (174 lines) - Phones get a single column, so widgets stack full-width.
+- `Props` (interface)
+- `filterTag` (function)
+- `CustomBoard` (export function)
+
+## src/components/Customize/WidgetPanel.native.tsx (301 lines) - widget panel.native (components  customize)
+- `IconName` (type)
+- `Option` (interface)
+- `PickerField` (function) - A dropdown that opens a list in a sheet: easier to tap than a native <select> on a phone.
+- `Step` (function)
+- `Props` (interface)
+- `WidgetPanel` (export function)
+
+## src/components/Customize/WidgetPanel.tsx (296 lines) - widget panel (components  customize)
+- `Step` (function)
+- `Field` (function)
+- `Props` (interface)
+- `WidgetPanel` (export function)
+
+## src/components/Customize/WidgetRenderer.native.tsx (244 lines) - widget renderer.native (components  customize)
+- `Message` (function)
+- `BarChart` (function)
+- `LineChart` (function)
+- `Donut` (function)
+- `RankedBars` (function)
+- `WidgetRenderer` (export function)
+
+## src/components/Customize/WidgetRenderer.tsx (205 lines) - widget renderer (components  customize)
+- `Message` (function)
+- `WidgetRenderer` (export function)
+
+## src/components/Customize/WidgetSkeleton.native.tsx (87 lines) - Placeholder shaped like the widget that is loading.
+- `Block` (function)
+- `WidgetSkeleton` (export function) - Placeholder shaped like the widget that is loading.
+
+## src/components/Customize/WidgetSkeleton.tsx (69 lines) - Placeholder shaped like the widget that is loading, so the page doesn't jump when data arrives.
+- `WidgetSkeleton` (export function) - Placeholder shaped like the widget that is loading, so the page doesn't jump when data arrives.
+
 ## src/components/Dashboard/AccountTypeDonut.tsx (137 lines) - account type donut (components  dashboard)
 - `AccountTooltipPayload` (type)
 - `AccountTooltipProps` (type)
@@ -143,6 +186,12 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
 ## src/components/Dashboard/FinancialPosition.tsx (121 lines) - financial position (components  dashboard)
 - `FinancialPositionProps` (type)
 - `FinancialPosition` (export function)
+
+## src/components/Dashboard/KpiCard.tsx (67 lines) - Secondary line under the value (amount, status, hint).
+- `KpiTone` (export type)
+- `KpiCardProps` (interface)
+- `formatMoney` (export function)
+- `KpiCard` (export function)
 
 ## src/components/Dashboard/RecentTransactionsTable.tsx (157 lines) - recent transactions table (components  dashboard)
 - `RecentTransactionsTableProps` (type)
@@ -163,6 +212,10 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
 - `SparklineBlue` (const)
 - `SparklinePurple` (const)
 - `SummaryCards` (export function)
+
+## src/components/Dashboard/SystemsStrip.tsx (49 lines) - Compact connected-systems status: one wrapped row of pills instead of a card grid.
+- `SystemsStripItem` (export interface)
+- `SystemsStrip` (export function) - Compact connected-systems status: one wrapped row of pills instead of a card grid.
 
 ## src/components/common/ErrorBoundary.tsx (48 lines) - error boundary (components common)
 - `Props` (interface)
@@ -439,6 +492,14 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
 - `useAssignApproverMember` (export function)
 - `useRemoveApproverMember` (export function)
 
+## src/hooks/useBoardState.ts (185 lines) - Next free slot at the bottom of the grid for a new widget.
+- `SaveStatus` (export type)
+- `BoardResponse` (interface)
+- `nextSlot` (function) - Next free slot at the bottom of the grid for a new widget.
+- `newWidgetId` (export function)
+- `orderedWidgets` (export function) - Widgets in reading order (top to bottom, then left to right): the order phones show them in.
+- `useBoardState` (export function) - A board (widgets + grid layout) saved on the server for the signed-in user, so each login keeps its own  layout on every device.
+
 ## src/hooks/useCeoRealtimeStream.ts (49 lines) - Time the last query successfully received fresh data (not the render time).
 - `ConnectionState` (export type)
 - `RealtimeSyncState` (export interface)
@@ -461,6 +522,9 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
 - `useBankBalancesChart` (export function)
 - `useAccountDistribution` (export function)
 - `useRecentTransactions` (export function)
+
+## src/hooks/useDataSource.ts (27 lines) - use data source (hooks)
+- `useDataSource` (export function) - Live pass-through read of a catalog data source.
 
 ## src/hooks/useHeartbeat.ts (37 lines) - use heartbeat (hooks)
 - `useHeartbeat` (export function)
@@ -498,6 +562,12 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
 - `ChatStreamEvent` (export type)
 - `useStreamingChat` (export function)
 
+## src/hooks/useWidgetData.ts (25 lines) - Everything a widget needs to draw itself: live rows (filtered), grouped chart points and its columns.
+- `useWidgetData` (export function) - Everything a widget needs to draw itself: live rows (filtered), grouped chart points and its columns.
+
+## src/hooks/useWidgetDraft.ts (88 lines) - The editing logic behind the "add / edit widget" panel, shared by web and native so they behave the same.
+- `useWidgetDraft` (export function) - The editing logic behind the "add / edit widget" panel, shared by web and native so they behave the same.
+
 ## src/lib/AuthContext.tsx (239 lines) - auth context (lib)
 - `User` (export interface)
 - `Role` (export interface)
@@ -518,8 +588,39 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
 - `ServiceStatusProvider` (export function)
 - `useServiceStatus` (export function)
 
+## src/lib/aggregate.ts (85 lines) - aggregate (lib)
+- `ChartPoint` (export interface)
+- `toNumber` (const)
+- `aggregate` (export function)
+- `groupRows` (export function) - Group rows by a column and aggregate a measure.
+- `formatValue` (export function)
+- `formatCompact` (export function) - Compact number for KPI tiles / axes (1.2K, 3.4M).
+
+## src/lib/boardDefaults.ts (52 lines) - board defaults (lib)
+- `Seed` (type)
+- `build` (function)
+- `kpi` (const)
+- `DASHBOARD_DEFAULTS` (export const) - Customization": the Dashboard, rebuilt from live data sources.
+- `MA_DEFAULTS` (export const) - Customize - M&A".
+- `ADMIN_DEFAULTS` (export const) - Customize Administration".
+
 ## src/lib/codegenShim.ts (4 lines) - codegen shim (lib)
 - `codegenNativeComponent` (export function)
+
+## src/lib/dataSources.ts (217 lines) - Live pass-through catalog.
+- `asRows` (const)
+- `asSingleRow` (const)
+- `revenueMidpointK` (function) - M&A revenue is a range string in $K ("500-1000"); use the midpoint so it can be summed/averaged.
+- `withRevenueK` (const)
+- `dim` (const)
+- `date` (const)
+- `bool` (const)
+- `num` (const)
+- `money` (const)
+- `breakdownRows` (const) - Turn a { label: count } map from the summary into rows.
+- `DATA_SOURCES` (export const)
+- `MODULE_LABELS` (export const)
+- `getDataSource` (export function)
 
 ## src/lib/env.ts (64 lines) - Universal environment variable reader for Vite and Metro / React Native
 - `getEnv` (export function)
@@ -532,6 +633,23 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
 
 ## src/lib/utils.ts (7 lines) - utils (lib)
 - `cn` (export function)
+
+## src/lib/widgetLogic.ts (126 lines) - Plain-language names and one-line descriptions for every display type (shared by web and native).
+- `KIND_INFO` (export const) - Plain-language names and one-line descriptions for every display type (shared by web and native).
+- `KIND_ORDER` (export const)
+- `friendlyType` (export function)
+- `MeasureChoice` (export interface)
+- `measureChoices` (export function) - One dropdown instead of two: "Number of records", "Total of Amount", "Average of Amount"...
+- `encodeMeasure` (export function)
+- `decodeMeasure` (export function)
+- `measureSentence` (function)
+- `suggestTitle` (export function) - A sensible title like "Total of Amount by Department", used until the user types their own.
+- `defaultsForSource` (export function)
+- `blankWidget` (export function)
+- `applyFilter` (export function)
+- `distinctValues` (export function) - Distinct values of a column in the loaded rows, most common first, for the "only show..." picker.
+- `filterableColumns` (export function) - Dimensions that make good "only show" filters (text/yes-no, not free text like descriptions).
+- `firstExample` (export function)
 
 ## src/pages/Administration/Administration.native.tsx (1106 lines) - administration.native (pages  administration)
 - `PortalStatus` (interface)
@@ -623,6 +741,15 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
 
 ## src/pages/Auth/PendingAccess.tsx (146 lines) - pending access (pages  auth)
 - `PendingAccess` (export function)
+
+## src/pages/Customization/Customization.tsx (14 lines) - customization (pages  customization)
+- `Customization` (export function)
+
+## src/pages/Customization/CustomizeAdministration.tsx (14 lines) - customize administration (pages  customization)
+- `CustomizeAdministration` (export function)
+
+## src/pages/Customization/CustomizeMA.tsx (14 lines) - customize m a (pages  customization)
+- `CustomizeMA` (export function)
 
 ## src/pages/Dashboard/Dashboard.native.tsx (3816 lines) - dashboard.native (pages  dashboard)
 - `PortalStatus` (interface)
@@ -812,6 +939,19 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
 - `XgboostTransactionExplanation` (export type)
 - `XgboostModelStatus` (export type)
 - `XgboostQualityMetrics` (export type)
+
+## src/types/customize.ts (69 lines) - dimension = something you group/label by; measure = something you add up or average.
+- `ColumnType` (export type)
+- `ColumnRole` (export type) - dimension = something you group/label by; measure = something you add up or average.
+- `DataColumn` (export interface)
+- `DataSourceModule` (export type)
+- `DataRow` (export type)
+- `DataSourceDef` (export interface)
+- `WidgetKind` (export type)
+- `Aggregation` (export type)
+- `WidgetConfig` (export interface)
+- `BoardLayoutItem` (export interface)
+- `BoardState` (export interface)
 
 ## src/types/dashboard.ts (45 lines) - dashboard (types)
 - `DashboardSummary` (export type)

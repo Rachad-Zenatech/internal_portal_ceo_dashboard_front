@@ -17,6 +17,7 @@ import {
   RefreshControl,
   Linking,
 } from "react-native";
+import type { NativeScrollEvent, NativeSyntheticEvent } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/services/apiClient";
@@ -100,6 +101,9 @@ export default function MergersAcquisitions() {
   const [selectedTask, setSelectedTask] = useState<PipelineTask | null>(null);
   const [activeTab, setActiveTab] = useState<"deals" | "events">("deals");
   const [refreshing, setRefreshing] = useState(false);
+  // The deal list reveals this many rows at a time as you scroll down.
+  const BATCH_SIZE = 10;
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
 
   // 1. Fetch Executive Summary KPIs
   const {
@@ -170,6 +174,17 @@ export default function MergersAcquisitions() {
     });
   }, [rawTasks, searchQuery]);
 
+  const visibleTasks = filteredTasks.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredTasks.length;
+  const loadMore = () => setVisibleCount((c) => c + BATCH_SIZE);
+
+  // Reveal the next 10 deals when the user scrolls near the bottom of the Deals tab.
+  const handleScroll = ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (activeTab !== "deals" || !hasMore) return;
+    const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+    if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 240) loadMore();
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Top App Bar */}
@@ -199,6 +214,8 @@ export default function MergersAcquisitions() {
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
+        scrollEventThrottle={100}
+        onScroll={handleScroll}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#2563eb"]} />
         }
@@ -283,6 +300,7 @@ export default function MergersAcquisitions() {
                 value={searchQuery}
                 onChangeText={(t) => {
                   setSearchQuery(t);
+                  setVisibleCount(BATCH_SIZE);
                 }}
               />
               {searchQuery.length > 0 && (
@@ -305,7 +323,7 @@ export default function MergersAcquisitions() {
                 <Text style={styles.emptySubtitle}>Try adjusting your search terms.</Text>
               </View>
             ) : (
-              filteredTasks.map((task) => {
+              visibleTasks.map((task) => {
                 const isAccepted = true;
                 return (
                   <TouchableOpacity
@@ -390,7 +408,7 @@ export default function MergersAcquisitions() {
               <View style={styles.endlessScrollFooter}>
                 <MaterialCommunityIcons name="check-decagram-outline" size={16} color="#10b981" />
                 <Text style={styles.endlessScrollText}>
-                  All {filteredTasks.length} LOI Accepted deals loaded • Endless Scroll
+                  Showing {visibleTasks.length} of {filteredTasks.length} records{hasMore ? " • Scroll for more" : " • All loaded"}
                 </Text>
               </View>
             )}

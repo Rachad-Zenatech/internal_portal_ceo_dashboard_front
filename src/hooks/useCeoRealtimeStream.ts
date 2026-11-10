@@ -1,12 +1,13 @@
 import { useServiceStatus } from "@/lib/ServiceStatusContext";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export type ConnectionState = "CONNECTING" | "CONNECTED" | "DISCONNECTED" | "RECONNECTING";
 
 export interface RealtimeSyncState {
   isConnected: boolean;
   connectionState: ConnectionState;
+  /** Time the last query successfully received fresh data (not the render time). */
   lastSyncedAt: Date;
   triggerManualSync: () => void;
 }
@@ -14,6 +15,15 @@ export interface RealtimeSyncState {
 export function useCeoRealtimeStream(): RealtimeSyncState {
   const { wsConnected, reconnect } = useServiceStatus();
   const queryClient = useQueryClient();
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date>(() => new Date());
+
+  useEffect(() => {
+    return queryClient.getQueryCache().subscribe((event) => {
+      if (event.type === "updated" && event.action.type === "success") {
+        setLastSyncedAt(new Date());
+      }
+    });
+  }, [queryClient]);
 
   const triggerManualSync = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["admin"] });
@@ -32,7 +42,7 @@ export function useCeoRealtimeStream(): RealtimeSyncState {
   return {
     isConnected: wsConnected,
     connectionState: connState,
-    lastSyncedAt: new Date(),
+    lastSyncedAt,
     triggerManualSync,
   };
 }

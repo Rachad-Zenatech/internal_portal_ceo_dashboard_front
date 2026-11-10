@@ -12,6 +12,9 @@ import MergersAcquisitions from "./pages/MergersAcquisitions/MergersAcquisitions
 import UploadFiles from "./pages/UploadFiles/UploadFiles.native";
 import AuditLog from "./pages/Log/AuditLog.native";
 import Administration from "./pages/Administration/Administration.native";
+import Customization from "./pages/Customization/Customization";
+import CustomizeMA from "./pages/Customization/CustomizeMA";
+import CustomizeAdministration from "./pages/Customization/CustomizeAdministration";
 
 const Stack = createNativeStackNavigator();
 
@@ -70,6 +73,9 @@ function NavigationContent() {
               headerShown: false,
             }}
           />
+          <Stack.Screen name="Customization" component={Customization} options={{ headerShown: false }} />
+          <Stack.Screen name="CustomizeMA" component={CustomizeMA} options={{ headerShown: false }} />
+          <Stack.Screen name="CustomizeAdministration" component={CustomizeAdministration} options={{ headerShown: false }} />
           <Stack.Screen
             name="UploadFiles"
             component={UploadFiles}

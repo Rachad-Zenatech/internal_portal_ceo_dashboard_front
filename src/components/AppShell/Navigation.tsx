@@ -1,5 +1,7 @@
 import {
   LayoutDashboard,
+  LayoutGrid,
+  SlidersHorizontal,
   Upload,
   FileClock,
   Briefcase,
@@ -30,6 +32,13 @@ export const navigation: NavigationItem[] = [
     navigationCode: "DASHBOARD",
   },
   {
+    label: "Customization",
+    path: "/customization",
+    icon: LayoutGrid,
+    section: "MAIN",
+    navigationCode: "DASHBOARD",
+  },
+  {
     label: "Mergers & Acquisitions",
     path: "/mergers-acquisitions",
     icon: Briefcase,
@@ -37,9 +46,23 @@ export const navigation: NavigationItem[] = [
     navigationCode: "DASHBOARD",
   },
   {
+    label: "Customize - M&A",
+    path: "/customize-ma",
+    icon: SlidersHorizontal,
+    section: "MAIN",
+    navigationCode: "DASHBOARD",
+  },
+  {
     label: "Administration",
     path: "/administration",
     icon: Building2,
+    section: "MAIN",
+    navigationCode: "DASHBOARD",
+  },
+  {
+    label: "Customize Administration",
+    path: "/customize-administration",
+    icon: SlidersHorizontal,
     section: "MAIN",
     navigationCode: "DASHBOARD",
   },

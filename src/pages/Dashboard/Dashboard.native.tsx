@@ -2074,6 +2074,39 @@ export default function Dashboard() {
                   style={styles.drawerNavItem}
                   onPress={() => {
                     setIsDrawerOpen(false);
+                    navigation.navigate("Customization");
+                  }}
+                >
+                  <MaterialCommunityIcons name="view-grid-plus-outline" size={20} color="#64748b" />
+                  <Text style={styles.drawerNavText}>Customization</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.drawerNavItem}
+                  onPress={() => {
+                    setIsDrawerOpen(false);
+                    navigation.navigate("CustomizeMA");
+                  }}
+                >
+                  <MaterialCommunityIcons name="tune-variant" size={20} color="#64748b" />
+                  <Text style={styles.drawerNavText}>Customize - M&A</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.drawerNavItem}
+                  onPress={() => {
+                    setIsDrawerOpen(false);
+                    navigation.navigate("CustomizeAdministration");
+                  }}
+                >
+                  <MaterialCommunityIcons name="tune-variant" size={20} color="#64748b" />
+                  <Text style={styles.drawerNavText}>Customize Administration</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.drawerNavItem}
+                  onPress={() => {
+                    setIsDrawerOpen(false);
                     navigation.navigate("UploadFiles");
                   }}
                 >
