@@ -13,7 +13,7 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
 - `getAvailableAvd` (function)
 - `main` (function)
 
-## src/App.native.tsx (115 lines) - app.native
+## src/App.native.tsx (121 lines) - app.native
 - `Stack` (const)
 - `NavigationContent` (function)
 - `App` (export function)
@@ -624,7 +624,7 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
 ## src/pages/Auth/PendingAccess.tsx (146 lines) - pending access (pages  auth)
 - `PendingAccess` (export function)
 
-## src/pages/Dashboard/Dashboard.native.tsx (3783 lines) - dashboard.native (pages  dashboard)
+## src/pages/Dashboard/Dashboard.native.tsx (3816 lines) - dashboard.native (pages  dashboard)
 - `PortalStatus` (interface)
 - `PurchaseRequestLineItem` (interface)
 - `PurchaseRequestAttachment` (interface)
@@ -675,7 +675,7 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
     - `auditTable` (fn)
     - `loginTable` (fn)
 
-## src/pages/MergersAcquisitions/MergersAcquisitions.native.tsx (1057 lines) - mergers acquisitions.native (pages  mergers acquisitions)
+## src/pages/MergersAcquisitions/MergersAcquisitions.native.tsx (1075 lines) - mergers acquisitions.native (pages  mergers acquisitions)
 - `PipelineSummary` (interface)
 - `PipelineTask` (interface)
 - `CeoEvent` (interface)
@@ -685,8 +685,10 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
     - `onRefresh` (fn)
     - `totalAcceptedRevenueNum` (fn) - Compute total revenue of accepted deals
     - `filteredTasks` (fn) - Filter LOI Accepted tasks based on search query for seamless endless scrolling
+    - `loadMore` (fn)
+    - `handleScroll` (fn) - Reveal the next 10 deals when the user scrolls near the bottom of the Deals tab.
 
-## src/pages/MergersAcquisitions/MergersAcquisitions.tsx (522 lines) - mergers acquisitions (pages  mergers acquisitions)
+## src/pages/MergersAcquisitions/MergersAcquisitions.tsx (553 lines) - mergers acquisitions (pages  mergers acquisitions)
 - `PipelineSummary` (interface)
 - `PipelineTask` (interface)
 - `formatRevenue` (function)
@@ -695,6 +697,7 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
     - `refreshAll` (fn)
     - `loiAcceptedDeals` (fn)
     - `filteredDeals` (fn)
+    - `loadMore` (fn)
 
 ## src/pages/Reports/Reports.tsx (96 lines) - src/pages/Reports.tsx
 - `Reports` (export function)

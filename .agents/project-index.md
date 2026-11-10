@@ -7,7 +7,7 @@ For detailed function and route definitions, see `.agents/code-map.md`.
 
 - scripts/reload-android.js (86 lines) - Check ANDROID_HOME or ANDROID_SDK_ROOT first
 - scripts/start-android.js (196 lines) - Check ANDROID_HOME or ANDROID_SDK_ROOT environment variables first
-- src/App.native.tsx (115 lines) - app.native
+- src/App.native.tsx (121 lines) - app.native
 - src/App.tsx (179 lines) - Customizable boards pull in the grid/drag library, so load them on demand.
 - src/components/Administration/AssignApproversModal.tsx (1844 lines) - assign approvers modal (components  administration)
 - src/components/AppShell/AppShell.tsx (80 lines) - app shell (components  app shell)
@@ -86,12 +86,12 @@ For detailed function and route definitions, see `.agents/code-map.md`.
 - src/pages/Auth/Login.tsx (215 lines) - login (pages  auth)
 - src/pages/Auth/PendingAccess.native.tsx (132 lines) - pending access.native (pages  auth)
 - src/pages/Auth/PendingAccess.tsx (146 lines) - pending access (pages  auth)
-- src/pages/Dashboard/Dashboard.native.tsx (3783 lines) - dashboard.native (pages  dashboard)
+- src/pages/Dashboard/Dashboard.native.tsx (3816 lines) - dashboard.native (pages  dashboard)
 - src/pages/Dashboard/Dashboard.tsx (364 lines) - dashboard (pages  dashboard)
 - src/pages/Log/AuditLog.native.tsx (904 lines) - audit log.native (pages  log)
 - src/pages/Log/AuditLog.tsx (474 lines) - audit log (pages  log)
-- src/pages/MergersAcquisitions/MergersAcquisitions.native.tsx (1057 lines) - mergers acquisitions.native (pages  mergers acquisitions)
-- src/pages/MergersAcquisitions/MergersAcquisitions.tsx (522 lines) - mergers acquisitions (pages  mergers acquisitions)
+- src/pages/MergersAcquisitions/MergersAcquisitions.native.tsx (1075 lines) - mergers acquisitions.native (pages  mergers acquisitions)
+- src/pages/MergersAcquisitions/MergersAcquisitions.tsx (553 lines) - mergers acquisitions (pages  mergers acquisitions)
 - src/pages/Reports/Reports.tsx (96 lines) - src/pages/Reports.tsx
 - src/pages/Settings/Settings.tsx (276 lines) - settings (pages  settings)
 - src/pages/UploadFiles/UploadFiles.native.tsx (884 lines) - upload files.native (pages  upload files)
