@@ -146,7 +146,7 @@ How to use: check `.agents/project-index.md` first to locate the file, then insp
 - `Props` (interface)
 - `WidgetPanel` (export function)
 
-## src/components/Customize/WidgetPanel.tsx (296 lines) - widget panel (components  customize)
+## src/components/Customize/WidgetPanel.tsx (290 lines) - widget panel (components  customize)
 - `Step` (function)
 - `Field` (function)
 - `Props` (interface)

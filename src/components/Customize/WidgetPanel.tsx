@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import WidgetRenderer from "@/components/Customize/WidgetRenderer";
 import { useWidgetDraft } from "@/hooks/useWidgetDraft";
 import { DATA_SOURCES, MODULE_LABELS } from "@/lib/dataSources";
@@ -103,32 +103,26 @@ export default function WidgetPanel({ open, onOpenChange, widget, isNew, onSave 
           </div>
 
           <Step n={1} title="What do you want to show?" hint="Pick where the numbers come from. They are always live.">
-            {Object.entries(MODULE_LABELS).map(([module, label]) => {
-              const items = DATA_SOURCES.filter((s) => s.module === module);
-              if (items.length === 0) return null;
-              return (
-                <div key={module} className="space-y-1.5">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-                  <div className="space-y-1.5">
-                    {items.map((s) => (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => changeSource(s.id)}
-                        aria-pressed={draft.sourceId === s.id}
-                        className={cn(
-                          "w-full cursor-pointer rounded-xl border px-3 py-2 text-left transition-colors",
-                          draft.sourceId === s.id ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40" : "border-border hover:bg-muted/60",
-                        )}
-                      >
-                        <div className="text-sm font-medium text-foreground">{s.label}</div>
-                        <div className="text-xs text-muted-foreground">{s.description}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+            <Select value={draft.sourceId} onValueChange={changeSource}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choose data…" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(MODULE_LABELS).map(([module, label]) => {
+                  const items = DATA_SOURCES.filter((s) => s.module === module);
+                  if (items.length === 0) return null;
+                  return (
+                    <SelectGroup key={module}>
+                      <SelectLabel>{label}</SelectLabel>
+                      {items.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            {source?.description && <p className="text-xs text-muted-foreground">{source.description}</p>}
           </Step>
 
           <Step n={2} title="How should it look?">

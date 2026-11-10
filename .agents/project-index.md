@@ -24,7 +24,7 @@ For detailed function and route definitions, see `.agents/code-map.md`.
 - src/components/Customize/CustomBoard.native.tsx (166 lines) - custom board.native (components  customize)
 - src/components/Customize/CustomBoard.tsx (174 lines) - Phones get a single column, so widgets stack full-width.
 - src/components/Customize/WidgetPanel.native.tsx (301 lines) - widget panel.native (components  customize)
-- src/components/Customize/WidgetPanel.tsx (296 lines) - widget panel (components  customize)
+- src/components/Customize/WidgetPanel.tsx (290 lines) - widget panel (components  customize)
 - src/components/Customize/WidgetRenderer.native.tsx (244 lines) - widget renderer.native (components  customize)
 - src/components/Customize/WidgetRenderer.tsx (205 lines) - widget renderer (components  customize)
 - src/components/Customize/WidgetSkeleton.native.tsx (87 lines) - Placeholder shaped like the widget that is loading.
