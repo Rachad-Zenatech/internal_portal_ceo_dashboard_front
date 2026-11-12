@@ -1,0 +1,57 @@
+{
+  "limit": 500,
+  "files": {
+    "src/components/Administration/AssignApproversModal.tsx": {
+      "max_lines": 1843,
+      "reason": "Over the limit when the check was introduced; split it when you next work on it."
+    },
+    "src/components/AppShell/FloatingChat.tsx": {
+      "max_lines": 526,
+      "reason": "Over the limit when the check was introduced; split it when you next work on it."
+    },
+    "src/components/AppShell/MessageHubStatusDropdown.tsx": {
+      "max_lines": 579,
+      "reason": "Over the limit when the check was introduced; split it when you next work on it."
+    },
+    "src/components/AppShell/TopBar.tsx": {
+      "max_lines": 549,
+      "reason": "Over the limit when the check was introduced; split it when you next work on it."
+    },
+    "src/components/native/index.tsx": {
+      "max_lines": 591,
+      "reason": "Over the limit when the check was introduced; split it when you next work on it."
+    },
+    "src/pages/Administration/Administration.native.tsx": {
+      "max_lines": 1105,
+      "reason": "Over the limit when the check was introduced; split it when you next work on it."
+    },
+    "src/pages/Administration/Administration.tsx": {
+      "max_lines": 2063,
+      "reason": "Over the limit when the check was introduced; split it when you next work on it."
+    },
+    "src/pages/Dashboard/Dashboard.native.tsx": {
+      "max_lines": 3815,
+      "reason": "Over the limit when the check was introduced; split it when you next work on it."
+    },
+    "src/pages/Log/AuditLog.native.tsx": {
+      "max_lines": 903,
+      "reason": "Over the limit when the check was introduced; split it when you next work on it."
+    },
+    "src/pages/MergersAcquisitions/MergersAcquisitions.native.tsx": {
+      "max_lines": 1074,
+      "reason": "Over the limit when the check was introduced; split it when you next work on it."
+    },
+    "src/pages/MergersAcquisitions/MergersAcquisitions.tsx": {
+      "max_lines": 552,
+      "reason": "Over the limit when the check was introduced; split it when you next work on it."
+    },
+    "src/pages/UploadFiles/UploadFiles.native.tsx": {
+      "max_lines": 883,
+      "reason": "Over the limit when the check was introduced; split it when you next work on it."
+    },
+    "src/pages/UploadFiles/UploadFiles.tsx": {
+      "max_lines": 630,
+      "reason": "Over the limit when the check was introduced; split it when you next work on it."
+    }
+  }
+}
