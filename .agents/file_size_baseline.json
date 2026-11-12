@@ -1,5 +1,9 @@
 {
   "limit": 500,
+  "block_limits": {
+    "jsx_return": 80,
+    "py_function": 120
+  },
   "files": {
     "src/components/Administration/AssignApproversModal.tsx": {
       "max_lines": 1843,
@@ -52,6 +56,104 @@
     "src/pages/UploadFiles/UploadFiles.tsx": {
       "max_lines": 630,
       "reason": "Over the limit when the check was introduced; split it when you next work on it."
+    }
+  },
+  "blocks": {
+    "src/App.tsx#App": {
+      "max_lines": 103,
+      "kind": "jsx_return"
+    },
+    "src/components/Administration/AssignApproversModal.tsx#AssignApproversModal": {
+      "max_lines": 828,
+      "kind": "jsx_return"
+    },
+    "src/components/Administration/AssignApproversModal.tsx#MultiUserApproverPopover": {
+      "max_lines": 164,
+      "kind": "jsx_return"
+    },
+    "src/components/AppShell/ChatMessageRenderer.tsx#ChatMessageRenderer": {
+      "max_lines": 112,
+      "kind": "jsx_return"
+    },
+    "src/components/AppShell/ConnectionStatusLight.tsx#ConnectionStatusLight": {
+      "max_lines": 92,
+      "kind": "jsx_return"
+    },
+    "src/components/AppShell/FloatingChat.tsx#FloatingChat": {
+      "max_lines": 293,
+      "kind": "jsx_return"
+    },
+    "src/components/AppShell/MessageHubStatusDropdown.tsx#MessageHubStatusDropdown": {
+      "max_lines": 154,
+      "kind": "jsx_return"
+    },
+    "src/components/AppShell/Sidebar.tsx#Sidebar": {
+      "max_lines": 144,
+      "kind": "jsx_return"
+    },
+    "src/components/AppShell/TopBar.tsx#TopBar": {
+      "max_lines": 424,
+      "kind": "jsx_return"
+    },
+    "src/components/Customize/CustomBoard.tsx#CustomBoard": {
+      "max_lines": 105,
+      "kind": "jsx_return"
+    },
+    "src/components/Customize/WidgetPanel.native.tsx#WidgetPanel": {
+      "max_lines": 158,
+      "kind": "jsx_return"
+    },
+    "src/components/Customize/WidgetPanel.tsx#WidgetPanel": {
+      "max_lines": 197,
+      "kind": "jsx_return"
+    },
+    "src/components/ui/calendar.tsx#Calendar": {
+      "max_lines": 151,
+      "kind": "jsx_return"
+    },
+    "src/pages/Administration/Administration.native.tsx#Administration": {
+      "max_lines": 379,
+      "kind": "jsx_return"
+    },
+    "src/pages/Administration/Administration.tsx#Administration": {
+      "max_lines": 1162,
+      "kind": "jsx_return"
+    },
+    "src/pages/Dashboard/Dashboard.native.tsx#Dashboard": {
+      "max_lines": 1749,
+      "kind": "jsx_return"
+    },
+    "src/pages/Dashboard/Dashboard.tsx#Dashboard": {
+      "max_lines": 200,
+      "kind": "jsx_return"
+    },
+    "src/pages/Log/AuditLog.native.tsx#AuditLog": {
+      "max_lines": 392,
+      "kind": "jsx_return"
+    },
+    "src/pages/Log/AuditLog.tsx#AuditLog": {
+      "max_lines": 205,
+      "kind": "jsx_return"
+    },
+    "src/pages/MergersAcquisitions/MergersAcquisitions.native.tsx#MergersAcquisitions": {
+      "max_lines": 393,
+      "kind": "jsx_return"
+    },
+    "src/pages/MergersAcquisitions/MergersAcquisitions.tsx#MergersAcquisitions": {
+      "max_lines": 353,
+      "kind": "jsx_return"
+    },
+    "src/pages/Settings/Settings.tsx#Settings": {
+      "max_lines": 217,
+      "kind": "jsx_return"
+    },
+    "src/pages/UploadFiles/UploadFiles.native.tsx#UploadFiles": {
+      "max_lines": 351,
+      "kind": "jsx_return"
+    },
+    "src/pages/UploadFiles/UploadFiles.tsx#UploadFiles": {
+      "max_lines": 385,
+      "kind": "jsx_return"
     }
   }
 }
