@@ -100,7 +100,7 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/lib/widgetLogic.ts (126 lines) - Plain-language names and one-line descriptions for every display type (shared by web and native).
 - src/pages/Administration/Administration.native.tsx (1106 lines) - administration.native (pages  administration)
 - src/pages/Administration/Administration.tsx (2049 lines) - administration (pages  administration)
-- src/pages/Administration/ApprovalUrgentBadges.tsx (134 lines) - approval urgent badges (pages  administration)
+- src/pages/Administration/ApprovalUrgentBadges.tsx (155 lines) - approval urgent badges (pages  administration)
 - src/pages/Auth/Login.native.tsx (288 lines) - login.native (pages  auth)
 - src/pages/Auth/Login.tsx (215 lines) - login (pages  auth)
 - src/pages/Auth/PendingAccess.native.tsx (132 lines) - pending access.native (pages  auth)

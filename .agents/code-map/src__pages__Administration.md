@@ -83,8 +83,9 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
     - `handleClearSelection` (fn) L861
     - `activeLineItems` (fn) L865
 
-## src/pages/Administration/ApprovalUrgentBadges.tsx (134 lines) - approval urgent badges (pages  administration)
+## src/pages/Administration/ApprovalUrgentBadges.tsx (155 lines) - approval urgent badges (pages  administration)
 - `parseQuoteDataSafe` (export function) L3
-- `mapCompletedHistoryRequests` (export function) L15
-- `ApprovalTitleAndPriorityCells` (export function) L59
-- `UrgentOverrideDetailBanner` (export function) L103
+- `parseTimestamp` (function) L15
+- `mapCompletedHistoryRequests` (export function) L21
+- `ApprovalTitleAndPriorityCells` (export function) L80
+- `UrgentOverrideDetailBanner` (export function) L124

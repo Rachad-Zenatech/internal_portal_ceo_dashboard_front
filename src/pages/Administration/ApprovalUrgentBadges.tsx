@@ -12,13 +12,27 @@ export function parseQuoteDataSafe(raw: any): any {
   return raw;
 }
 
+function parseTimestamp(val: any): number {
+  if (!val) return 0;
+  const ts = new Date(val).getTime();
+  return Number.isNaN(ts) ? 0 : ts;
+}
+
 export function mapCompletedHistoryRequests(rawCompletedHistory: any[]) {
   if (!Array.isArray(rawCompletedHistory)) return [];
-  return rawCompletedHistory.map((r: any) => {
+  const mapped = rawCompletedHistory.map((r: any) => {
     const qd = parseQuoteDataSafe(r.quote_data);
     const isUrgentOverride = Boolean(r.is_urgent_override || qd?.is_urgent_override);
     const urgentReason = r.urgent_override_reason || qd?.urgent_override_reason || null;
     const priority = isUrgentOverride ? "URGENT" : r.priority || "Normal";
+    const resolvedApprovedAt =
+      r.approved_at ||
+      r.level_2_approved_at ||
+      r.level_1_approved_at ||
+      qd?.urgent_override_at ||
+      r.created_at ||
+      r.request_date ||
+      "";
     return {
       id: String(r.id),
       department: r.department || "Operations",
@@ -28,7 +42,7 @@ export function mapCompletedHistoryRequests(rawCompletedHistory: any[]) {
       description: r.description || r.product_name || `Purchase Request #${r.id}`,
       status: r.status || "COMPLETED",
       priority,
-      approved_at: r.created_at || "",
+      approved_at: resolvedApprovedAt,
       note:
         r.approval_note ||
         (urgentReason ? `Urgent Override: ${urgentReason}` : null) ||
@@ -53,6 +67,13 @@ export function mapCompletedHistoryRequests(rawCompletedHistory: any[]) {
       pending_sync: Boolean(r.pending_sync),
       rawReq: { ...r, quote_data: qd, priority },
     };
+  });
+  return mapped.sort((a, b) => {
+    const timeDiff =
+      (parseTimestamp(b.approved_at) || parseTimestamp(b.created_at)) -
+      (parseTimestamp(a.approved_at) || parseTimestamp(a.created_at));
+    if (timeDiff !== 0) return timeDiff;
+    return (Number(b.id) || 0) - (Number(a.id) || 0);
   });
 }
 
