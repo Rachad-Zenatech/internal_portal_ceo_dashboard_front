@@ -12,19 +12,19 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `AuditApplicationTabsProps` (interface) L4
 - `AuditApplicationTabs` (export function) L10
 
-## src/pages/Log/AuditLog.native.tsx (841 lines) - audit log.native (pages  log)
-- `AuditLogItem` (interface) L27
-- `LoginActivityItem` (interface) L41
-- `AuditLog` (export function) L51
-    - `onRefresh` (fn) L82
-    - `applicationTabs` (fn) L88
-    - `filteredAuditLogs` (fn) L91 - Filter Audit Logs
-    - `filteredLogins` (fn) L117 - Filter Login Activities
-    - `paginatedAuditLogs` (fn) L133
-    - `start` (fn) L134
-    - `paginatedLogins` (fn) L138
-    - `start` (fn) L139
-    - `getActionColor` (fn) L143
+## src/pages/Log/AuditLog.native.tsx (862 lines) - audit log.native (pages  log)
+- `AuditLogItem` (interface) L28
+- `LoginActivityItem` (interface) L42
+- `AuditLog` (export function) L52
+    - `onRefresh` (fn) L84
+    - `applicationTabs` (fn) L90
+    - `filteredAuditLogs` (fn) L93 - Filter Audit Logs
+    - `filteredLogins` (fn) L119 - Filter Login Activities
+    - `paginatedAuditLogs` (fn) L135
+    - `start` (fn) L136
+    - `paginatedLogins` (fn) L140
+    - `start` (fn) L141
+    - `getActionColor` (fn) L145
 
 ## src/pages/Log/AuditLog.tsx (183 lines) - audit log (pages  log)
 - `AuditLog` (export function) L18

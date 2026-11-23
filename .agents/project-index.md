@@ -116,7 +116,7 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/pages/Dashboard/Dashboard.tsx (364 lines) - dashboard (pages  dashboard)
 - src/pages/Log/AuditApplicationTabs.native.tsx (81 lines) - audit application tabs.native (pages  log)
 - src/pages/Log/AuditApplicationTabs.tsx (53 lines) - audit application tabs (pages  log)
-- src/pages/Log/AuditLog.native.tsx (841 lines) - audit log.native (pages  log)
+- src/pages/Log/AuditLog.native.tsx (862 lines) - audit log.native (pages  log)
 - src/pages/Log/AuditLog.tsx (183 lines) - audit log (pages  log)
 - src/pages/Log/AuditLogDetailModal.native.tsx (143 lines) - audit log detail modal.native (pages  log)
 - src/pages/Log/AuditLogTableSection.tsx (121 lines) - audit log table section (pages  log)

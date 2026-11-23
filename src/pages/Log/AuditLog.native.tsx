@@ -8,6 +8,7 @@ import {
   NativeCard,
   NativeCardContent,
   NativeBadge,
+  SafeAreaView,
 } from "@/components/native";
 import {
   TextInput,
@@ -17,7 +18,7 @@ import {
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/services/apiClient";
-import MobileShell from "@/components/AppShell/MobileShell.native";
+import { useNavigation } from "@react-navigation/native";
 import { buildApplicationTabs, getAuditSourceLabel, normalizeAuditSource } from "./auditLogSources";
 import { AuditApplicationTabs } from "./AuditApplicationTabs.native";
 import { AuditLogDetailModal } from "./AuditLogDetailModal.native";
@@ -49,6 +50,7 @@ interface LoginActivityItem {
 }
 
 export default function AuditLog() {
+  const navigation = useNavigation<any>();
   const [activeTab, setActiveTab] = useState<"audit" | "logins">("audit");
   const [selectedApp, setSelectedApp] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -149,12 +151,31 @@ export default function AuditLog() {
   };
 
   return (
-    <MobileShell
-      title="Audit Log"
-      subtitle="Governance & Security Logs"
-      onRefresh={onRefresh}
-      isRefreshing={refreshing}
-    >
+    <SafeAreaView style={styles.safeArea}>
+      {/* Top Nav Bar */}
+      <View style={styles.navBar}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.navigate("Dashboard")}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="arrow-back" size={24} color="#0f172a" />
+        </TouchableOpacity>
+
+        <View style={styles.navTitleContainer}>
+          <Text style={styles.navTitle}>System Audit Trail</Text>
+          <Text style={styles.navSubtitle}>Governance & Security Logs</Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.refreshButton}
+          onPress={onRefresh}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="refresh" size={20} color="#2563eb" />
+        </TouchableOpacity>
+      </View>
+
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
@@ -464,7 +485,7 @@ export default function AuditLog() {
       </ScrollView>
 
       <AuditLogDetailModal log={selectedLog} onClose={() => setSelectedLog(null)} />
-    </MobileShell>
+    </SafeAreaView>
   );
 }
 
