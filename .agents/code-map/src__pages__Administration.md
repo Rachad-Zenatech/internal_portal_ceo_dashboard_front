@@ -22,63 +22,69 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
     - `totalPendingAmount` (fn) L238
     - `totalApprovedAmount` (fn) L242
 
-## src/pages/Administration/Administration.tsx (2064 lines) - administration (pages  administration)
-- `PurchaseRequestLineItem` (interface) L45
-- `PurchaseRequest` (interface) L62
-- `formatUsd` (function) L122
-- `formatForeignCurrency` (function) L129
-- `CurrencyInfo` (interface) L136
-- `getRequestCurrencyInfo` (function) L144
-- `getPaymentMethodLabel` (function) L213
-- `TaxInfo` (interface) L222
-- `getAfterTaxInfo` (function) L235 - Total after tax.
-    - `round2` (fn) L236
-- `formatShortDate` (function) L259
-- `describeApprovalLevel` (function) L265
-- `getRequestQuantity` (function) L271
-- `renderRequestMetaCells` (function) L277 - Table cells: quantity, payment method and Level 1 approver (kept in sync across the three request tables).
-- `renderRequestAmountCell` (function) L312
-- `ItemPriceInfo` (interface) L332
-- `getItemPriceInfo` (function) L341
-- `isRequestActionable` (const) L425
-- `Administration` (export function) L465
-    - `queryClient` (fn) L467
-    - `pendingApprovals` (fn) L512
-    - `activeRequest` (fn) L553
-    - `activeCurrencyInfo` (fn) L561
-    - `activeTaxInfo` (fn) L565
-    - `selectedCurrencyInfo` (fn) L570
-    - `approvalMutation` (fn) L575 - Single Item Approval / Rejection Mutation
-    - `bulkApprovalMutation` (fn) L614 - Bulk Approval / Rejection Mutation
-    - `handleActionSubmit` (fn) L663
-    - `handleBulkSubmit` (fn) L682
-    - `refreshAll` (fn) L691
-    - `allCompletedRequests` (fn) L698
-    - `syncedApprovedRequests` (fn) L725
-    - `isDetailedInApproveHistory` (fn) L730
-    - `pendingSyncRequests` (fn) L740
-    - `filteredApprovals` (fn) L746 - Filtered requests with safe string matching
-    - `q` (fn) L747
-    - `filteredPendingSync` (fn) L771
-    - `q` (fn) L772
-    - `filteredApproved` (fn) L784
-    - `q` (fn) L785
-    - `paginatedApprovals` (fn) L807
-    - `startIndex` (fn) L808
-    - `paginatedPendingSync` (fn) L812
-    - `startIndex` (fn) L813
-    - `paginatedApproved` (fn) L817
-    - `startIndex` (fn) L818
-    - `totalPendingAmount` (fn) L822
-    - `totalApprovedAmount` (fn) L826
-    - `totalPendingSyncAmount` (fn) L830
-    - `selectedRequests` (fn) L836 - Selected requests info and handlers for bulk actions
-    - `totalSelectedAmount` (fn) L840
-    - `currentPagePendingIds` (fn) L844
-    - `isAllCurrentPageSelected` (fn) L848
-    - `isSomeCurrentPageSelected` (fn) L853
-    - `handleToggleSelectAllCurrentPage` (fn) L857
-    - `handleToggleSelectRow` (fn) L865
-    - `handleSelectAllFiltered` (fn) L871
-    - `handleClearSelection` (fn) L876
-    - `activeLineItems` (fn) L880
+## src/pages/Administration/Administration.tsx (2049 lines) - administration (pages  administration)
+- `PurchaseRequestLineItem` (interface) L51
+- `PurchaseRequest` (interface) L68
+- `formatUsd` (function) L128
+- `formatForeignCurrency` (function) L135
+- `CurrencyInfo` (interface) L142
+- `getRequestCurrencyInfo` (function) L150
+- `getPaymentMethodLabel` (function) L219
+- `TaxInfo` (interface) L228
+- `getAfterTaxInfo` (function) L241 - Total after tax.
+    - `round2` (fn) L242
+- `formatShortDate` (function) L265
+- `describeApprovalLevel` (function) L271
+- `getRequestQuantity` (function) L277
+- `renderRequestMetaCells` (function) L283 - Table cells: quantity, payment method and Level 1 approver (kept in sync across the three request tables).
+- `renderRequestAmountCell` (function) L318
+- `ItemPriceInfo` (interface) L338
+- `getItemPriceInfo` (function) L347
+- `isRequestActionable` (const) L431
+- `Administration` (export function) L471
+    - `queryClient` (fn) L473
+    - `pendingApprovals` (fn) L518
+    - `activeRequest` (fn) L559
+    - `activeCurrencyInfo` (fn) L568
+    - `activeTaxInfo` (fn) L572
+    - `selectedCurrencyInfo` (fn) L577
+    - `approvalMutation` (fn) L582 - Single Item Approval / Rejection Mutation
+    - `bulkApprovalMutation` (fn) L621 - Bulk Approval / Rejection Mutation
+    - `handleActionSubmit` (fn) L670
+    - `handleBulkSubmit` (fn) L689
+    - `refreshAll` (fn) L698
+    - `allCompletedRequests` (fn) L705
+    - `syncedApprovedRequests` (fn) L710
+    - `isDetailedInApproveHistory` (fn) L715
+    - `pendingSyncRequests` (fn) L725
+    - `filteredApprovals` (fn) L731 - Filtered requests with safe string matching
+    - `q` (fn) L732
+    - `filteredPendingSync` (fn) L756
+    - `q` (fn) L757
+    - `filteredApproved` (fn) L769
+    - `q` (fn) L770
+    - `paginatedApprovals` (fn) L792
+    - `startIndex` (fn) L793
+    - `paginatedPendingSync` (fn) L797
+    - `startIndex` (fn) L798
+    - `paginatedApproved` (fn) L802
+    - `startIndex` (fn) L803
+    - `totalPendingAmount` (fn) L807
+    - `totalApprovedAmount` (fn) L811
+    - `totalPendingSyncAmount` (fn) L815
+    - `selectedRequests` (fn) L821 - Selected requests info and handlers for bulk actions
+    - `totalSelectedAmount` (fn) L825
+    - `currentPagePendingIds` (fn) L829
+    - `isAllCurrentPageSelected` (fn) L833
+    - `isSomeCurrentPageSelected` (fn) L838
+    - `handleToggleSelectAllCurrentPage` (fn) L842
+    - `handleToggleSelectRow` (fn) L850
+    - `handleSelectAllFiltered` (fn) L856
+    - `handleClearSelection` (fn) L861
+    - `activeLineItems` (fn) L865
+
+## src/pages/Administration/ApprovalUrgentBadges.tsx (134 lines) - approval urgent badges (pages  administration)
+- `parseQuoteDataSafe` (export function) L3
+- `mapCompletedHistoryRequests` (export function) L15
+- `ApprovalTitleAndPriorityCells` (export function) L59
+- `UrgentOverrideDetailBanner` (export function) L103

@@ -21,11 +21,11 @@ to find the right file.
 | .agents/code-map/src__components__ui.md | 34 | 8 KB |
 | .agents/code-map/src__hooks.md | 12 | 4 KB |
 | .agents/code-map/src__lib.md | 10 | 4 KB |
-| .agents/code-map/src__pages__Administration.md | 2 | 3 KB |
+| .agents/code-map/src__pages__Administration.md | 3 | 4 KB |
 | .agents/code-map/src__pages__Auth.md | 4 | 1 KB |
 | .agents/code-map/src__pages__Customization.md | 3 | 1 KB |
 | .agents/code-map/src__pages__Dashboard.md | 2 | 1 KB |
-| .agents/code-map/src__pages__Log.md | 2 | 1 KB |
+| .agents/code-map/src__pages__Log.md | 3 | 1 KB |
 | .agents/code-map/src__pages__MergersAcquisitions.md | 2 | 1 KB |
 | .agents/code-map/src__pages__Reports.md | 1 | 1 KB |
 | .agents/code-map/src__pages__Settings.md | 1 | 1 KB |

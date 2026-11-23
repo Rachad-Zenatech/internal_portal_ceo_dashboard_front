@@ -40,6 +40,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { getEnv } from "@/lib/env";
 import { useApproverRoleMembers } from "@/hooks/useApproverRoles";
+import {
+  ApprovalTitleAndPriorityCells,
+  UrgentOverrideDetailBanner,
+  mapCompletedHistoryRequests,
+  parseQuoteDataSafe,
+} from "./ApprovalUrgentBadges";
 import { KpiCard, formatMoney } from "@/components/Dashboard/KpiCard";
 
 interface PurchaseRequestLineItem {
@@ -552,10 +558,11 @@ export default function Administration() {
 
   const activeRequest = useMemo(() => {
     if (!detailedRequest) return null;
-    if (requestDetailResponse && String(requestDetailResponse.id) === String(detailedRequest.id)) {
-      return { ...detailedRequest, ...requestDetailResponse };
-    }
-    return detailedRequest;
+    const merged =
+      requestDetailResponse && String(requestDetailResponse.id) === String(detailedRequest.id)
+        ? { ...detailedRequest, ...requestDetailResponse }
+        : detailedRequest;
+    return { ...merged, quote_data: parseQuoteDataSafe(merged.quote_data) || parseQuoteDataSafe(detailedRequest.quote_data) };
   }, [detailedRequest, requestDetailResponse]);
 
   const activeCurrencyInfo = useMemo(() => {
@@ -695,32 +702,10 @@ export default function Administration() {
     toast.info("Retrying connection and refreshing live feeds...");
   }, [triggerManualSync, refetchApprovals, refetchHistory]);
 
-  const allCompletedRequests = useMemo(() => {
-    if (Array.isArray(rawCompletedHistory)) {
-      return rawCompletedHistory.map((r: any) => ({
-        id: String(r.id),
-        department: r.department || "Operations",
-        amount: Number(r.amount) || 0,
-        requester_name: r.requester_name || r.requester || "Staff Member",
-        created_at: r.created_at || r.request_date || "",
-        description: r.description || r.product_name || `Purchase Request #${r.id}`,
-        status: r.status || "COMPLETED",
-        approved_at: r.created_at || "",
-        note: r.approval_note || r.hold_reason || (r.pending_sync ? (r.status === "REJECTED" ? "Rejected Offline (Queued)" : "Approved Offline (Queued)") : (r.status === "REJECTED" ? "Rejected" : "Signed Off")),
-        vendor: r.vendor || r.product_info?.vendor || "Verified Vendor",
-        currency: r.currency || "USD",
-        original_currency: r.original_currency,
-        original_amount: r.original_amount,
-        exchange_rate: r.exchange_rate,
-        is_converted: r.is_converted,
-        quote_data: r.quote_data,
-        items: r.items,
-        pending_sync: Boolean(r.pending_sync),
-        rawReq: r,
-      }));
-    }
-    return [];
-  }, [rawCompletedHistory]);
+  const allCompletedRequests = useMemo(
+    () => mapCompletedHistoryRequests(rawCompletedHistory || []),
+    [rawCompletedHistory]
+  );
 
   const syncedApprovedRequests = useMemo(
     () => allCompletedRequests.filter((r) => !r.pending_sync),
@@ -1331,9 +1316,24 @@ export default function Administration() {
                               </span>
                             </td>
                             <td className="py-3 px-4">
-                              <span className="font-medium text-slate-900 dark:text-zinc-100 block group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
-                                {req.description}
-                              </span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-medium text-slate-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
+                                  {req.description}
+                                </span>
+                                {(req.quote_data?.is_urgent_override || req.priority?.toUpperCase() === "URGENT") && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[10px] px-1.5 py-0 font-semibold bg-red-50 text-red-700 border-red-300 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800 shrink-0"
+                                  >
+                                    Urgent
+                                  </Badge>
+                                )}
+                              </div>
+                              {req.quote_data?.urgent_override_reason && (
+                                <p className="text-[11px] text-red-700 dark:text-red-300 mt-0.5 line-clamp-2">
+                                  Reason: {req.quote_data.urgent_override_reason}
+                                </p>
+                              )}
                               {req.gl_code && (
                                 <span className="text-[10px] text-slate-400 font-mono">GL: {req.gl_code}</span>
                               )}
@@ -1342,7 +1342,7 @@ export default function Administration() {
                               <Badge
                                 variant="outline"
                                 className={`text-[10px] px-1.5 py-0 font-medium ${
-                                  req.priority === "Urgent" || req.priority === "High"
+                                  req.priority?.toUpperCase() === "URGENT" || req.priority?.toUpperCase() === "HIGH"
                                     ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300"
                                     : "bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300"
                                 }`}
@@ -1419,19 +1419,7 @@ export default function Administration() {
                               {req.department}
                             </span>
                           </td>
-                          <td className="py-3 px-4">
-                            <span className="font-medium text-slate-900 dark:text-zinc-100 block line-clamp-1">
-                              {req.description}
-                            </span>
-                            {req.vendor && (
-                              <span className="text-[10px] text-slate-500 font-medium">Vendor: {req.vendor}</span>
-                            )}
-                          </td>
-                          <td className="py-3 px-4 text-center whitespace-nowrap">
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300">
-                              Normal
-                            </Badge>
-                          </td>
+                          <ApprovalTitleAndPriorityCells req={req} />
                           <td className="py-3 px-4 text-center whitespace-nowrap">
                             <Badge
                               variant="outline"
@@ -1482,19 +1470,7 @@ export default function Administration() {
                               {req.department}
                             </span>
                           </td>
-                          <td className="py-3 px-4">
-                            <span className="font-medium text-slate-900 dark:text-zinc-100 block line-clamp-1">
-                              {req.description}
-                            </span>
-                            {req.vendor && (
-                              <span className="text-[10px] text-slate-500 font-medium">Vendor: {req.vendor}</span>
-                            )}
-                          </td>
-                          <td className="py-3 px-4 text-center whitespace-nowrap">
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300">
-                              Normal
-                            </Badge>
-                          </td>
+                          <ApprovalTitleAndPriorityCells req={req} />
                           <td className="py-3 px-4 text-center whitespace-nowrap">
                             <Badge
                               variant="outline"
@@ -1865,6 +1841,14 @@ export default function Administration() {
                 >
                   {activeRequest?.status}
                 </Badge>
+                {(activeRequest?.quote_data?.is_urgent_override || activeRequest?.priority?.toUpperCase() === "URGENT") && (
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] px-2 py-0.5 font-semibold bg-red-50 text-red-700 border-red-300 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800"
+                  >
+                    Urgent
+                  </Badge>
+                )}
               </div>
             </div>
             <DialogDescription className="text-xs mt-1">
@@ -1879,6 +1863,7 @@ export default function Administration() {
             </div>
           ) : (
             <div className="space-y-4 py-2 text-xs">
+              <UrgentOverrideDetailBanner request={activeRequest} />
               {/* Product Info & Specifications */}
               <div className="p-3.5 bg-slate-50 dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800 space-y-2">
                 <h4 className="font-semibold text-slate-800 dark:text-zinc-200 text-xs">Item Description & Purpose</h4>

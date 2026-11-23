@@ -79,7 +79,7 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/hooks/useApproverRoles.ts (101 lines) - use approver roles (hooks)
 - src/hooks/useBoardState.ts (185 lines) - Next free slot at the bottom of the grid for a new widget.
 - src/hooks/useCeoRealtimeStream.ts (49 lines) - Time the last query successfully received fresh data (not the render time).
-- src/hooks/useDashboard.ts (93 lines) - use dashboard (hooks)
+- src/hooks/useDashboard.ts (97 lines) - use dashboard (hooks)
 - src/hooks/useDataSource.ts (27 lines) - use data source (hooks)
 - src/hooks/useHeartbeat.ts (37 lines) - use heartbeat (hooks)
 - src/hooks/useNotifications.ts (296 lines) - use notifications (hooks)
@@ -99,7 +99,8 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/lib/utils.ts (7 lines) - utils (lib)
 - src/lib/widgetLogic.ts (126 lines) - Plain-language names and one-line descriptions for every display type (shared by web and native).
 - src/pages/Administration/Administration.native.tsx (1106 lines) - administration.native (pages  administration)
-- src/pages/Administration/Administration.tsx (2064 lines) - administration (pages  administration)
+- src/pages/Administration/Administration.tsx (2049 lines) - administration (pages  administration)
+- src/pages/Administration/ApprovalUrgentBadges.tsx (134 lines) - approval urgent badges (pages  administration)
 - src/pages/Auth/Login.native.tsx (288 lines) - login.native (pages  auth)
 - src/pages/Auth/Login.tsx (215 lines) - login (pages  auth)
 - src/pages/Auth/PendingAccess.native.tsx (132 lines) - pending access.native (pages  auth)
@@ -110,7 +111,8 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/pages/Dashboard/Dashboard.native.tsx (3816 lines) - dashboard.native (pages  dashboard)
 - src/pages/Dashboard/Dashboard.tsx (364 lines) - dashboard (pages  dashboard)
 - src/pages/Log/AuditLog.native.tsx (904 lines) - audit log.native (pages  log)
-- src/pages/Log/AuditLog.tsx (474 lines) - audit log (pages  log)
+- src/pages/Log/AuditLog.tsx (328 lines) - audit log (pages  log)
+- src/pages/Log/auditLogColumns.tsx (224 lines) - audit log columns (pages  log)
 - src/pages/MergersAcquisitions/MergersAcquisitions.native.tsx (1075 lines) - mergers acquisitions.native (pages  mergers acquisitions)
 - src/pages/MergersAcquisitions/MergersAcquisitions.tsx (553 lines) - mergers acquisitions (pages  mergers acquisitions)
 - src/pages/Reports/Reports.tsx (96 lines) - src/pages/Reports.tsx

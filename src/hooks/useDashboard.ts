@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Platform } from "react-native";
 import { apiClient } from "@/services/apiClient";
 import { format } from "date-fns";
 import type { DashboardOverview } from "@/types/dashboard";
@@ -49,13 +50,16 @@ function useDashboardOverview<T>(
   select: (overview: any) => T,
   options?: DashboardQueryOptions,
 ) {
+  const isNative = Platform.OS !== "web";
   return useQuery({
     queryKey: overviewQueryKey(period, filters),
     queryFn: ({ signal }) =>
       fetcher<DashboardOverview>(`/overview?period=${period}`, filters, signal),
     select,
     enabled: options?.enabled !== undefined ? options.enabled : true,
-    staleTime: 60000,
+    staleTime: isNative ? 0 : 60000,
+    gcTime: isNative ? 0 : 1000 * 60 * 5,
+    refetchOnMount: isNative ? "always" : true,
     retry: false,
     refetchOnWindowFocus: false,
   });

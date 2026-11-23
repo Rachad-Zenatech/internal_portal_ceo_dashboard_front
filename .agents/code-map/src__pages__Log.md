@@ -17,10 +17,11 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
     - `start` (fn) L128
     - `getActionColor` (fn) L132
 
-## src/pages/Log/AuditLog.tsx (474 lines) - audit log (pages  log)
-- `AuditLog` (export function) L28
-    - `getActionBadgeColor` (fn) L39
-    - `safeAuditLogs` (fn) L121
-    - `safeLoginActivities` (fn) L122
-    - `auditTable` (fn) L124
-    - `loginTable` (fn) L241
+## src/pages/Log/AuditLog.tsx (328 lines) - audit log (pages  log)
+- `AuditLog` (export function) L27
+
+## src/pages/Log/auditLogColumns.tsx (224 lines) - audit log columns (pages  log)
+- `AUDIT_SOURCE_LABELS` (export const) L6
+- `getCeoAuditActionBadgeColor` (export function) L22
+- `buildCeoAuditColumns` (export function) L35
+- `buildCeoLoginColumns` (export function) L141

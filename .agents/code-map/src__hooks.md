@@ -23,23 +23,23 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `RealtimeSyncState` (export interface) L7
 - `useCeoRealtimeStream` (export function) L15
 
-## src/hooks/useDashboard.ts (93 lines) - use dashboard (hooks)
-- `DashboardFilters` (export type) L7
-- `DashboardQueryOptions` (export type) L12
-- `buildParams` (function) L16
-- `fetcher` (function) L31
-- `overviewQueryKey` (function) L35
-- `useDashboardOverview` (function) L46
-- `selectSummary` (const) L64
-- `selectRevenueExpense` (const) L65
-- `selectBankBalances` (const) L66
-- `selectAccountDistribution` (const) L67
-- `selectRecentTransactions` (const) L68
-- `useDashboardSummary` (export function) L70
-- `useRevenueExpenseChart` (export function) L74
-- `useBankBalancesChart` (export function) L82
-- `useAccountDistribution` (export function) L86
-- `useRecentTransactions` (export function) L90
+## src/hooks/useDashboard.ts (97 lines) - use dashboard (hooks)
+- `DashboardFilters` (export type) L8
+- `DashboardQueryOptions` (export type) L13
+- `buildParams` (function) L17
+- `fetcher` (function) L32
+- `overviewQueryKey` (function) L36
+- `useDashboardOverview` (function) L47
+- `selectSummary` (const) L68
+- `selectRevenueExpense` (const) L69
+- `selectBankBalances` (const) L70
+- `selectAccountDistribution` (const) L71
+- `selectRecentTransactions` (const) L72
+- `useDashboardSummary` (export function) L74
+- `useRevenueExpenseChart` (export function) L78
+- `useBankBalancesChart` (export function) L86
+- `useAccountDistribution` (export function) L90
+- `useRecentTransactions` (export function) L94
 
 ## src/hooks/useDataSource.ts (27 lines) - use data source (hooks)
 - `useDataSource` (export function) L11 - Live pass-through read of a catalog data source.
