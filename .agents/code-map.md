@@ -25,7 +25,7 @@ to find the right file.
 | .agents/code-map/src__pages__Auth.md | 4 | 1 KB |
 | .agents/code-map/src__pages__Customization.md | 3 | 1 KB |
 | .agents/code-map/src__pages__Dashboard.md | 2 | 1 KB |
-| .agents/code-map/src__pages__Log.md | 3 | 1 KB |
+| .agents/code-map/src__pages__Log.md | 8 | 2 KB |
 | .agents/code-map/src__pages__MergersAcquisitions.md | 2 | 1 KB |
 | .agents/code-map/src__pages__Reports.md | 1 | 1 KB |
 | .agents/code-map/src__pages__Settings.md | 1 | 1 KB |

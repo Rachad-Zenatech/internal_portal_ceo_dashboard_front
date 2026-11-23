@@ -2,37 +2,86 @@ import { ArrowUpDown, CheckCircle2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { ColumnDef } from "@tanstack/react-table";
+import { AUDIT_SOURCE_LABELS, getAuditSourceLabel, normalizeAuditSource } from "./auditLogSources";
 
-export const AUDIT_SOURCE_LABELS: Record<string, string> = {
-  ceo: "CEO Dashboard",
-  administration: "Administration",
-  admin: "Administration",
-  ma: "M&A",
-  m7a: "M&A",
-  finance: "Finance",
-  marketing: "Marketing",
-  real_estate: "Real Estate",
-  social_media_compliance: "Compliance",
-  travel: "Travel",
-  sec_filing: "SEC Filing",
-  share_document: "SEC Filing",
-  template_automation: "Templates",
+export { AUDIT_SOURCE_LABELS };
+
+const SOURCE_BADGE_CLASSES: Record<string, string> = {
+  ceo: "bg-slate-100 text-slate-700 border-slate-300 dark:bg-zinc-800 dark:text-slate-200 dark:border-zinc-700",
+  administration: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
+  ma: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800",
+  finance: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800",
+  marketing: "bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-950/40 dark:text-pink-300 dark:border-pink-800",
+  real_estate: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
+  social_media_compliance: "bg-indigo-50/70 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800",
+  travel: "bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800",
+  sec_filing: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800",
+  template_automation: "bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800",
 };
 
 export function getCeoAuditActionBadgeColor(action: string) {
   const act = (action || "").toUpperCase();
   if (act.includes("OVERRIDE") || act.includes("URGENT"))
     return "bg-red-50 text-red-700 border-red-300 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800 font-semibold";
-  if (act.includes("CREATE"))
+  if (act.includes("CREATE") || act.includes("APPROV"))
     return "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400";
-  if (act.includes("UPDATE"))
+  if (act.includes("UPDATE") || act.includes("ASSIGN"))
     return "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400";
   if (act.includes("DELETE") || act.includes("REJECT"))
     return "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-400";
   return "bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-slate-300";
 }
 
-export function buildCeoAuditColumns(): ColumnDef<any>[] {
+function summarizeAuditDetails(newValue: unknown): string | null {
+  if (!newValue) return null;
+  if (typeof newValue === "string") return newValue.trim() || null;
+  if (typeof newValue !== "object") return String(newValue);
+
+  const obj = newValue as Record<string, unknown>;
+  const direct = obj.comment || obj.details || obj.message || obj.reason || obj.summary;
+  if (direct) return String(direct);
+
+  const summaryKeys = ["title", "script_title", "name", "product_name", "submission_number", "status", "stage", "email"];
+  const parts: string[] = [];
+  for (const key of summaryKeys) {
+    const val = obj[key];
+    if (val !== undefined && val !== null && String(val).trim() !== "") {
+      parts.push(`${key.replace(/_/g, " ")}: ${String(val)}`);
+    }
+    if (parts.length >= 2) break;
+  }
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+export function buildCeoAuditColumns(options: { showProject?: boolean } = {}): ColumnDef<any>[] {
+  const { showProject = true } = options;
+
+  const projectColumn: ColumnDef<any>[] = showProject
+    ? [
+        {
+          accessorKey: "source_service",
+          header: ({ column }) => (
+            <Button variant="ghost" className="px-0 font-semibold" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+              Application
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          ),
+          cell: ({ row }) => {
+            const key = normalizeAuditSource(row.original.source_service);
+            const label = getAuditSourceLabel(key);
+            const badgeClass =
+              SOURCE_BADGE_CLASSES[key] ||
+              "bg-indigo-50/70 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800";
+            return (
+              <Badge variant="outline" className={`text-[11px] font-medium whitespace-nowrap ${badgeClass}`}>
+                {label}
+              </Badge>
+            );
+          },
+        },
+      ]
+    : [];
+
   return [
     {
       accessorKey: "created_at",
@@ -42,26 +91,9 @@ export function buildCeoAuditColumns(): ColumnDef<any>[] {
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }) => <span className="font-medium">{new Date(row.original.created_at).toLocaleString()}</span>,
+      cell: ({ row }) => <span className="font-medium whitespace-nowrap">{new Date(row.original.created_at).toLocaleString()}</span>,
     },
-    {
-      accessorKey: "source_service",
-      header: ({ column }) => (
-        <Button variant="ghost" className="px-0 font-semibold" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Project
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ row }) => {
-        const key = String(row.original.source_service || "ceo").toLowerCase();
-        const label = AUDIT_SOURCE_LABELS[key] || key.replace(/_/g, " ");
-        return (
-          <Badge variant="outline" className="text-[11px] font-medium bg-indigo-50/70 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800 whitespace-nowrap">
-            {label}
-          </Badge>
-        );
-      },
-    },
+    ...projectColumn,
     {
       accessorKey: "actor_name",
       header: ({ column }) => (
@@ -110,8 +142,8 @@ export function buildCeoAuditColumns(): ColumnDef<any>[] {
         </Button>
       ),
       cell: ({ row }) => (
-        <span className="font-mono text-xs text-slate-500 max-w-[150px] truncate block" title={row.original.entity_id}>
-          {row.original.entity_id}
+        <span className="font-mono text-xs text-slate-500 max-w-[150px] truncate block" title={row.original.entity_id || ""}>
+          {row.original.entity_id || "—"}
         </span>
       ),
     },
@@ -120,8 +152,7 @@ export function buildCeoAuditColumns(): ColumnDef<any>[] {
       header: () => <div className="font-semibold">Details</div>,
       cell: ({ row }) => {
         const nv = row.original.new_value;
-        const reason = nv && typeof nv === "object" ? nv.urgent_override_reason : null;
-        const comment = nv && typeof nv === "object" ? nv.comment || nv.details || nv.message : null;
+        const reason = nv && typeof nv === "object" ? (nv as Record<string, unknown>).urgent_override_reason : null;
         if (reason) {
           return (
             <span className="text-xs font-medium text-red-600 dark:text-red-400 line-clamp-2 max-w-[300px]">
@@ -129,8 +160,13 @@ export function buildCeoAuditColumns(): ColumnDef<any>[] {
             </span>
           );
         }
-        if (comment) {
-          return <span className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 max-w-[300px]">{String(comment)}</span>;
+        const summary = summarizeAuditDetails(nv);
+        if (summary) {
+          return (
+            <span className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 max-w-[300px]" title={summary}>
+              {summary}
+            </span>
+          );
         }
         return <span className="text-xs text-slate-400">—</span>;
       },

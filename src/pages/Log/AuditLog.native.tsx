@@ -8,10 +8,8 @@ import {
   NativeCard,
   NativeCardContent,
   NativeBadge,
-  SafeAreaView,
 } from "@/components/native";
 import {
-  Modal,
   TextInput,
   TouchableOpacity,
   RefreshControl,
@@ -19,17 +17,22 @@ import {
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/services/apiClient";
-import { useNavigation } from "@react-navigation/native";
+import MobileShell from "@/components/AppShell/MobileShell.native";
+import { buildApplicationTabs, getAuditSourceLabel, normalizeAuditSource } from "./auditLogSources";
+import { AuditApplicationTabs } from "./AuditApplicationTabs.native";
+import { AuditLogDetailModal } from "./AuditLogDetailModal.native";
 
 const PAGE_SIZE = 50;
 
 interface AuditLogItem {
   id: string | number;
   created_at: string;
+  source_service?: string;
   actor_name?: string;
   actor_email?: string;
   action: string;
   entity_type?: string;
+  entity_id?: string;
   target_entity?: string;
   result?: string;
   details?: any;
@@ -46,8 +49,8 @@ interface LoginActivityItem {
 }
 
 export default function AuditLog() {
-  const navigation = useNavigation<any>();
   const [activeTab, setActiveTab] = useState<"audit" | "logins">("audit");
+  const [selectedApp, setSelectedApp] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedActionFilter, setSelectedActionFilter] = useState<string>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
@@ -82,9 +85,14 @@ export default function AuditLog() {
     setRefreshing(false);
   };
 
+  const applicationTabs = useMemo(() => buildApplicationTabs(auditLogs), [auditLogs]);
+
   // Filter Audit Logs
   const filteredAuditLogs = useMemo(() => {
     return auditLogs.filter((log) => {
+      const sourceKey = normalizeAuditSource(log.source_service);
+      if (selectedApp !== "all" && sourceKey !== selectedApp) return false;
+
       const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
         !q ||
@@ -92,7 +100,10 @@ export default function AuditLog() {
         (log.actor_email || "").toLowerCase().includes(q) ||
         (log.action || "").toLowerCase().includes(q) ||
         (log.entity_type || "").toLowerCase().includes(q) ||
-        (log.target_entity || "").toLowerCase().includes(q);
+        (log.entity_id || "").toLowerCase().includes(q) ||
+        (log.target_entity || "").toLowerCase().includes(q) ||
+        sourceKey.includes(q) ||
+        getAuditSourceLabel(sourceKey).toLowerCase().includes(q);
 
       const matchesAction =
         selectedActionFilter === "ALL" ||
@@ -100,7 +111,7 @@ export default function AuditLog() {
 
       return matchesSearch && matchesAction;
     });
-  }, [auditLogs, searchQuery, selectedActionFilter]);
+  }, [auditLogs, selectedApp, searchQuery, selectedActionFilter]);
 
   // Filter Login Activities
   const filteredLogins = useMemo(() => {
@@ -138,31 +149,12 @@ export default function AuditLog() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* Top Nav Bar */}
-      <View style={styles.navBar}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.navigate("Dashboard")}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="arrow-back" size={24} color="#0f172a" />
-        </TouchableOpacity>
-
-        <View style={styles.navTitleContainer}>
-          <Text style={styles.navTitle}>System Audit Trail</Text>
-          <Text style={styles.navSubtitle}>Governance & Security Logs</Text>
-        </View>
-
-        <TouchableOpacity
-          style={styles.refreshButton}
-          onPress={onRefresh}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="refresh" size={20} color="#2563eb" />
-        </TouchableOpacity>
-      </View>
-
+    <MobileShell
+      title="Audit Log"
+      subtitle="Governance & Security Logs"
+      onRefresh={onRefresh}
+      isRefreshing={refreshing}
+    >
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
@@ -231,7 +223,17 @@ export default function AuditLog() {
           )}
         </View>
 
-        {/* Filter Chips for Audit Tab */}
+        {/* Application Tabs + Action Filter Chips for Audit Tab */}
+        {activeTab === "audit" && (
+          <AuditApplicationTabs
+            tabs={applicationTabs}
+            selectedApp={selectedApp}
+            onSelect={(appKey) => {
+              setSelectedApp(appKey);
+              setCurrentPage(1);
+            }}
+          />
+        )}
         {activeTab === "audit" && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
             {["ALL", "APPROVE", "REJECT", "CREATE", "UPDATE", "ROLE", "LOGIN"].map((f) => (
@@ -343,6 +345,11 @@ export default function AuditLog() {
                       </View>
 
                       <View style={styles.logEntityRow}>
+                        {selectedApp === "all" ? (
+                          <NativeBadge variant="outline" style={styles.entityBadge}>
+                            <Text style={styles.entityBadgeText}>{getAuditSourceLabel(log.source_service)}</Text>
+                          </NativeBadge>
+                        ) : null}
                         {log.entity_type ? (
                           <NativeBadge variant="outline" style={styles.entityBadge}>
                             <Text style={styles.entityBadgeText}>{log.entity_type}</Text>
@@ -456,78 +463,8 @@ export default function AuditLog() {
         )}
       </ScrollView>
 
-      {/* ========================================================= */}
-      {/* AUDIT LOG DETAILS / JSON INSPECTOR MODAL                   */}
-      {/* ========================================================= */}
-      <Modal
-        visible={selectedLog !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setSelectedLog(null)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalHeaderLeft}>
-                <View style={styles.modalIconBox}>
-                  <MaterialCommunityIcons name="code-json" size={24} color="#2563eb" />
-                </View>
-                <View style={styles.modalHeaderTitles}>
-                  <Text style={styles.modalLogAction} numberOfLines={1}>
-                    {selectedLog?.action}
-                  </Text>
-                  <Text style={styles.modalSub}>
-                    {selectedLog?.created_at ? new Date(selectedLog.created_at).toLocaleString() : "-"}
-                  </Text>
-                </View>
-              </View>
-
-              <TouchableOpacity
-                style={styles.modalCloseBtn}
-                onPress={() => setSelectedLog(null)}
-              >
-                <Ionicons name="close" size={22} color="#64748b" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalBody}>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Actor:</Text>
-                <Text style={styles.detailValue}>
-                  {selectedLog?.actor_name || "System"} ({selectedLog?.actor_email || "N/A"})
-                </Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Target Entity:</Text>
-                <Text style={styles.detailValue}>
-                  {selectedLog?.entity_type} #{selectedLog?.target_entity || "-"}
-                </Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Result Status:</Text>
-                <Text
-                  style={[
-                    styles.detailValue,
-                    { color: selectedLog?.result === "SUCCESS" ? "#16a34a" : "#2563eb" },
-                  ]}
-                >
-                  {selectedLog?.result || "COMPLETED"}
-                </Text>
-              </View>
-
-              <Text style={styles.payloadTitle}>Full Audit Payload & Context:</Text>
-              <View style={styles.jsonCodeBox}>
-                <Text style={styles.jsonCodeText}>
-                  {JSON.stringify(selectedLog?.details || selectedLog, null, 2)}
-                </Text>
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
+      <AuditLogDetailModal log={selectedLog} onClose={() => setSelectedLog(null)} />
+    </MobileShell>
   );
 }
 

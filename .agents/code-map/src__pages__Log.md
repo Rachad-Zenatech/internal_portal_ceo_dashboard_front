@@ -4,24 +4,50 @@
 
 Each symbol shows its start line (`L<n>`); read from there to the next symbol's line, not the whole file.
 
-## src/pages/Log/AuditLog.native.tsx (904 lines) - audit log.native (pages  log)
-- `AuditLogItem` (interface) L26
-- `LoginActivityItem` (interface) L38
-- `AuditLog` (export function) L48
-    - `onRefresh` (fn) L79
-    - `filteredAuditLogs` (fn) L86 - Filter Audit Logs
-    - `filteredLogins` (fn) L106 - Filter Login Activities
-    - `paginatedAuditLogs` (fn) L122
-    - `start` (fn) L123
-    - `paginatedLogins` (fn) L127
-    - `start` (fn) L128
-    - `getActionColor` (fn) L132
+## src/pages/Log/AuditApplicationTabs.native.tsx (81 lines) - audit application tabs.native (pages  log)
+- `AuditApplicationTabsProps` (interface) L4
+- `AuditApplicationTabs` (export function) L10
 
-## src/pages/Log/AuditLog.tsx (328 lines) - audit log (pages  log)
-- `AuditLog` (export function) L27
+## src/pages/Log/AuditApplicationTabs.tsx (53 lines) - audit application tabs (pages  log)
+- `AuditApplicationTabsProps` (interface) L4
+- `AuditApplicationTabs` (export function) L10
 
-## src/pages/Log/auditLogColumns.tsx (224 lines) - audit log columns (pages  log)
-- `AUDIT_SOURCE_LABELS` (export const) L6
+## src/pages/Log/AuditLog.native.tsx (841 lines) - audit log.native (pages  log)
+- `AuditLogItem` (interface) L27
+- `LoginActivityItem` (interface) L41
+- `AuditLog` (export function) L51
+    - `onRefresh` (fn) L82
+    - `applicationTabs` (fn) L88
+    - `filteredAuditLogs` (fn) L91 - Filter Audit Logs
+    - `filteredLogins` (fn) L117 - Filter Login Activities
+    - `paginatedAuditLogs` (fn) L133
+    - `start` (fn) L134
+    - `paginatedLogins` (fn) L138
+    - `start` (fn) L139
+    - `getActionColor` (fn) L143
+
+## src/pages/Log/AuditLog.tsx (183 lines) - audit log (pages  log)
+- `AuditLog` (export function) L18
+
+## src/pages/Log/AuditLogDetailModal.native.tsx (143 lines) - audit log detail modal.native (pages  log)
+- `AuditLogDetailModalProps` (interface) L5
+- `AuditLogDetailModal` (export function) L21
+
+## src/pages/Log/AuditLogTableSection.tsx (121 lines) - audit log table section (pages  log)
+- `AuditLogTableSectionProps` (interface) L16
+- `AuditLogTableSection` (export function) L27
+
+## src/pages/Log/auditLogColumns.tsx (260 lines) - audit log columns (pages  log)
 - `getCeoAuditActionBadgeColor` (export function) L22
-- `buildCeoAuditColumns` (export function) L35
-- `buildCeoLoginColumns` (export function) L141
+- `summarizeAuditDetails` (function) L35
+- `buildCeoAuditColumns` (export function) L56
+- `buildCeoLoginColumns` (export function) L177
+
+## src/pages/Log/auditLogSources.ts (98 lines) - audit log sources (pages  log)
+- `AuditApplicationDef` (export interface) L1
+- `AuditApplicationTab` (export interface) L6
+- `AUDIT_APPLICATIONS` (export const) L10
+- `AUDIT_SOURCE_LABELS` (export const) L49
+- `normalizeAuditSource` (export function) L65
+- `getAuditSourceLabel` (export function) L70
+- `buildApplicationTabs` (export function) L75
