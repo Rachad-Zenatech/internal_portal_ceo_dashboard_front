@@ -21,6 +21,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/services/apiClient";
 import { useNavigation } from "@react-navigation/native";
+import { RequestOverviewAndPoNativeSection, UrgentNativeBadge } from "./RequestDetailSections.native";
+import { normalizeRequestDetailResponse, type PurchaseOrderDetail } from "./requestDetailHelpers";
 
 interface PortalStatus {
   name: string;
@@ -53,22 +55,15 @@ interface PurchaseRequest {
   gl_code?: string;
   currency?: string;
   item_url?: string;
-  product_info?: {
-    vendor?: string;
-    specs?: string;
-    delivery_date?: string;
-    model?: string;
-    warranty?: string;
-  };
+  title?: string;
+  purchase_order?: PurchaseOrderDetail | null;
+  invoice?: { po_id?: string | null } | null;
+  product_info?: { vendor?: string; specs?: string; delivery_date?: string; model?: string; warranty?: string };
   items?: PurchaseRequestLineItem[];
   item_mode?: "SINGLE" | "MULTIPLE";
   quantity?: number;
   unit_price?: number;
-  quote_data?: {
-    vendor_name?: string;
-    quote_number?: string;
-    quote_date?: string;
-  };
+  quote_data?: { vendor_name?: string; quote_number?: string; quote_date?: string; is_urgent_override?: boolean; po_number?: string };
 }
 
 export default function Administration() {
@@ -133,15 +128,17 @@ export default function Administration() {
     if (Array.isArray(rawCompletedHistory) && rawCompletedHistory.length > 0) {
       return rawCompletedHistory.map((r) => ({
         id: String(r?.id || ""),
+        title: (r as any)?.title || (r as any)?.product_name,
         department: r?.department || "Operations",
         requester_name: r?.requester_name || "Staff",
         amount: Number(r?.amount || 0),
         description: r?.description || (r as any)?.product_name || `Purchase Request #${r?.id}`,
         status: r?.status || "COMPLETED",
         created_at: r?.created_at || "",
-        priority: r?.priority || "Normal",
+        priority: (r as any)?.is_urgent_override || (r?.quote_data as any)?.is_urgent_override ? "URGENT" : r?.priority || "Normal",
         vendor: (r?.product_info as any)?.vendor || "Verified Vendor",
         product_info: r?.product_info,
+        quote_data: r?.quote_data,
         items: r?.items,
       }));
     }
@@ -153,8 +150,7 @@ export default function Administration() {
     queryKey: ["approvalDetail", detailedRequest?.id],
     queryFn: async () => {
       if (!detailedRequest?.id) return null;
-      const res = await apiClient.get<any>(`/api/v1/ceo/approvals/${detailedRequest.id}`);
-      return res?.request || res;
+      return normalizeRequestDetailResponse(await apiClient.get<any>(`/api/v1/ceo/approvals/${detailedRequest.id}`));
     },
     enabled: Boolean(detailedRequest?.id),
     staleTime: 10000,
@@ -568,6 +564,7 @@ export default function Administration() {
               <View>
                 <Text style={styles.detailReqNumber}>Request #{activeRequest?.id}</Text>
                 <Text style={styles.detailDeptSub}>{activeRequest?.department}</Text>
+                <UrgentNativeBadge request={activeRequest} />
               </View>
               <TouchableOpacity onPress={() => setDetailedRequest(null)}>
                 <Ionicons name="close" size={24} color="#64748b" />
@@ -582,12 +579,7 @@ export default function Administration() {
                 </Text>
               </View>
 
-              <View style={styles.detailSection}>
-                <Text style={styles.detailSectionHeading}>DESCRIPTION & JUSTIFICATION</Text>
-                <Text style={styles.detailDescriptionText}>
-                  {activeRequest?.description || "No description provided."}
-                </Text>
-              </View>
+              <RequestOverviewAndPoNativeSection request={activeRequest} />
 
               <View style={styles.detailSection}>
                 <Text style={styles.detailSectionHeading}>DETAILS</Text>
@@ -597,7 +589,9 @@ export default function Administration() {
                 </View>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailRowLabel}>Priority:</Text>
-                  <Text style={styles.detailRowVal}>{activeRequest?.priority || "Normal"}</Text>
+                  <Text style={styles.detailRowVal}>
+                    {activeRequest?.priority?.toUpperCase() === "URGENT" ? "URGENT" : activeRequest?.priority || "Normal"}
+                  </Text>
                 </View>
                 {activeRequest?.created_at && (
                   <View style={styles.detailRow}>

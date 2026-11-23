@@ -46,6 +46,8 @@ import {
   mapCompletedHistoryRequests,
   parseQuoteDataSafe,
 } from "./ApprovalUrgentBadges";
+import { RequestOverviewAndPoSection } from "./RequestDetailSections";
+import { normalizeRequestDetailResponse, type PurchaseOrderDetail } from "./requestDetailHelpers";
 import { KpiCard, formatMoney } from "@/components/Dashboard/KpiCard";
 
 interface PurchaseRequestLineItem {
@@ -67,6 +69,7 @@ interface PurchaseRequestLineItem {
 
 interface PurchaseRequest {
   id: string;
+  title?: string;
   department?: string;
   amount: number;
   status: string;
@@ -114,8 +117,8 @@ interface PurchaseRequest {
   level_2_approved_at?: string | null;
   requires_second_level?: boolean;
   // Present on the detail response (merged in from the Administration request detail)
-  purchase_order?: { payment_method?: string | null; vendor?: string | null; shipped_to_location?: string | null } | null;
-  invoice?: { actual_cost_after_tax?: number | null } | null;
+  purchase_order?: PurchaseOrderDetail | null;
+  invoice?: { po_id?: string | null; actual_cost_after_tax?: number | null } | null;
   wire_transfer?: unknown;
   rawReq?: any;
   attachments?: Array<{
@@ -540,16 +543,7 @@ export default function Administration() {
     queryFn: async ({ signal }) => {
       if (!detailedRequestId) return null;
       const res = await apiClient.get<any>(`/api/v1/ceo/approvals/${detailedRequestId}`, { signal });
-      if (res?.request) {
-        // Keep the purchase order / invoice / wire details that sit beside the request in the response
-        return {
-          ...res.request,
-          purchase_order: res.purchase_order ?? null,
-          invoice: res.invoice ?? null,
-          wire_transfer: res.wire_transfer ?? null,
-        };
-      }
-      return res;
+      return normalizeRequestDetailResponse(res);
     },
     enabled: Boolean(detailedRequestId),
     staleTime: 60000,
@@ -1323,9 +1317,9 @@ export default function Administration() {
                                 {(req.quote_data?.is_urgent_override || req.priority?.toUpperCase() === "URGENT") && (
                                   <Badge
                                     variant="outline"
-                                    className="text-[10px] px-1.5 py-0 font-semibold bg-red-50 text-red-700 border-red-300 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800 shrink-0"
+                                    className="text-[10px] px-1.5 py-0 font-semibold uppercase bg-red-50 text-red-700 border-red-300 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800 shrink-0"
                                   >
-                                    Urgent
+                                    URGENT
                                   </Badge>
                                 )}
                               </div>
@@ -1347,7 +1341,7 @@ export default function Administration() {
                                     : "bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300"
                                 }`}
                               >
-                                {req.priority || "Normal"}
+                                {req.priority?.toUpperCase() === "URGENT" ? "URGENT" : req.priority || "Normal"}
                               </Badge>
                             </td>
                             <td className="py-3 px-4 text-center whitespace-nowrap">
@@ -1844,9 +1838,9 @@ export default function Administration() {
                 {(activeRequest?.quote_data?.is_urgent_override || activeRequest?.priority?.toUpperCase() === "URGENT") && (
                   <Badge
                     variant="outline"
-                    className="text-[10px] px-2 py-0.5 font-semibold bg-red-50 text-red-700 border-red-300 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800"
+                    className="text-[10px] px-2 py-0.5 font-semibold uppercase bg-red-50 text-red-700 border-red-300 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800"
                   >
-                    Urgent
+                    URGENT
                   </Badge>
                 )}
               </div>
@@ -1864,17 +1858,7 @@ export default function Administration() {
           ) : (
             <div className="space-y-4 py-2 text-xs">
               <UrgentOverrideDetailBanner request={activeRequest} />
-              {/* Product Info & Specifications */}
-              <div className="p-3.5 bg-slate-50 dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800 space-y-2">
-                <h4 className="font-semibold text-slate-800 dark:text-zinc-200 text-xs">Item Description & Purpose</h4>
-                <p className="text-slate-600 dark:text-zinc-400">{activeRequest?.description || "No description provided."}</p>
-                {activeRequest?.product_info?.specs && (
-                  <div className="mt-2 pt-2 border-t border-slate-200/60 dark:border-zinc-800">
-                    <span className="text-[11px] text-muted-foreground font-medium">Specs:</span>
-                    <p className="text-slate-700 dark:text-zinc-300 mt-0.5 whitespace-pre-wrap">{activeRequest.product_info.specs}</p>
-                  </div>
-                )}
-              </div>
+              <RequestOverviewAndPoSection request={activeRequest} />
 
               {/* Key facts: quantity, requested date, payment method, approvals */}
               <div className="grid grid-cols-2 gap-x-4 gap-y-3 p-3.5 rounded-xl border border-slate-100 dark:border-zinc-800">

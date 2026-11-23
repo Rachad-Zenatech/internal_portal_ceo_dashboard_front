@@ -63,6 +63,12 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `RecentTransaction` (export type) L31
 - `DashboardOverview` (export type) L38
 
+## src/types/messageHub.ts (61 lines) - message hub (types)
+- `HubQueueOrStreamItem` (export interface) L1
+- `HubChannelGroupStatus` (export interface) L10
+- `HubConnectedServer` (export interface) L19
+- `MessageHubStatusResponse` (export interface) L35
+
 ## src/types/search.ts (8 lines) - search (types)
 - `SearchResult` (export type) L1
 

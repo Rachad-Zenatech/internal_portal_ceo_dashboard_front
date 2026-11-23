@@ -35,25 +35,8 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
     - `handleCopy` (fn) L209
     - `handleResetChat` (fn) L223
 
-## src/components/AppShell/MessageHubStatusDropdown.tsx (580 lines) - message hub status dropdown (components  app shell)
-- `HubQueueOrStreamItem` (export interface) L26
-- `HubChannelGroupStatus` (export interface) L35
-- `HubConnectedServer` (export interface) L44
-- `MessageHubStatusResponse` (export interface) L60
-- `forceServerOffline` (function) L87
-- `buildOfflineServer` (function) L128
-    - `q` (fn) L129
-- `buildAllOfflineFallback` (function) L166
-- `fetchWithTimeout` (function) L198
-- `useMessageHubLiveStatus` (export function) L213 - Shared live hub status query (local backend -> peer backend -> all-offline fallback).
-    - `queryClient` (fn) L214
-- `MessageHubStatusDropdown` (export function) L268
-    - `queryClient` (fn) L270
-    - `handleActiveTest` (fn) L301
-    - `getStatusDot` (fn) L329
-    - `getServerBadge` (fn) L341
-    - `formatLastSeen` (fn) L375
-    - `renderMetric` (fn) L397
+## src/components/AppShell/MessageHubStatusDropdown.tsx (325 lines) - message hub status dropdown (components  app shell)
+- `MessageHubStatusDropdown` (export function) L39
 
 ## src/components/AppShell/Navigation.tsx (91 lines) - navigation (components  app shell)
 - `NavigationItem` (export interface) L13

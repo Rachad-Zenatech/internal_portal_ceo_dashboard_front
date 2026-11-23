@@ -47,6 +47,16 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 ## src/hooks/useHeartbeat.ts (37 lines) - use heartbeat (hooks)
 - `useHeartbeat` (export function) L4
 
+## src/hooks/useMessageHubLiveStatus.ts (253 lines) - use message hub live status (hooks)
+- `HUB_SERVERS` (export const) L14
+- `forceServerOffline` (function) L31
+- `buildOfflineServer` (function) L55
+- `buildAllOfflineFallback` (export function) L93
+- `fetchWithTimeout` (function) L125
+- `isTokenUsable` (function) L135
+- `useMessageHubLiveStatus` (export function) L152 - Shared live hub status query (local backend -> peer backend -> all-offline fallback).
+- `useMessageHubStream` (export function) L214 - Real-time SSE listener for cross-server disconnect/reconnect pushes.
+
 ## src/hooks/useNotifications.ts (296 lines) - use notifications (hooks)
 - `Notification` (export interface) L5
 - `NotificationListener` (type) L36

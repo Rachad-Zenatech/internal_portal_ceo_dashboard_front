@@ -13,10 +13,6 @@
       "max_lines": 526,
       "reason": "Over the limit when the check was introduced; split it when you next work on it."
     },
-    "src/components/AppShell/MessageHubStatusDropdown.tsx": {
-      "max_lines": 579,
-      "reason": "Over the limit when the check was introduced; split it when you next work on it."
-    },
     "src/components/AppShell/TopBar.tsx": {
       "max_lines": 549,
       "reason": "Over the limit when the check was introduced; split it when you next work on it."
@@ -26,11 +22,11 @@
       "reason": "Over the limit when the check was introduced; split it when you next work on it."
     },
     "src/pages/Administration/Administration.native.tsx": {
-      "max_lines": 1105,
+      "max_lines": 1099,
       "reason": "Over the limit when the check was introduced; split it when you next work on it."
     },
     "src/pages/Administration/Administration.tsx": {
-      "max_lines": 2063,
+      "max_lines": 2032,
       "reason": "Over the limit when the check was introduced; split it when you next work on it."
     },
     "src/pages/Dashboard/Dashboard.native.tsx": {
@@ -112,11 +108,11 @@
       "kind": "jsx_return"
     },
     "src/pages/Administration/Administration.native.tsx#Administration": {
-      "max_lines": 379,
+      "max_lines": 377,
       "kind": "jsx_return"
     },
     "src/pages/Administration/Administration.tsx#Administration": {
-      "max_lines": 1162,
+      "max_lines": 1152,
       "kind": "jsx_return"
     },
     "src/pages/Dashboard/Dashboard.native.tsx#Dashboard": {

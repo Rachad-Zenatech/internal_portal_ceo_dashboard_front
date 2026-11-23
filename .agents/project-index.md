@@ -15,7 +15,7 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/components/AppShell/ChatMessageRenderer.tsx (357 lines) - chat message renderer (components  app shell)
 - src/components/AppShell/ConnectionStatusLight.tsx (262 lines) - connection status light (components  app shell)
 - src/components/AppShell/FloatingChat.tsx (527 lines) - floating chat (components  app shell)
-- src/components/AppShell/MessageHubStatusDropdown.tsx (580 lines) - message hub status dropdown (components  app shell)
+- src/components/AppShell/MessageHubStatusDropdown.tsx (325 lines) - message hub status dropdown (components  app shell)
 - src/components/AppShell/Navigation.tsx (91 lines) - navigation (components  app shell)
 - src/components/AppShell/SessionTimeout.tsx (4 lines) - session timeout (components  app shell)
 - src/components/AppShell/Sidebar.tsx (191 lines) - sidebar (components  app shell)
@@ -82,6 +82,7 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/hooks/useDashboard.ts (97 lines) - use dashboard (hooks)
 - src/hooks/useDataSource.ts (27 lines) - use data source (hooks)
 - src/hooks/useHeartbeat.ts (37 lines) - use heartbeat (hooks)
+- src/hooks/useMessageHubLiveStatus.ts (253 lines) - use message hub live status (hooks)
 - src/hooks/useNotifications.ts (296 lines) - use notifications (hooks)
 - src/hooks/useSearch.ts (16 lines) - use search (hooks)
 - src/hooks/useServiceCommand.ts (124 lines) - use service command (hooks)
@@ -98,9 +99,12 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/lib/storage.ts (74 lines) - Universal storage adapter for Web and Native
 - src/lib/utils.ts (7 lines) - utils (lib)
 - src/lib/widgetLogic.ts (126 lines) - Plain-language names and one-line descriptions for every display type (shared by web and native).
-- src/pages/Administration/Administration.native.tsx (1106 lines) - administration.native (pages  administration)
-- src/pages/Administration/Administration.tsx (2049 lines) - administration (pages  administration)
+- src/pages/Administration/Administration.native.tsx (1100 lines) - administration.native (pages  administration)
+- src/pages/Administration/Administration.tsx (2033 lines) - administration (pages  administration)
 - src/pages/Administration/ApprovalUrgentBadges.tsx (155 lines) - approval urgent badges (pages  administration)
+- src/pages/Administration/RequestDetailSections.native.tsx (115 lines) - request detail sections.native (pages  administration)
+- src/pages/Administration/RequestDetailSections.tsx (98 lines) - request detail sections (pages  administration)
+- src/pages/Administration/requestDetailHelpers.ts (110 lines) - request detail helpers (pages  administration)
 - src/pages/Auth/Login.native.tsx (288 lines) - login.native (pages  auth)
 - src/pages/Auth/Login.tsx (215 lines) - login (pages  auth)
 - src/pages/Auth/PendingAccess.native.tsx (132 lines) - pending access.native (pages  auth)
@@ -134,6 +138,7 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/types/classification.ts (149 lines) - classification (types)
 - src/types/customize.ts (69 lines) - dimension = something you group/label by; measure = something you add up or average.
 - src/types/dashboard.ts (45 lines) - dashboard (types)
+- src/types/messageHub.ts (61 lines) - message hub (types)
 - src/types/search.ts (8 lines) - search (types)
 - src/types/uploadArchive.ts (26 lines) - upload archive (types)
 - vite.config.ts (51 lines) - vite.config

@@ -92,9 +92,9 @@ export function ApprovalTitleAndPriorityCells({ req }: { req: any }) {
           {isUrgent && (
             <Badge
               variant="outline"
-              className="text-[10px] px-1.5 py-0 font-semibold bg-red-50 text-red-700 border-red-300 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800 shrink-0"
+              className="text-[10px] px-1.5 py-0 font-semibold uppercase bg-red-50 text-red-700 border-red-300 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800 shrink-0"
             >
-              Urgent
+              URGENT
             </Badge>
           )}
         </div>
@@ -114,7 +114,7 @@ export function ApprovalTitleAndPriorityCells({ req }: { req: any }) {
               : "bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300"
           }`}
         >
-          {req.priority || "Normal"}
+          {prioUpper === "URGENT" ? "URGENT" : req.priority || "Normal"}
         </Badge>
       </td>
     </>
@@ -137,8 +137,8 @@ export function UrgentOverrideDetailBanner({ request }: { request: any }) {
         <h4 className="font-semibold text-red-800 dark:text-red-200 text-xs">
           Urgent Account Payable — Approval Override
         </h4>
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-100 text-red-700 border-red-300 dark:bg-red-950 dark:text-red-300 dark:border-red-800">
-          Urgent
+        <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-semibold uppercase bg-red-100 text-red-700 border-red-300 dark:bg-red-950 dark:text-red-300 dark:border-red-800">
+          URGENT
         </Badge>
       </div>
       <p className="text-red-700 dark:text-red-300 font-medium whitespace-pre-wrap">
