@@ -32,25 +32,33 @@ export function getCeoAuditActionBadgeColor(action: string) {
   return "bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-slate-300";
 }
 
+function formatAuditValue(val: unknown): string {
+  if (typeof val === "string") return val;
+  if (typeof val === "number" || typeof val === "boolean") return String(val);
+  try {
+    return JSON.stringify(val);
+  } catch {
+    return String(val);
+  }
+}
+
 function summarizeAuditDetails(newValue: unknown): string | null {
-  if (!newValue) return null;
+  if (newValue === null || newValue === undefined) return null;
   if (typeof newValue === "string") return newValue.trim() || null;
   if (typeof newValue !== "object") return String(newValue);
 
   const obj = newValue as Record<string, unknown>;
   const direct = obj.comment || obj.details || obj.message || obj.reason || obj.summary;
-  if (direct) return String(direct);
+  if (direct) return formatAuditValue(direct);
 
-  const summaryKeys = ["title", "script_title", "name", "product_name", "submission_number", "status", "stage", "email"];
   const parts: string[] = [];
-  for (const key of summaryKeys) {
-    const val = obj[key];
-    if (val !== undefined && val !== null && String(val).trim() !== "") {
-      parts.push(`${key.replace(/_/g, " ")}: ${String(val)}`);
-    }
-    if (parts.length >= 2) break;
+  for (const [key, val] of Object.entries(obj)) {
+    if (val === undefined || val === null) continue;
+    const text = formatAuditValue(val).trim();
+    if (!text) continue;
+    parts.push(`${key.replace(/_/g, " ")}: ${text}`);
   }
-  return parts.length > 0 ? parts.join(" · ") : null;
+  return parts.length > 0 ? parts.join("\n") : null;
 }
 
 export function buildCeoAuditColumns(options: { showProject?: boolean } = {}): ColumnDef<any>[] {
@@ -155,17 +163,17 @@ export function buildCeoAuditColumns(options: { showProject?: boolean } = {}): C
         const reason = nv && typeof nv === "object" ? (nv as Record<string, unknown>).urgent_override_reason : null;
         if (reason) {
           return (
-            <span className="text-xs font-medium text-red-600 dark:text-red-400 line-clamp-2 max-w-[300px]">
+            <div className="text-xs font-medium text-red-600 dark:text-red-400 whitespace-pre-wrap break-words leading-relaxed">
               Urgent Override: {String(reason)}
-            </span>
+            </div>
           );
         }
         const summary = summarizeAuditDetails(nv);
         if (summary) {
           return (
-            <span className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 max-w-[300px]" title={summary}>
+            <div className="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-wrap break-words leading-relaxed">
               {summary}
-            </span>
+            </div>
           );
         }
         return <span className="text-xs text-slate-400">—</span>;

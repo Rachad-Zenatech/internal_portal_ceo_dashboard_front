@@ -33,15 +33,18 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `AuditLogDetailModalProps` (interface) L5
 - `AuditLogDetailModal` (export function) L21
 
-## src/pages/Log/AuditLogTableSection.tsx (121 lines) - audit log table section (pages  log)
+## src/pages/Log/AuditLogTableSection.tsx (148 lines) - audit log table section (pages  log)
 - `AuditLogTableSectionProps` (interface) L16
-- `AuditLogTableSection` (export function) L27
+- `AuditTableToolbarProps` (interface) L29
+- `AuditTableToolbar` (function) L36
+- `AuditLogTableSection` (export function) L78
 
-## src/pages/Log/auditLogColumns.tsx (260 lines) - audit log columns (pages  log)
+## src/pages/Log/auditLogColumns.tsx (268 lines) - audit log columns (pages  log)
 - `getCeoAuditActionBadgeColor` (export function) L22
-- `summarizeAuditDetails` (function) L35
-- `buildCeoAuditColumns` (export function) L56
-- `buildCeoLoginColumns` (export function) L177
+- `formatAuditValue` (function) L35
+- `summarizeAuditDetails` (function) L45
+- `buildCeoAuditColumns` (export function) L64
+- `buildCeoLoginColumns` (export function) L185
 
 ## src/pages/Log/auditLogSources.ts (98 lines) - audit log sources (pages  log)
 - `AuditApplicationDef` (export interface) L1

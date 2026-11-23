@@ -22,7 +22,7 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
     - `totalPendingAmount` (fn) L234
     - `totalApprovedAmount` (fn) L238
 
-## src/pages/Administration/Administration.tsx (2033 lines) - administration (pages  administration)
+## src/pages/Administration/Administration.tsx (2004 lines) - administration (pages  administration)
 - `PurchaseRequestLineItem` (interface) L53
 - `PurchaseRequest` (interface) L70
 - `formatUsd` (function) L131
@@ -83,12 +83,12 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
     - `handleClearSelection` (fn) L855
     - `activeLineItems` (fn) L859
 
-## src/pages/Administration/ApprovalUrgentBadges.tsx (155 lines) - approval urgent badges (pages  administration)
+## src/pages/Administration/ApprovalUrgentBadges.tsx (144 lines) - approval urgent badges (pages  administration)
 - `parseQuoteDataSafe` (export function) L3
 - `parseTimestamp` (function) L15
 - `mapCompletedHistoryRequests` (export function) L21
 - `ApprovalTitleAndPriorityCells` (export function) L80
-- `UrgentOverrideDetailBanner` (export function) L124
+- `UrgentOverrideDetailBanner` (export function) L113
 
 ## src/pages/Administration/RequestDetailSections.native.tsx (115 lines) - request detail sections.native (pages  administration)
 - `UrgentNativeBadge` (export function) L4

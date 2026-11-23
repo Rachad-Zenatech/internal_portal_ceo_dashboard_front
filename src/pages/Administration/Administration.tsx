@@ -778,8 +778,8 @@ export default function Administration() {
     approvalViewMode === "pending"
       ? filteredApprovals
       : approvalViewMode === "pending_sync"
-      ? filteredPendingSync
-      : filteredApproved;
+        ? filteredPendingSync
+        : filteredApproved;
   const totalPages = Math.max(1, Math.ceil(currentList.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
 
@@ -1000,18 +1000,16 @@ export default function Administration() {
                   setSelectedIds([]);
                   setCurrentPage(1);
                 }}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  approvalViewMode === "pending"
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${approvalViewMode === "pending"
                     ? "bg-white dark:bg-zinc-900 text-indigo-700 dark:text-indigo-300 shadow-2xs"
                     : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100"
-                }`}
+                  }`}
               >
                 <span>Pending Review</span>
-                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                  approvalViewMode === "pending"
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${approvalViewMode === "pending"
                     ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300"
                     : "bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300"
-                }`}>
+                  }`}>
                   {pendingApprovals.length}
                 </span>
               </button>
@@ -1023,20 +1021,18 @@ export default function Administration() {
                   setSelectedIds([]);
                   setCurrentPage(1);
                 }}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  approvalViewMode === "pending_sync"
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${approvalViewMode === "pending_sync"
                     ? "bg-white dark:bg-zinc-900 text-amber-700 dark:text-amber-300 shadow-2xs"
                     : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100"
-                }`}
+                  }`}
               >
                 <span>Waiting Reconnect</span>
-                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                  approvalViewMode === "pending_sync"
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${approvalViewMode === "pending_sync"
                     ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
                     : pendingSyncRequests.length > 0
-                    ? "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 animate-pulse"
-                    : "bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300"
-                }`}>
+                      ? "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 animate-pulse"
+                      : "bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300"
+                  }`}>
                   {pendingSyncRequests.length}
                 </span>
               </button>
@@ -1048,18 +1044,16 @@ export default function Administration() {
                   setSelectedIds([]);
                   setCurrentPage(1);
                 }}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  approvalViewMode === "approved"
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${approvalViewMode === "approved"
                     ? "bg-white dark:bg-zinc-900 text-emerald-700 dark:text-emerald-300 shadow-2xs"
                     : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100"
-                }`}
+                  }`}
               >
                 <span>Approved History</span>
-                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                  approvalViewMode === "approved"
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${approvalViewMode === "approved"
                     ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
                     : "bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300"
-                }`}>
+                  }`}>
                   {syncedApprovedRequests.length}
                 </span>
               </button>
@@ -1077,9 +1071,8 @@ export default function Administration() {
                     setSearchTerm(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className={`h-8 pl-8 text-xs bg-slate-50/60 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 rounded-lg w-full ${
-                    isServerDisconnected ? "opacity-50 cursor-not-allowed bg-slate-100 dark:bg-zinc-900" : ""
-                  }`}
+                  className={`h-8 pl-8 text-xs bg-slate-50/60 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 rounded-lg w-full ${isServerDisconnected ? "opacity-50 cursor-not-allowed bg-slate-100 dark:bg-zinc-900" : ""
+                    }`}
                 />
               </div>
 
@@ -1091,9 +1084,8 @@ export default function Administration() {
                       setStatusFilter(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className={`h-8 text-xs bg-slate-50/60 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 rounded-lg px-2 text-slate-700 dark:text-zinc-300 font-medium ${
-                      isServerDisconnected ? "opacity-50 cursor-not-allowed bg-slate-100 dark:bg-zinc-900" : "cursor-pointer"
-                    }`}
+                    className={`h-8 text-xs bg-slate-50/60 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 rounded-lg px-2 text-slate-700 dark:text-zinc-300 font-medium ${isServerDisconnected ? "opacity-50 cursor-not-allowed bg-slate-100 dark:bg-zinc-900" : "cursor-pointer"
+                      }`}
                   >
                     <option value="ALL">All Statuses</option>
                     <option value="WAITING_APPROVAL">Waiting Approval</option>
@@ -1105,9 +1097,8 @@ export default function Administration() {
                       setTierFilter(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className={`h-8 text-xs bg-slate-50/60 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 rounded-lg px-2 text-slate-700 dark:text-zinc-300 font-medium ${
-                      isServerDisconnected ? "opacity-50 cursor-not-allowed bg-slate-100 dark:bg-zinc-900" : "cursor-pointer"
-                    }`}
+                    className={`h-8 text-xs bg-slate-50/60 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 rounded-lg px-2 text-slate-700 dark:text-zinc-300 font-medium ${isServerDisconnected ? "opacity-50 cursor-not-allowed bg-slate-100 dark:bg-zinc-900" : "cursor-pointer"
+                      }`}
                   >
                     <option value="ALL">All Tiers</option>
                     <option value="STANDARD">&lt; $10k Manager</option>
@@ -1236,15 +1227,15 @@ export default function Administration() {
                   {approvalViewMode === "pending"
                     ? "No Pending Approvals"
                     : approvalViewMode === "pending_sync"
-                    ? "No Records Waiting Reconnect"
-                    : "No Synchronized Approved History"}
+                      ? "No Records Waiting Reconnect"
+                      : "No Synchronized Approved History"}
                 </h4>
                 <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
                   {approvalViewMode === "pending"
                     ? "All executive purchase requests have been reviewed and processed."
                     : approvalViewMode === "pending_sync"
-                    ? "All approved requests are currently in sync with the live Administration Portal."
-                    : "No approved requests matched the current search criteria."}
+                      ? "All approved requests are currently in sync with the live Administration Portal."
+                      : "No approved requests matched the current search criteria."}
                 </p>
               </div>
             ) : (
@@ -1284,9 +1275,8 @@ export default function Administration() {
                           <tr
                             key={req.id}
                             onClick={() => setDetailedRequest(req)}
-                            className={`hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors group ${
-                              isRowSelected ? "bg-indigo-50/70 dark:bg-indigo-950/30 border-l-2 border-indigo-600 dark:border-indigo-400" : ""
-                            }`}
+                            className={`hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors group ${isRowSelected ? "bg-indigo-50/70 dark:bg-indigo-950/30 border-l-2 border-indigo-600 dark:border-indigo-400" : ""
+                              }`}
                           >
                             <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
                               <Checkbox
@@ -1310,19 +1300,9 @@ export default function Administration() {
                               </span>
                             </td>
                             <td className="py-3 px-4">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="font-medium text-slate-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
-                                  {req.description}
-                                </span>
-                                {(req.quote_data?.is_urgent_override || req.priority?.toUpperCase() === "URGENT") && (
-                                  <Badge
-                                    variant="outline"
-                                    className="text-[10px] px-1.5 py-0 font-semibold uppercase bg-red-50 text-red-700 border-red-300 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800 shrink-0"
-                                  >
-                                    URGENT
-                                  </Badge>
-                                )}
-                              </div>
+                              <span className="font-medium text-slate-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
+                                {req.description}
+                              </span>
                               {req.quote_data?.urgent_override_reason && (
                                 <p className="text-[11px] text-red-700 dark:text-red-300 mt-0.5 line-clamp-2">
                                   Reason: {req.quote_data.urgent_override_reason}
@@ -1335,23 +1315,21 @@ export default function Administration() {
                             <td className="py-3 px-4 text-center whitespace-nowrap">
                               <Badge
                                 variant="outline"
-                                className={`text-[10px] px-1.5 py-0 font-medium ${
-                                  req.priority?.toUpperCase() === "URGENT" || req.priority?.toUpperCase() === "HIGH"
+                                className={`text-[10px] px-1.5 py-0 font-medium ${req.quote_data?.is_urgent_override || req.priority?.toUpperCase() === "URGENT" || req.priority?.toUpperCase() === "HIGH"
                                     ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300"
                                     : "bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300"
-                                }`}
+                                  }`}
                               >
-                                {req.priority?.toUpperCase() === "URGENT" ? "URGENT" : req.priority || "Normal"}
+                                {req.quote_data?.is_urgent_override || req.priority?.toUpperCase() === "URGENT" ? "URGENT" : req.priority || "Normal"}
                               </Badge>
                             </td>
                             <td className="py-3 px-4 text-center whitespace-nowrap">
                               <Badge
                                 variant="outline"
-                                className={`text-[10px] px-2 py-0.5 font-medium ${
-                                  (Number(req.amount) || 0) >= 10000
+                                className={`text-[10px] px-2 py-0.5 font-medium ${(Number(req.amount) || 0) >= 10000
                                     ? "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 font-semibold"
                                     : "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300"
-                                }`}
+                                  }`}
                               >
                                 {(Number(req.amount) || 0) >= 10000 ? "≥ $10k Exec" : "< $10k Mgr"}
                               </Badge>
@@ -1417,17 +1395,16 @@ export default function Administration() {
                           <td className="py-3 px-4 text-center whitespace-nowrap">
                             <Badge
                               variant="outline"
-                              className={`text-[10px] px-2 py-0.5 font-medium ${
-                                (Number(req.amount) || 0) >= 10000
+                              className={`text-[10px] px-2 py-0.5 font-medium ${(Number(req.amount) || 0) >= 10000
                                   ? "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300"
                                   : "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300"
-                              }`}
+                                }`}
                             >
                               {(Number(req.amount) || 0) >= 10000 ? "≥ $10k Exec" : "< $10k Mgr"}
                             </Badge>
                           </td>
                           {renderRequestMetaCells(req)}
-                            {renderRequestAmountCell(req)}
+                          {renderRequestAmountCell(req)}
                           <td className="py-3 px-4 text-center whitespace-nowrap">
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-300 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800 uppercase">
                               <Clock className="w-2.5 h-2.5 animate-spin text-amber-600" />
@@ -1468,17 +1445,16 @@ export default function Administration() {
                           <td className="py-3 px-4 text-center whitespace-nowrap">
                             <Badge
                               variant="outline"
-                              className={`text-[10px] px-2 py-0.5 font-medium ${
-                                (Number(req.amount) || 0) >= 10000
+                              className={`text-[10px] px-2 py-0.5 font-medium ${(Number(req.amount) || 0) >= 10000
                                   ? "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300"
                                   : "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300"
-                              }`}
+                                }`}
                             >
                               {(Number(req.amount) || 0) >= 10000 ? "≥ $10k Exec" : "< $10k Mgr"}
                             </Badge>
                           </td>
                           {renderRequestMetaCells(req)}
-                            {renderRequestAmountCell(req)}
+                          {renderRequestAmountCell(req)}
                           <td className="py-3 px-4 text-center whitespace-nowrap">
                             {req.status === "REJECTED" || req.status === "CANCELLED" || req.status === "DECLINED" ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900/60 uppercase">
@@ -1572,11 +1548,10 @@ export default function Administration() {
           <DialogHeader>
             <div className="flex items-center gap-2.5">
               <div
-                className={`p-2 rounded-xl shrink-0 ${
-                  actionType === "APPROVE"
+                className={`p-2 rounded-xl shrink-0 ${actionType === "APPROVE"
                     ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400"
                     : "bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400"
-                }`}
+                  }`}
               >
                 {actionType === "APPROVE" ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
               </div>
@@ -1648,11 +1623,10 @@ export default function Administration() {
               size="sm"
               onClick={handleActionSubmit}
               disabled={approvalMutation.isPending}
-              className={`text-xs font-medium h-9 px-4 rounded-xl gap-1.5 text-white cursor-pointer ${
-                actionType === "APPROVE"
+              className={`text-xs font-medium h-9 px-4 rounded-xl gap-1.5 text-white cursor-pointer ${actionType === "APPROVE"
                   ? "bg-emerald-600 hover:bg-emerald-700"
                   : "bg-rose-600 hover:bg-rose-700"
-              }`}
+                }`}
             >
               {approvalMutation.isPending ? (
                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -1681,11 +1655,10 @@ export default function Administration() {
           <DialogHeader className="pb-3 border-b border-slate-100 dark:border-zinc-800">
             <div className="flex items-center gap-3">
               <div
-                className={`p-2.5 rounded-xl ${
-                  bulkActionType === "APPROVE"
+                className={`p-2.5 rounded-xl ${bulkActionType === "APPROVE"
                     ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
                     : "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
-                }`}
+                  }`}
               >
                 {bulkActionType === "APPROVE" ? (
                   <CheckCircle2 className="w-5 h-5" />
@@ -1782,11 +1755,10 @@ export default function Administration() {
               size="sm"
               onClick={handleBulkSubmit}
               disabled={bulkApprovalMutation.isPending}
-              className={`text-xs font-semibold h-9 px-5 rounded-xl gap-2 text-white cursor-pointer ${
-                bulkActionType === "APPROVE"
+              className={`text-xs font-semibold h-9 px-5 rounded-xl gap-2 text-white cursor-pointer ${bulkActionType === "APPROVE"
                   ? "bg-emerald-600 hover:bg-emerald-700"
                   : "bg-rose-600 hover:bg-rose-700"
-              }`}
+                }`}
             >
               {bulkApprovalMutation.isPending ? (
                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -1799,8 +1771,8 @@ export default function Administration() {
                 {bulkApprovalMutation.isPending
                   ? "Processing..."
                   : bulkActionType === "APPROVE"
-                  ? `Approve ${selectedIds.length} Requests`
-                  : `Reject ${selectedIds.length} Requests`}
+                    ? `Approve ${selectedIds.length} Requests`
+                    : `Reject ${selectedIds.length} Requests`}
               </span>
             </Button>
           </DialogFooter>
@@ -1825,13 +1797,12 @@ export default function Administration() {
                 </span>
                 <Badge
                   variant="outline"
-                  className={`text-[10px] px-2 py-0.5 ${
-                    activeRequest?.status === "APPROVED" || activeRequest?.status === "COMPLETED"
+                  className={`text-[10px] px-2 py-0.5 ${activeRequest?.status === "APPROVED" || activeRequest?.status === "COMPLETED"
                       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                       : activeRequest?.status === "REJECTED"
-                      ? "bg-rose-50 text-rose-700 border-rose-200"
-                      : "bg-amber-50 text-amber-700 border-amber-200"
-                  }`}
+                        ? "bg-rose-50 text-rose-700 border-rose-200"
+                        : "bg-amber-50 text-amber-700 border-amber-200"
+                    }`}
                 >
                   {activeRequest?.status}
                 </Badge>

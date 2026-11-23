@@ -24,6 +24,57 @@ interface AuditLogTableSectionProps {
   paginationNoun: string;
 }
 
+const DETAILS_CELL_CLASS = "whitespace-normal align-top min-w-[260px] max-w-[460px]";
+
+interface AuditTableToolbarProps {
+  table: ReactTable<any>;
+  globalFilter: string;
+  onGlobalFilterChange: (value: string) => void;
+  searchPlaceholder: string;
+}
+
+function AuditTableToolbar({
+  table,
+  globalFilter,
+  onGlobalFilterChange,
+  searchPlaceholder,
+}: AuditTableToolbarProps) {
+  const hideableColumns = table.getAllColumns().filter((column) => column.getCanHide());
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+        <Input
+          type="text"
+          placeholder={searchPlaceholder}
+          value={globalFilter}
+          onChange={(e) => onGlobalFilterChange(e.target.value)}
+          className="pl-10 w-full sm:w-[300px] bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 rounded-xl"
+        />
+      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" className="sm:ml-auto">
+            Columns <ChevronDown className="ml-2 h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {hideableColumns.map((column) => (
+            <DropdownMenuCheckboxItem
+              key={column.id}
+              className="capitalize"
+              checked={column.getIsVisible()}
+              onCheckedChange={(value) => column.toggleVisibility(!!value)}
+            >
+              {column.id.replace(/_/g, " ")}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
 export function AuditLogTableSection({
   table,
   columnCount,
@@ -35,41 +86,15 @@ export function AuditLogTableSection({
   paginationNoun,
 }: AuditLogTableSectionProps) {
   const rows = table.getRowModel().rows;
-  const hideableColumns = table.getAllColumns().filter((column) => column.getCanHide());
 
   return (
     <div className="space-y-4 flex-1 flex flex-col min-h-0">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <Input
-            type="text"
-            placeholder={searchPlaceholder}
-            value={globalFilter}
-            onChange={(e) => onGlobalFilterChange(e.target.value)}
-            className="pl-10 w-full sm:w-[300px] bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 rounded-xl"
-          />
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="sm:ml-auto">
-              Columns <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {hideableColumns.map((column) => (
-              <DropdownMenuCheckboxItem
-                key={column.id}
-                className="capitalize"
-                checked={column.getIsVisible()}
-                onCheckedChange={(value) => column.toggleVisibility(!!value)}
-              >
-                {column.id.replace(/_/g, " ")}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      <AuditTableToolbar
+        table={table}
+        globalFilter={globalFilter}
+        onGlobalFilterChange={onGlobalFilterChange}
+        searchPlaceholder={searchPlaceholder}
+      />
 
       <Card className="flex-1 min-h-0 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm flex flex-col p-0">
         <Table className="m-0 relative" containerClassName="max-h-[calc(100vh-20rem)]">
@@ -97,7 +122,9 @@ export function AuditLogTableSection({
               rows.map((row) => (
                 <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                    <TableCell key={cell.id} className={cell.column.id === "details" ? DETAILS_CELL_CLASS : undefined}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
                   ))}
                 </TableRow>
               ))

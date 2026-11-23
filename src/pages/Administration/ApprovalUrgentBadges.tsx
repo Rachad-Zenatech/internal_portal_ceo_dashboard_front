@@ -52,8 +52,8 @@ export function mapCompletedHistoryRequests(rawCompletedHistory: any[]) {
             ? "Rejected Offline (Queued)"
             : "Approved Offline (Queued)"
           : r.status === "REJECTED"
-          ? "Rejected"
-          : "Signed Off"),
+            ? "Rejected"
+            : "Signed Off"),
       vendor: r.vendor || r.product_info?.vendor || "Verified Vendor",
       currency: r.currency || "USD",
       original_currency: r.original_currency,
@@ -82,22 +82,12 @@ export function ApprovalTitleAndPriorityCells({ req }: { req: any }) {
     req.is_urgent_override || req.quote_data?.is_urgent_override || req.priority?.toUpperCase() === "URGENT"
   );
   const urgentReason = req.urgent_override_reason || req.quote_data?.urgent_override_reason || null;
-  const prioUpper = String(req.priority || "Normal").toUpperCase();
+  const prioUpper = isUrgent ? "URGENT" : String(req.priority || "Normal").toUpperCase();
 
   return (
     <>
       <td className="py-3 px-4">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="font-medium text-slate-900 dark:text-zinc-100 line-clamp-1">{req.description}</span>
-          {isUrgent && (
-            <Badge
-              variant="outline"
-              className="text-[10px] px-1.5 py-0 font-semibold uppercase bg-red-50 text-red-700 border-red-300 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800 shrink-0"
-            >
-              URGENT
-            </Badge>
-          )}
-        </div>
+        <span className="font-medium text-slate-900 dark:text-zinc-100 line-clamp-1">{req.description}</span>
         {urgentReason && (
           <p className="text-[11px] font-medium text-red-600 dark:text-red-400 mt-0.5 line-clamp-2">
             Reason: {urgentReason}
@@ -108,11 +98,10 @@ export function ApprovalTitleAndPriorityCells({ req }: { req: any }) {
       <td className="py-3 px-4 text-center whitespace-nowrap">
         <Badge
           variant="outline"
-          className={`text-[10px] px-1.5 py-0 font-medium ${
-            prioUpper === "URGENT" || prioUpper === "HIGH"
+          className={`text-[10px] px-1.5 py-0 font-medium ${prioUpper === "URGENT" || prioUpper === "HIGH"
               ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300"
               : "bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300"
-          }`}
+            }`}
         >
           {prioUpper === "URGENT" ? "URGENT" : req.priority || "Normal"}
         </Badge>
@@ -124,9 +113,9 @@ export function ApprovalTitleAndPriorityCells({ req }: { req: any }) {
 export function UrgentOverrideDetailBanner({ request }: { request: any }) {
   const isUrgent = Boolean(
     request?.quote_data?.is_urgent_override ||
-      request?.is_urgent_override ||
-      request?.quote_data?.urgent_override_reason ||
-      request?.urgent_override_reason
+    request?.is_urgent_override ||
+    request?.quote_data?.urgent_override_reason ||
+    request?.urgent_override_reason
   );
   if (!isUrgent) return null;
   const reason = request?.quote_data?.urgent_override_reason || request?.urgent_override_reason;
