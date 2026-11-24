@@ -61,7 +61,7 @@ export default function AiErrorsDialog({
 
   const query = useQuery({
     queryKey: ["system-security", "ai-errors", hours, filter?.feature ?? "", filter?.model ?? ""],
-    queryFn: () => apiClient.get<AiErrorsResponse>(`/api/observability/ai/errors?${params.toString()}`, { skipGlobalLoading: true }),
+    queryFn: () => apiClient.get<AiErrorsResponse>(`/api/observability/ai/errors?${params.toString()}`),
     enabled: Boolean(filter),
   });
 

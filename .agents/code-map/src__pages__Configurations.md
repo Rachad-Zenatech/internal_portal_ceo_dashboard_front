@@ -4,5 +4,5 @@
 
 Each symbol shows its start line (`L<n>`); read from there to the next symbol's line, not the whole file.
 
-## src/pages/Configurations/AiStatusPage.tsx (85 lines) - ai status page (pages  configurations)
-- `AiStatusPage` (export function) L22
+## src/pages/Configurations/AiStatusPage.tsx (86 lines) - ai status page (pages  configurations)
+- `AiStatusPage` (export function) L21

@@ -76,7 +76,7 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/components/ui/toggle-group.tsx (90 lines) - toggle group (components ui)
 - src/components/ui/toggle.tsx (46 lines) - toggle (components ui)
 - src/components/ui/tooltip.tsx (56 lines) - tooltip (components ui)
-- src/hooks/useAiOverview.ts (16 lines) - use ai overview (hooks)
+- src/hooks/useAiOverview.ts (13 lines) - use ai overview (hooks)
 - src/hooks/useApproverRoles.ts (101 lines) - use approver roles (hooks)
 - src/hooks/useBoardState.ts (185 lines) - Next free slot at the bottom of the grid for a new widget.
 - src/hooks/useCeoRealtimeStream.ts (49 lines) - Time the last query successfully received fresh data (not the render time).
@@ -110,7 +110,7 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/pages/Auth/Login.tsx (215 lines) - login (pages  auth)
 - src/pages/Auth/PendingAccess.native.tsx (132 lines) - pending access.native (pages  auth)
 - src/pages/Auth/PendingAccess.tsx (146 lines) - pending access (pages  auth)
-- src/pages/Configurations/AiStatusPage.tsx (85 lines) - ai status page (pages  configurations)
+- src/pages/Configurations/AiStatusPage.tsx (86 lines) - ai status page (pages  configurations)
 - src/pages/Configurations/aiStatus/AiCoresGrid.tsx (78 lines) - ai cores grid (pages  configurations ai status)
 - src/pages/Configurations/aiStatus/AiErrorsDialog.tsx (110 lines) - ai errors dialog (pages  configurations ai status)
 - src/pages/Configurations/aiStatus/AiFeatureMatrix.tsx (203 lines) - ai feature matrix (pages  configurations ai status)
