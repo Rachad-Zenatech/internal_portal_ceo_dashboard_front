@@ -15,6 +15,8 @@ import AuditLog from "./pages/Log/AuditLog";
 import Login from "./pages/Auth/Login";
 import PendingAccess from "./pages/Auth/PendingAccess";
 import Settings from "./pages/Settings/Settings";
+import { lazy } from "react";
+const AiStatusPage = lazy(() => import("./pages/Configurations/AiStatusPage"));
 
 // Customizable boards pull in the grid/drag library, so load them on demand.
 const Customization = lazy(() => import("./pages/Customization/Customization"));
@@ -150,7 +152,8 @@ function App() {
                       }
                     />
                   </Route>
-                </Routes>
+                          <Route path="/configurations/ai-status" element={<AiStatusPage />} />
+        </Routes>
               </Suspense>
             </BrowserRouter>
           </View>
