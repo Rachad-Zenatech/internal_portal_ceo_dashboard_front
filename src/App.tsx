@@ -15,7 +15,6 @@ import AuditLog from "./pages/Log/AuditLog";
 import Login from "./pages/Auth/Login";
 import PendingAccess from "./pages/Auth/PendingAccess";
 import Settings from "./pages/Settings/Settings";
-import { lazy } from "react";
 const AiStatusPage = lazy(() => import("./pages/Configurations/AiStatusPage"));
 
 // Customizable boards pull in the grid/drag library, so load them on demand.
@@ -56,6 +55,36 @@ function FallbackLoader() {
   );
 }
 
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/pending-access" element={<PendingAccess />} />
+      <Route
+        element={
+          <ProtectedRoute>
+            <AppShell>
+              <Outlet />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/" element={<ProtectedRoute navigationCode="DASHBOARD"><Dashboard /></ProtectedRoute>} />
+        <Route path="/mergers-acquisitions" element={<ProtectedRoute navigationCode="DASHBOARD"><MergersAcquisitions /></ProtectedRoute>} />
+        <Route path="/administration" element={<Administration />} />
+        <Route path="/customization" element={<ProtectedRoute navigationCode="DASHBOARD"><Customization /></ProtectedRoute>} />
+        <Route path="/customize-ma" element={<ProtectedRoute navigationCode="DASHBOARD"><CustomizeMA /></ProtectedRoute>} />
+        <Route path="/customize-administration" element={<ProtectedRoute navigationCode="DASHBOARD"><CustomizeAdministration /></ProtectedRoute>} />
+        <Route path="/upload-files" element={<ProtectedRoute navigationCode="UPLOAD_FILES"><UploadFile /></ProtectedRoute>} />
+        <Route path="/log" element={<Navigate to="/log/audit-log" replace />} />
+        <Route path="/log/audit-log" element={<ProtectedRoute navigationCode="AUDIT_LOG"><AuditLog /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute navigationCode="DASHBOARD"><Settings /></ProtectedRoute>} />
+        <Route path="/configurations/ai-status" element={<ProtectedRoute navigationCode="SYSTEM_LOGS"><AiStatusPage /></ProtectedRoute>} />
+      </Route>
+    </Routes>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -64,96 +93,7 @@ function App() {
           <View style={styles.root}>
             <BrowserRouter>
               <Suspense fallback={<FallbackLoader />}>
-                <Routes>
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/pending-access" element={<PendingAccess />} />
-
-                  {/* Main app layout routes */}
-                  <Route
-                    element={
-                      <ProtectedRoute>
-                        <AppShell>
-                          <Outlet />
-                        </AppShell>
-                      </ProtectedRoute>
-                    }
-                  >
-                    <Route
-                      path="/"
-                      element={
-                        <ProtectedRoute navigationCode="DASHBOARD">
-                          <Dashboard />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/mergers-acquisitions"
-                      element={
-                        <ProtectedRoute navigationCode="DASHBOARD">
-                          <MergersAcquisitions />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/administration"
-                      element={<Administration />}
-                    />
-                    <Route
-                      path="/customization"
-                      element={
-                        <ProtectedRoute navigationCode="DASHBOARD">
-                          <Customization />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/customize-ma"
-                      element={
-                        <ProtectedRoute navigationCode="DASHBOARD">
-                          <CustomizeMA />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/customize-administration"
-                      element={
-                        <ProtectedRoute navigationCode="DASHBOARD">
-                          <CustomizeAdministration />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/upload-files"
-                      element={
-                        <ProtectedRoute navigationCode="UPLOAD_FILES">
-                          <UploadFile />
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    {/* Logs */}
-                    <Route path="/log" element={<Navigate to="/log/audit-log" replace />} />
-                    <Route
-                      path="/log/audit-log"
-                      element={
-                        <ProtectedRoute navigationCode="AUDIT_LOG">
-                          <AuditLog />
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    {/* Settings redirect to dashboard */}
-                    <Route
-                      path="/settings"
-                      element={
-                        <ProtectedRoute navigationCode="DASHBOARD">
-                          <Settings />
-                        </ProtectedRoute>
-                      }
-                    />
-                  </Route>
-                          <Route path="/configurations/ai-status" element={<AiStatusPage />} />
-        </Routes>
+                <AppRoutes />
               </Suspense>
             </BrowserRouter>
           </View>

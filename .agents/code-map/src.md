@@ -9,6 +9,7 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `NavigationContent` (function) L30
 - `App` (export function) L99
 
-## src/App.tsx (179 lines) - Customizable boards pull in the grid/drag library, so load them on demand.
-- `FallbackLoader` (function) L49
-- `App` (function) L57
+## src/App.tsx (122 lines) - Customizable boards pull in the grid/drag library, so load them on demand.
+- `FallbackLoader` (function) L50
+- `AppRoutes` (function) L58
+- `App` (function) L88

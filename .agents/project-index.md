@@ -8,7 +8,7 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - scripts/reload-android.js (86 lines) - Check ANDROID_HOME or ANDROID_SDK_ROOT first
 - scripts/start-android.js (196 lines) - Check ANDROID_HOME or ANDROID_SDK_ROOT environment variables first
 - src/App.native.tsx (121 lines) - app.native
-- src/App.tsx (179 lines) - Customizable boards pull in the grid/drag library, so load them on demand.
+- src/App.tsx (122 lines) - Customizable boards pull in the grid/drag library, so load them on demand.
 - src/components/Administration/AssignApproversModal.tsx (1844 lines) - assign approvers modal (components  administration)
 - src/components/AppShell/AppShell.tsx (80 lines) - app shell (components  app shell)
 - src/components/AppShell/Breadcrumbs.tsx (77 lines) - Define custom mapping for breadcrumb names to ensure they look pretty
@@ -16,7 +16,7 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/components/AppShell/ConnectionStatusLight.tsx (262 lines) - connection status light (components  app shell)
 - src/components/AppShell/FloatingChat.tsx (527 lines) - floating chat (components  app shell)
 - src/components/AppShell/MessageHubStatusDropdown.tsx (325 lines) - message hub status dropdown (components  app shell)
-- src/components/AppShell/Navigation.tsx (91 lines) - navigation (components  app shell)
+- src/components/AppShell/Navigation.tsx (99 lines) - navigation (components  app shell)
 - src/components/AppShell/SessionTimeout.tsx (4 lines) - session timeout (components  app shell)
 - src/components/AppShell/Sidebar.tsx (191 lines) - sidebar (components  app shell)
 - src/components/AppShell/ThemeSwitch.tsx (41 lines) - theme switch (components  app shell)
@@ -76,6 +76,7 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/components/ui/toggle-group.tsx (90 lines) - toggle group (components ui)
 - src/components/ui/toggle.tsx (46 lines) - toggle (components ui)
 - src/components/ui/tooltip.tsx (56 lines) - tooltip (components ui)
+- src/hooks/useAiOverview.ts (16 lines) - use ai overview (hooks)
 - src/hooks/useApproverRoles.ts (101 lines) - use approver roles (hooks)
 - src/hooks/useBoardState.ts (185 lines) - Next free slot at the bottom of the grid for a new widget.
 - src/hooks/useCeoRealtimeStream.ts (49 lines) - Time the last query successfully received fresh data (not the render time).
@@ -109,6 +110,13 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/pages/Auth/Login.tsx (215 lines) - login (pages  auth)
 - src/pages/Auth/PendingAccess.native.tsx (132 lines) - pending access.native (pages  auth)
 - src/pages/Auth/PendingAccess.tsx (146 lines) - pending access (pages  auth)
+- src/pages/Configurations/AiStatusPage.tsx (85 lines) - ai status page (pages  configurations)
+- src/pages/Configurations/aiStatus/AiCoresGrid.tsx (78 lines) - ai cores grid (pages  configurations ai status)
+- src/pages/Configurations/aiStatus/AiErrorsDialog.tsx (110 lines) - ai errors dialog (pages  configurations ai status)
+- src/pages/Configurations/aiStatus/AiFeatureMatrix.tsx (203 lines) - ai feature matrix (pages  configurations ai status)
+- src/pages/Configurations/aiStatus/AiPipelineTelemetry.tsx (179 lines) - ai pipeline telemetry (pages  configurations ai status)
+- src/pages/Configurations/aiStatus/AiSummaryCards.tsx (140 lines) - ai summary cards (pages  configurations ai status)
+- src/pages/Configurations/aiStatus/statusStyles.ts (31 lines) - status styles (pages  configurations ai status)
 - src/pages/Customization/Customization.tsx (14 lines) - customization (pages  customization)
 - src/pages/Customization/CustomizeAdministration.tsx (14 lines) - customize administration (pages  customization)
 - src/pages/Customization/CustomizeMA.tsx (14 lines) - customize m a (pages  customization)
@@ -136,6 +144,7 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/services/queryKeys.ts (26 lines) - All React Query cache keys live here so that invalidation calls in
 - src/services/uploadArchiveService.ts (22 lines) - upload archive service (services)
 - src/types/aiAssistant.ts (5 lines) - ai assistant (types)
+- src/types/aiOverview.ts (152 lines) - ai overview (types)
 - src/types/approverRoles.ts (30 lines) - approver roles (types)
 - src/types/bankAccount.ts (11 lines) - bank account (types)
 - src/types/bankFeedRule.ts (39 lines) - bank feed rule (types)

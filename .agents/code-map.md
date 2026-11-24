@@ -19,10 +19,12 @@ to find the right file.
 | .agents/code-map/src__components__Dashboard.md | 8 | 2 KB |
 | .agents/code-map/src__components__native.md | 1 | 2 KB |
 | .agents/code-map/src__components__ui.md | 34 | 8 KB |
-| .agents/code-map/src__hooks.md | 13 | 5 KB |
+| .agents/code-map/src__hooks.md | 14 | 5 KB |
 | .agents/code-map/src__lib.md | 10 | 4 KB |
 | .agents/code-map/src__pages__Administration.md | 6 | 5 KB |
 | .agents/code-map/src__pages__Auth.md | 4 | 1 KB |
+| .agents/code-map/src__pages__Configurations.md | 1 | 1 KB |
+| .agents/code-map/src__pages__Configurations__aiStatus.md | 6 | 2 KB |
 | .agents/code-map/src__pages__Customization.md | 3 | 1 KB |
 | .agents/code-map/src__pages__Dashboard.md | 2 | 1 KB |
 | .agents/code-map/src__pages__Log.md | 8 | 2 KB |
@@ -31,4 +33,4 @@ to find the right file.
 | .agents/code-map/src__pages__Settings.md | 1 | 1 KB |
 | .agents/code-map/src__pages__UploadFiles.md | 2 | 2 KB |
 | .agents/code-map/src__services.md | 7 | 1 KB |
-| .agents/code-map/src__types.md | 11 | 3 KB |
+| .agents/code-map/src__types.md | 12 | 4 KB |

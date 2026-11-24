@@ -7,6 +7,7 @@ import {
   Briefcase,
   Building2,
   Settings,
+  ShieldCheck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -72,6 +73,13 @@ export const navigation: NavigationItem[] = [
     icon: Upload,
     section: "MAIN",
     navigationCode: "UPLOAD_FILES",
+  },
+  {
+    label: "AI Status & Usage",
+    path: "/configurations/ai-status",
+    icon: ShieldCheck,
+    section: "SYSTEM ADMINISTRATION",
+    navigationCode: "SYSTEM_LOGS",
   },
   {
     label: "Audit Log",

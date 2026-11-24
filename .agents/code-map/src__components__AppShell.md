@@ -38,9 +38,9 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 ## src/components/AppShell/MessageHubStatusDropdown.tsx (325 lines) - message hub status dropdown (components  app shell)
 - `MessageHubStatusDropdown` (export function) L39
 
-## src/components/AppShell/Navigation.tsx (91 lines) - navigation (components  app shell)
-- `NavigationItem` (export interface) L13
-- `navigation` (export const) L26
+## src/components/AppShell/Navigation.tsx (99 lines) - navigation (components  app shell)
+- `NavigationItem` (export interface) L14
+- `navigation` (export const) L27
 
 ## src/components/AppShell/SessionTimeout.tsx (4 lines) - session timeout (components  app shell)
 - `SessionTimeout` (export function) L1
