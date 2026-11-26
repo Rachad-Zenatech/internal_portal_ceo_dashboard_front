@@ -13,16 +13,16 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `AuthProvider` (export function) L48
 - `useAuth` (export function) L232
 
-## src/lib/ServiceStatusContext.tsx (352 lines) - Service Name Normalization Map
+## src/lib/ServiceStatusContext.tsx (371 lines) - Service Name Normalization Map
 - `ServiceStatus` (export type) L7
 - `ServiceStatusMap` (export interface) L9
 - `ServiceStatusContextValue` (export interface) L13
 - `ServiceStatusContext` (const) L22
 - `SERVICE_NAMES` (export const) L25 - Service Name Normalization Map
 - `normalizeServiceName` (export function) L32
-- `notifyServiceTransition` (function) L51
-- `ServiceStatusProvider` (export function) L75
-- `useServiceStatus` (export function) L337
+- `notifyServiceTransition` (function) L52
+- `ServiceStatusProvider` (export function) L78
+- `useServiceStatus` (export function) L356
 
 ## src/lib/aggregate.ts (85 lines) - aggregate (lib)
 - `ChartPoint` (export interface) L3
@@ -32,18 +32,21 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `formatValue` (export function) L55
 - `formatCompact` (export function) L81 - Compact number for KPI tiles / axes (1.2K, 3.4M).
 
-## src/lib/boardDefaults.ts (52 lines) - board defaults (lib)
+## src/lib/boardDefaults.ts (87 lines) - Centralized Executive Dashboard defaults spanning Finance, Admin, M&A, Compliance, and Real Estate.
 - `Seed` (type) L3
 - `build` (function) L5
 - `kpi` (const) L16
-- `DASHBOARD_DEFAULTS` (export const) L21 - Customization": the Dashboard, rebuilt from live data sources.
-- `MA_DEFAULTS` (export const) L32 - Customize - M&A".
-- `ADMIN_DEFAULTS` (export const) L43 - Customize Administration".
+- `DASHBOARD_DEFAULTS` (export const) L21 - Centralized Executive Dashboard defaults spanning Finance, Admin, M&A, Compliance, and Real Estate.
+- `FINANCE_DEFAULTS` (export const) L34 - Customize - Finance".
+- `MA_DEFAULTS` (export const) L45 - Customize - M&A".
+- `ADMIN_DEFAULTS` (export const) L56 - Customize Administration".
+- `COMPLIANCE_DEFAULTS` (export const) L67 - Customize - Social Compliance".
+- `REAL_ESTATE_DEFAULTS` (export const) L78 - Customize - Real Estate".
 
 ## src/lib/codegenShim.ts (4 lines) - codegen shim (lib)
 - `codegenNativeComponent` (export function) L1
 
-## src/lib/dataSources.ts (217 lines) - Live pass-through catalog.
+## src/lib/dataSources.ts (326 lines) - Live pass-through catalog.
 - `asRows` (const) L6
 - `asSingleRow` (const) L7
 - `revenueMidpointK` (function) L10 - M&A revenue is a range string in $K ("500-1000"); use the midpoint so it can be summed/averaged.
@@ -55,8 +58,8 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `money` (const) L28
 - `breakdownRows` (const) L83 - Turn a { label: count } map from the summary into rows.
 - `DATA_SOURCES` (export const) L88
-- `MODULE_LABELS` (export const) L207
-- `getDataSource` (export function) L214
+- `MODULE_LABELS` (export const) L314
+- `getDataSource` (export function) L323
 
 ## src/lib/env.ts (64 lines) - Universal environment variable reader for Vite and Metro / React Native
 - `getEnv` (export function) L5

@@ -3,13 +3,14 @@ import { ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-export type KpiTone = "emerald" | "blue" | "amber" | "indigo";
+export type KpiTone = "emerald" | "blue" | "amber" | "indigo" | "slate";
 
 const TONES: Record<KpiTone, string> = {
   emerald: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400",
   blue: "bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400",
   amber: "bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400",
   indigo: "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400",
+  slate: "bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-300",
 };
 
 interface KpiCardProps {

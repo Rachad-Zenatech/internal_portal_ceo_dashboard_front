@@ -24,6 +24,12 @@ Lean rules for this enterprise internal portal.
 - Use theme tokens and shadcn variants for dark mode.
 - Preserve accounting math: bank/income add; expenses/credit cards subtract; liability increases are negative.
 - Keep upload/archive flows non-destructive unless replacement is explicit.
+- **New Connected Application Checklist (Mandatory):** Whenever a new internal application is integrated into the CEO Dashboard, always update the Centralized Dashboard and Customization system in the same task:
+  1. Add the module key to `DataSourceModule` in `src/types/customize.ts`.
+  2. Register its live data source(s) in `DATA_SOURCES` and `MODULE_LABELS` in `src/lib/dataSources.ts`.
+  3. Add default widgets to `DASHBOARD_DEFAULTS` and create `<APP>_DEFAULTS` in `src/lib/boardDefaults.ts`.
+  4. Create `src/pages/Customization/Customize<App>.tsx` and wire its route in `src/App.tsx` and sidebar link in `src/components/AppShell/Navigation.tsx`.
+  5. Add the live summary card to `src/pages/Dashboard/PlatformPulseCards.tsx`, wire its query & refresh into `src/pages/Dashboard/Dashboard.tsx`, and link its tile in `src/pages/Dashboard/ConnectedPlatformsHub.tsx`.
 
 ## Backend
 

@@ -9,10 +9,11 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `filterTag` (function) L25
 - `CustomBoard` (export function) L32 - Phone layout: one column, in the same order as the desktop grid (top to bottom, left to right).
 
-## src/components/Customize/CustomBoard.tsx (174 lines) - Phones get a single column, so widgets stack full-width.
-- `Props` (interface) L22
-- `filterTag` (function) L29
-- `CustomBoard` (export function) L35
+## src/components/Customize/CustomBoard.tsx (262 lines) - custom board (components  customize)
+- `Props` (interface) L35
+- `filterTag` (function) L43
+- `BoardHeader` (function) L49
+- `CustomBoard` (export function) L139
 
 ## src/components/Customize/WidgetPanel.native.tsx (301 lines) - widget panel.native (components  customize)
 - `IconName` (type) L10
@@ -36,9 +37,9 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `RankedBars` (function) L95
 - `WidgetRenderer` (export function) L112
 
-## src/components/Customize/WidgetRenderer.tsx (205 lines) - widget renderer (components  customize)
-- `Message` (function) L28
-- `WidgetRenderer` (export function) L32
+## src/components/Customize/WidgetRenderer.tsx (207 lines) - widget renderer (components  customize)
+- `Message` (function) L30
+- `WidgetRenderer` (export function) L34
 
 ## src/components/Customize/WidgetSkeleton.native.tsx (87 lines) - Placeholder shaped like the widget that is loading.
 - `Block` (function) L6

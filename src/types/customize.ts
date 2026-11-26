@@ -11,7 +11,7 @@ export interface DataColumn {
   description?: string;
 }
 
-export type DataSourceModule = "dashboard" | "ma" | "admin" | "system";
+export type DataSourceModule = "dashboard" | "ma" | "admin" | "compliance" | "real_estate" | "system";
 
 export type DataRow = Record<string, unknown>;
 

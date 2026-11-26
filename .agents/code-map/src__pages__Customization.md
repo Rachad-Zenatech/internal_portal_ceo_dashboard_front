@@ -10,5 +10,14 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 ## src/pages/Customization/CustomizeAdministration.tsx (14 lines) - customize administration (pages  customization)
 - `CustomizeAdministration` (export function) L4
 
+## src/pages/Customization/CustomizeCompliance.tsx (14 lines) - customize compliance (pages  customization)
+- `CustomizeCompliance` (export function) L4
+
+## src/pages/Customization/CustomizeFinance.tsx (14 lines) - customize finance (pages  customization)
+- `CustomizeFinance` (export function) L4
+
 ## src/pages/Customization/CustomizeMA.tsx (14 lines) - customize m a (pages  customization)
 - `CustomizeMA` (export function) L4
+
+## src/pages/Customization/CustomizeRealEstate.tsx (14 lines) - customize real estate (pages  customization)
+- `CustomizeRealEstate` (export function) L4

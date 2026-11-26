@@ -17,6 +17,8 @@ import {
 } from "recharts";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import WidgetSkeleton from "@/components/Customize/WidgetSkeleton";
 import { useWidgetData } from "@/hooks/useWidgetData";
 import { aggregate, formatCompact, formatValue } from "@/lib/aggregate";
@@ -94,33 +96,33 @@ export default function WidgetRenderer({ widget }: { widget: WidgetConfig }) {
     return (
       <div className="flex h-full flex-col">
         <div className="min-h-0 flex-1 overflow-auto">
-          <table className="w-full text-xs">
-            <thead className="sticky top-0 bg-muted/80 backdrop-blur">
-              <tr>
+          <Table className="text-xs">
+            <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur">
+              <TableRow>
                 {cols.map((c) => (
-                  <th key={c.key} className={`whitespace-nowrap px-3 py-2 font-medium text-muted-foreground ${c.role === "measure" ? "text-right" : "text-left"}`}>{c.label}</th>
+                  <TableHead key={c.key} className={`whitespace-nowrap h-8 text-xs ${c.role === "measure" ? "text-right" : "text-left"}`}>{c.label}</TableHead>
                 ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {visible.map((row, i) => (
-                <tr key={i} className="hover:bg-muted/40">
+                <TableRow key={i}>
                   {cols.map((c) => (
-                    <td key={c.key} className={`max-w-[16rem] truncate whitespace-nowrap px-3 py-2 ${c.role === "measure" ? "text-right font-mono tabular-nums" : ""}`}>
+                    <TableCell key={c.key} className={`max-w-[16rem] truncate whitespace-nowrap py-2 ${c.role === "measure" ? "text-right font-mono tabular-nums" : ""}`}>
                       {formatValue(row[c.key], c.type)}
-                    </td>
+                    </TableCell>
                   ))}
-                </tr>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
         {pageCount > 1 && (
           <div className="flex items-center justify-between border-t border-border px-3 py-1.5 text-xs text-muted-foreground">
             <span>{current * pageSize + 1}–{Math.min((current + 1) * pageSize, rows.length)} of {rows.length}</span>
             <div className="flex gap-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={current === 0} onClick={() => setPage(current - 1)} aria-label="Previous page"><ChevronLeft className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={current >= pageCount - 1} onClick={() => setPage(current + 1)} aria-label="Next page"><ChevronRight className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="icon-xs" disabled={current === 0} onClick={() => setPage(current - 1)} aria-label="Previous page"><ChevronLeft className="h-3.5 w-3.5" /></Button>
+              <Button variant="ghost" size="icon-xs" disabled={current >= pageCount - 1} onClick={() => setPage(current + 1)} aria-label="Next page"><ChevronRight className="h-3.5 w-3.5" /></Button>
             </div>
           </div>
         )}
@@ -131,7 +133,7 @@ export default function WidgetRenderer({ widget }: { widget: WidgetConfig }) {
   // Grouped displays
   if (!dimension) return <Message>Choose what to group by in the side panel.</Message>;
   if (points.length === 0) return <Message>Nothing to show yet.</Message>;
-  const tip = { contentStyle: { borderRadius: 12, fontSize: 12 }, formatter: (v: unknown) => [axisFmt(Number(v)), valueLabel] as [string, string] };
+  const tip = { contentStyle: { borderRadius: 10, fontSize: 12 }, formatter: (v: unknown) => [axisFmt(Number(v)), valueLabel] as [string, string] };
 
   if (widget.kind === "ranking") {
     const max = Math.max(...points.map((p) => p.value), 1);
@@ -146,8 +148,8 @@ export default function WidgetRenderer({ widget }: { widget: WidgetConfig }) {
               </span>
               <span className="shrink-0 font-mono text-xs tabular-nums text-foreground">{axisFmt(p.value)}</span>
             </div>
-            <div className="ml-7 h-1.5 overflow-hidden rounded-full bg-muted">
-              <div className="h-full rounded-full" style={{ width: `${(p.value / max) * 100}%`, background: PALETTE[i % PALETTE.length] }} />
+            <div className="ml-7">
+              <Progress value={(p.value / max) * 100} className="h-1.5" />
             </div>
           </li>
         ))}
@@ -156,8 +158,8 @@ export default function WidgetRenderer({ widget }: { widget: WidgetConfig }) {
   }
 
   return (
-    <div className="h-full min-h-40 p-2">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="h-full w-full min-h-[160px] p-2">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={160}>
         {widget.kind === "pie" ? (
           <PieChart>
             <Pie data={points} dataKey="value" nameKey="name" innerRadius="45%" outerRadius="80%" paddingAngle={2}>

@@ -37,8 +37,8 @@ export function normalizeRequestDetailResponse(res: any): any {
 export function isUrgentRequest(req: any): boolean {
   return Boolean(
     req?.is_urgent_override ||
-      req?.quote_data?.is_urgent_override ||
-      String(req?.priority || "").toUpperCase() === "URGENT",
+    req?.quote_data?.is_urgent_override ||
+    String(req?.priority || "").toUpperCase() === "URGENT",
   );
 }
 

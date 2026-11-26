@@ -17,8 +17,9 @@ export const AUDIT_APPLICATIONS: AuditApplicationDef[] = [
   { key: "social_media_compliance", label: "Compliance" },
   { key: "travel", label: "Travel" },
   { key: "sec_filing", label: "SEC Filing" },
-  { key: "template_automation", label: "Templates" },
 ];
+
+const HIDDEN_AUDIT_SOURCES = new Set(["template_automation"]);
 
 const CANONICAL_SOURCE_ALIASES: Record<string, string> = {
   ceo: "ceo",
@@ -89,7 +90,7 @@ export function buildApplicationTabs(logs: Array<{ source_service?: string | nul
   ];
 
   for (const [key, count] of counts.entries()) {
-    if (!knownKeys.has(key)) {
+    if (!knownKeys.has(key) && !HIDDEN_AUDIT_SOURCES.has(key)) {
       tabs.push({ key, label: getAuditSourceLabel(key), count });
     }
   }

@@ -21,7 +21,7 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `orderedWidgets` (export function) L27 - Widgets in reading order (top to bottom, then left to right): the order phones show them in.
 - `useBoardState` (export function) L40 - A board (widgets + grid layout) saved on the server for the signed-in user, so each login keeps its own  layout on every device.
 
-## src/hooks/useCeoRealtimeStream.ts (49 lines) - Time the last query successfully received fresh data (not the render time).
+## src/hooks/useCeoRealtimeStream.ts (51 lines) - Time the last query successfully received fresh data (not the render time).
 - `ConnectionState` (export type) L5
 - `RealtimeSyncState` (export interface) L7
 - `useCeoRealtimeStream` (export function) L15
@@ -76,6 +76,16 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `useClearReadNotifications` (export function) L261
 - `useClearAllNotifications` (export function) L279
 
+## src/hooks/useRealEstate.ts (77 lines) - use real estate (hooks)
+- `getBinaryHeaders` (function) L10
+- `fetchAuthenticatedBlob` (function) L15
+- `fetchRealEstateRenderBlob` (export function) L27
+- `fetchRealEstateFloorplanBlob` (export function) L31
+- `fetchRealEstateDocumentBlob` (export function) L35
+- `useRealEstateProperties` (export function) L45
+- `useRealEstatePropertyDetail` (export function) L55
+- `useRealEstateFloorMapProject` (export function) L68
+
 ## src/hooks/useSearch.ts (16 lines) - use search (hooks)
 - `useGlobalSearch` (export function) L5
 
@@ -87,6 +97,11 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `useApproveRequest` (export function) L68
 - `useRejectRequest` (export function) L87
 - `useTransitionDeal` (export function) L106
+
+## src/hooks/useSocialCompliance.ts (49 lines) - use social compliance (hooks)
+- `useApprovedComplianceContent` (export function) L9
+- `useCompliancePublicMood` (export function) L23
+- `useTriggerPublicMoodScrape` (export function) L37
 
 ## src/hooks/useStreamingChat.ts (163 lines) - use streaming chat (hooks)
 - `ChatMessage` (export type) L5

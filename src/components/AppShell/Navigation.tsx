@@ -6,7 +6,9 @@ import {
   FileClock,
   Briefcase,
   Building2,
+  Home,
   Settings,
+  Landmark,
   ShieldCheck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -40,6 +42,20 @@ export const navigation: NavigationItem[] = [
     navigationCode: "DASHBOARD",
   },
   {
+    label: "Finance",
+    path: "/finance",
+    icon: Landmark,
+    section: "MAIN",
+    navigationCode: "DASHBOARD",
+  },
+  {
+    label: "Customize - Finance",
+    path: "/customize-finance",
+    icon: SlidersHorizontal,
+    section: "MAIN",
+    navigationCode: "DASHBOARD",
+  },
+  {
     label: "Mergers & Acquisitions",
     path: "/mergers-acquisitions",
     icon: Briefcase,
@@ -63,6 +79,43 @@ export const navigation: NavigationItem[] = [
   {
     label: "Customize Administration",
     path: "/customize-administration",
+    icon: SlidersHorizontal,
+    section: "MAIN",
+    navigationCode: "DASHBOARD",
+  },
+  {
+    label: "Social Media Compliance",
+    icon: ShieldCheck,
+    section: "MAIN",
+    navigationCode: "DASHBOARD",
+    subItems: [
+      {
+        label: "Approved Content",
+        path: "/social-media-compliance",
+        navigationCode: "DASHBOARD",
+      },
+      {
+        label: "Public Mood",
+        path: "/social-media-compliance/public-mood",
+        navigationCode: "DASHBOARD",
+      },
+      {
+        label: "Customize - Compliance",
+        path: "/customize-compliance",
+        navigationCode: "DASHBOARD",
+      },
+    ],
+  },
+  {
+    label: "Real Estate",
+    path: "/real-estate",
+    icon: Home,
+    section: "MAIN",
+    navigationCode: "DASHBOARD",
+  },
+  {
+    label: "Customize - Real Estate",
+    path: "/customize-real-estate",
     icon: SlidersHorizontal,
     section: "MAIN",
     navigationCode: "DASHBOARD",

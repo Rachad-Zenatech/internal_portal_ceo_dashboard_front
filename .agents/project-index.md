@@ -8,7 +8,9 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - scripts/reload-android.js (86 lines) - Check ANDROID_HOME or ANDROID_SDK_ROOT first
 - scripts/start-android.js (196 lines) - Check ANDROID_HOME or ANDROID_SDK_ROOT environment variables first
 - src/App.native.tsx (121 lines) - app.native
-- src/App.tsx (122 lines) - Customizable boards pull in the grid/drag library, so load them on demand.
+- src/App.tsx (138 lines) - Customizable boards pull in the grid/drag library, so load them on demand.
+- src/App.tsx (138 lines) - Customizable boards pull in the grid/drag library, so load them on demand.
+- src/App.tsx (138 lines) - Customizable boards pull in the grid/drag library, so load them on demand.
 - src/components/Administration/AssignApproversModal.tsx (1844 lines) - assign approvers modal (components  administration)
 - src/components/AppShell/AppShell.tsx (80 lines) - app shell (components  app shell)
 - src/components/AppShell/Breadcrumbs.tsx (77 lines) - Define custom mapping for breadcrumb names to ensure they look pretty
@@ -16,23 +18,25 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/components/AppShell/ConnectionStatusLight.tsx (262 lines) - connection status light (components  app shell)
 - src/components/AppShell/FloatingChat.tsx (527 lines) - floating chat (components  app shell)
 - src/components/AppShell/MessageHubStatusDropdown.tsx (325 lines) - message hub status dropdown (components  app shell)
-- src/components/AppShell/Navigation.tsx (99 lines) - navigation (components  app shell)
+- src/components/AppShell/Navigation.tsx (152 lines) - navigation (components  app shell)
+- src/components/AppShell/Navigation.tsx (152 lines) - navigation (components  app shell)
+- src/components/AppShell/Navigation.tsx (152 lines) - navigation (components  app shell)
 - src/components/AppShell/SessionTimeout.tsx (4 lines) - session timeout (components  app shell)
 - src/components/AppShell/Sidebar.tsx (191 lines) - sidebar (components  app shell)
 - src/components/AppShell/ThemeSwitch.tsx (41 lines) - theme switch (components  app shell)
 - src/components/AppShell/TopBar.tsx (550 lines) - top bar (components  app shell)
 - src/components/Customize/CustomBoard.native.tsx (166 lines) - custom board.native (components  customize)
-- src/components/Customize/CustomBoard.tsx (174 lines) - Phones get a single column, so widgets stack full-width.
+- src/components/Customize/CustomBoard.tsx (262 lines) - custom board (components  customize)
 - src/components/Customize/WidgetPanel.native.tsx (301 lines) - widget panel.native (components  customize)
 - src/components/Customize/WidgetPanel.tsx (290 lines) - widget panel (components  customize)
 - src/components/Customize/WidgetRenderer.native.tsx (244 lines) - widget renderer.native (components  customize)
-- src/components/Customize/WidgetRenderer.tsx (205 lines) - widget renderer (components  customize)
+- src/components/Customize/WidgetRenderer.tsx (207 lines) - widget renderer (components  customize)
 - src/components/Customize/WidgetSkeleton.native.tsx (87 lines) - Placeholder shaped like the widget that is loading.
 - src/components/Customize/WidgetSkeleton.tsx (69 lines) - Placeholder shaped like the widget that is loading, so the page doesn't jump when data arrives.
 - src/components/Dashboard/AccountTypeDonut.tsx (137 lines) - account type donut (components  dashboard)
 - src/components/Dashboard/BankBalancesChart.tsx (160 lines) - bank balances chart (components  dashboard)
 - src/components/Dashboard/FinancialPosition.tsx (121 lines) - financial position (components  dashboard)
-- src/components/Dashboard/KpiCard.tsx (67 lines) - Secondary line under the value (amount, status, hint).
+- src/components/Dashboard/KpiCard.tsx (68 lines) - Secondary line under the value (amount, status, hint).
 - src/components/Dashboard/RecentTransactionsTable.tsx (157 lines) - recent transactions table (components  dashboard)
 - src/components/Dashboard/RevenueExpenseChart.tsx (170 lines) - revenue expense chart (components  dashboard)
 - src/components/Dashboard/SummaryCards.tsx (155 lines) - Simple SVG sparklines matching the mockup aesthetics
@@ -79,23 +83,25 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/hooks/useAiOverview.ts (13 lines) - use ai overview (hooks)
 - src/hooks/useApproverRoles.ts (101 lines) - use approver roles (hooks)
 - src/hooks/useBoardState.ts (185 lines) - Next free slot at the bottom of the grid for a new widget.
-- src/hooks/useCeoRealtimeStream.ts (49 lines) - Time the last query successfully received fresh data (not the render time).
+- src/hooks/useCeoRealtimeStream.ts (51 lines) - Time the last query successfully received fresh data (not the render time).
 - src/hooks/useDashboard.ts (97 lines) - use dashboard (hooks)
 - src/hooks/useDataSource.ts (27 lines) - use data source (hooks)
 - src/hooks/useHeartbeat.ts (37 lines) - use heartbeat (hooks)
 - src/hooks/useMessageHubLiveStatus.ts (253 lines) - use message hub live status (hooks)
 - src/hooks/useNotifications.ts (296 lines) - use notifications (hooks)
+- src/hooks/useRealEstate.ts (77 lines) - use real estate (hooks)
 - src/hooks/useSearch.ts (16 lines) - use search (hooks)
 - src/hooks/useServiceCommand.ts (124 lines) - use service command (hooks)
+- src/hooks/useSocialCompliance.ts (49 lines) - use social compliance (hooks)
 - src/hooks/useStreamingChat.ts (163 lines) - use streaming chat (hooks)
 - src/hooks/useWidgetData.ts (25 lines) - Everything a widget needs to draw itself: live rows (filtered), grouped chart points and its columns.
 - src/hooks/useWidgetDraft.ts (88 lines) - The editing logic behind the "add / edit widget" panel, shared by web and native so they behave the same.
 - src/lib/AuthContext.tsx (239 lines) - auth context (lib)
-- src/lib/ServiceStatusContext.tsx (352 lines) - Service Name Normalization Map
+- src/lib/ServiceStatusContext.tsx (371 lines) - Service Name Normalization Map
 - src/lib/aggregate.ts (85 lines) - aggregate (lib)
-- src/lib/boardDefaults.ts (52 lines) - board defaults (lib)
+- src/lib/boardDefaults.ts (87 lines) - Centralized Executive Dashboard defaults spanning Finance, Admin, M&A, Compliance, and Real Estate.
 - src/lib/codegenShim.ts (4 lines) - codegen shim (lib)
-- src/lib/dataSources.ts (217 lines) - Live pass-through catalog.
+- src/lib/dataSources.ts (326 lines) - Live pass-through catalog.
 - src/lib/env.ts (64 lines) - Universal environment variable reader for Vite and Metro / React Native
 - src/lib/storage.ts (74 lines) - Universal storage adapter for Web and Native
 - src/lib/utils.ts (7 lines) - utils (lib)
@@ -119,9 +125,17 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/pages/Configurations/aiStatus/statusStyles.ts (31 lines) - status styles (pages  configurations ai status)
 - src/pages/Customization/Customization.tsx (14 lines) - customization (pages  customization)
 - src/pages/Customization/CustomizeAdministration.tsx (14 lines) - customize administration (pages  customization)
+- src/pages/Customization/CustomizeCompliance.tsx (14 lines) - customize compliance (pages  customization)
+- src/pages/Customization/CustomizeFinance.tsx (14 lines) - customize finance (pages  customization)
 - src/pages/Customization/CustomizeMA.tsx (14 lines) - customize m a (pages  customization)
+- src/pages/Customization/CustomizeRealEstate.tsx (14 lines) - customize real estate (pages  customization)
+- src/pages/Dashboard/ConnectedPlatformsHub.tsx (171 lines) - connected platforms hub (pages  dashboard)
 - src/pages/Dashboard/Dashboard.native.tsx (3816 lines) - dashboard.native (pages  dashboard)
-- src/pages/Dashboard/Dashboard.tsx (364 lines) - dashboard (pages  dashboard)
+- src/pages/Dashboard/Dashboard.tsx (180 lines) - dashboard (pages  dashboard)
+- src/pages/Dashboard/ExecutiveHeroBanner.tsx (105 lines) - executive hero banner (pages  dashboard)
+- src/pages/Dashboard/PlatformPulseCards.tsx (138 lines) - platform pulse cards (pages  dashboard)
+- src/pages/Finance/FinancePage.native.tsx (61 lines) - finance page.native (pages  finance)
+- src/pages/Finance/FinancePage.tsx (132 lines) - finance page (pages  finance)
 - src/pages/Log/AuditApplicationTabs.native.tsx (81 lines) - audit application tabs.native (pages  log)
 - src/pages/Log/AuditApplicationTabs.tsx (53 lines) - audit application tabs (pages  log)
 - src/pages/Log/AuditLog.native.tsx (862 lines) - audit log.native (pages  log)
@@ -129,11 +143,29 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/pages/Log/AuditLogDetailModal.native.tsx (143 lines) - audit log detail modal.native (pages  log)
 - src/pages/Log/AuditLogTableSection.tsx (148 lines) - audit log table section (pages  log)
 - src/pages/Log/auditLogColumns.tsx (268 lines) - audit log columns (pages  log)
-- src/pages/Log/auditLogSources.ts (98 lines) - audit log sources (pages  log)
+- src/pages/Log/auditLogSources.ts (99 lines) - audit log sources (pages  log)
 - src/pages/MergersAcquisitions/MergersAcquisitions.native.tsx (1075 lines) - mergers acquisitions.native (pages  mergers acquisitions)
 - src/pages/MergersAcquisitions/MergersAcquisitions.tsx (553 lines) - mergers acquisitions (pages  mergers acquisitions)
+- src/pages/RealEstate/InteractiveFloorPlan3D.tsx (246 lines) - interactive floor plan3 d (pages  real estate)
+- src/pages/RealEstate/PropertiesListComponents.tsx (285 lines) - properties list components (pages  real estate)
+- src/pages/RealEstate/PropertyDetailSections.tsx (418 lines) - property detail sections (pages  real estate)
+- src/pages/RealEstate/PropertyDetailView.tsx (125 lines) - property detail view (pages  real estate)
+- src/pages/RealEstate/PropertyFloorPlanSection.tsx (254 lines) - property floor plan section (pages  real estate)
+- src/pages/RealEstate/PropertyMap.tsx (462 lines) - property map (pages  real estate)
+- src/pages/RealEstate/RealEstateOfflineBanner.tsx (37 lines) - real estate offline banner (pages  real estate)
+- src/pages/RealEstate/RealEstatePage.native.tsx (85 lines) - real estate page.native (pages  real estate)
+- src/pages/RealEstate/RealEstatePage.tsx (224 lines) - real estate page (pages  real estate)
 - src/pages/Reports/Reports.tsx (96 lines) - src/pages/Reports.tsx
 - src/pages/Settings/Settings.tsx (276 lines) - settings (pages  settings)
+- src/pages/SocialMediaCompliance/ApprovedContentDetailDialog.tsx (81 lines) - approved content detail dialog (pages  social media compliance)
+- src/pages/SocialMediaCompliance/ApprovedContentPage.native.tsx (111 lines) - approved content page.native (pages  social media compliance)
+- src/pages/SocialMediaCompliance/ApprovedContentPage.tsx (167 lines) - approved content page (pages  social media compliance)
+- src/pages/SocialMediaCompliance/ApprovedContentTable.tsx (196 lines) - approved content table (pages  social media compliance)
+- src/pages/SocialMediaCompliance/ComplianceOfflineBanner.tsx (36 lines) - compliance offline banner (pages  social media compliance)
+- src/pages/SocialMediaCompliance/PublicMoodPage.native.tsx (58 lines) - public mood page.native (pages  social media compliance)
+- src/pages/SocialMediaCompliance/PublicMoodPage.tsx (145 lines) - public mood page (pages  social media compliance)
+- src/pages/SocialMediaCompliance/PublicMoodTrackCard.tsx (55 lines) - public mood track card (pages  social media compliance)
+- src/pages/SocialMediaCompliance/PublicMoodTrendRow.tsx (139 lines) - public mood trend row (pages  social media compliance)
 - src/pages/UploadFiles/UploadFiles.native.tsx (884 lines) - upload files.native (pages  upload files)
 - src/pages/UploadFiles/UploadFiles.tsx (631 lines) - upload files (pages  upload files)
 - src/services/api.ts (6 lines) - api (services)
@@ -153,6 +185,8 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/types/customize.ts (69 lines) - dimension = something you group/label by; measure = something you add up or average.
 - src/types/dashboard.ts (45 lines) - dashboard (types)
 - src/types/messageHub.ts (61 lines) - message hub (types)
+- src/types/realEstate.ts (245 lines) - real estate (types)
 - src/types/search.ts (8 lines) - search (types)
+- src/types/socialCompliance.ts (119 lines) - social compliance (types)
 - src/types/uploadArchive.ts (26 lines) - upload archive (types)
 - vite.config.ts (51 lines) - vite.config

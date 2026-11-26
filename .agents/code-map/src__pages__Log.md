@@ -46,11 +46,11 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `buildCeoAuditColumns` (export function) L64
 - `buildCeoLoginColumns` (export function) L185
 
-## src/pages/Log/auditLogSources.ts (98 lines) - audit log sources (pages  log)
+## src/pages/Log/auditLogSources.ts (99 lines) - audit log sources (pages  log)
 - `AuditApplicationDef` (export interface) L1
 - `AuditApplicationTab` (export interface) L6
 - `AUDIT_APPLICATIONS` (export const) L10
-- `AUDIT_SOURCE_LABELS` (export const) L49
-- `normalizeAuditSource` (export function) L65
-- `getAuditSourceLabel` (export function) L70
-- `buildApplicationTabs` (export function) L75
+- `AUDIT_SOURCE_LABELS` (export const) L50
+- `normalizeAuditSource` (export function) L66
+- `getAuditSourceLabel` (export function) L71
+- `buildApplicationTabs` (export function) L76

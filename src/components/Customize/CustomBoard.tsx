@@ -3,8 +3,22 @@ import { Responsive, WidthProvider } from "react-grid-layout";
 import type { Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
-import { Check, GripVertical, LayoutGrid, Pencil, Plus, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
+import { Check, GripVertical, Info, LayoutGrid, Pencil, Plus, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import WidgetRenderer from "@/components/Customize/WidgetRenderer";
 import WidgetPanel from "@/components/Customize/WidgetPanel";
 import WidgetSkeleton from "@/components/Customize/WidgetSkeleton";
@@ -16,7 +30,6 @@ import type { BoardState, WidgetConfig } from "@/types/customize";
 
 const GridLayout = WidthProvider(Responsive);
 const BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
-// Phones get a single column, so widgets stack full-width.
 const COLUMNS = { lg: 12, md: 12, sm: 6, xs: 1, xxs: 1 };
 
 interface Props {
@@ -24,6 +37,7 @@ interface Props {
   title: string;
   subtitle: string;
   defaults: BoardState;
+  embedded?: boolean;
 }
 
 function filterTag(w: WidgetConfig): string | null {
@@ -32,7 +46,97 @@ function filterTag(w: WidgetConfig): string | null {
   return `${col?.label ?? w.filter.column}: ${w.filter.value}`;
 }
 
-export default function CustomBoard({ boardKey, title, subtitle, defaults }: Props) {
+function BoardHeader({
+  title,
+  subtitle,
+  embedded,
+  saveLabel,
+  status,
+  editMode,
+  hasState,
+  lastSyncedAt,
+  onRetrySave,
+  onAddWidget,
+  onReset,
+  onRefresh,
+  onToggleEdit,
+}: {
+  title: string;
+  subtitle: string;
+  embedded: boolean;
+  saveLabel: string;
+  status: string;
+  editMode: boolean;
+  hasState: boolean;
+  lastSyncedAt: Date;
+  onRetrySave: () => void;
+  onAddWidget: () => void;
+  onReset: () => void;
+  onRefresh: () => void;
+  onToggleEdit: () => void;
+}) {
+  return (
+    <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0 space-y-1">
+        <h1 className={`flex items-center gap-2 font-semibold tracking-tight text-foreground ${embedded ? "text-lg" : "text-2xl"}`}>
+          <LayoutGrid className={`${embedded ? "h-4 w-4" : "h-5 w-5"} text-muted-foreground`} />
+          {title}
+        </h1>
+        <p className="text-sm text-muted-foreground">{subtitle}</p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {saveLabel && (
+          <Badge variant={status === "error" ? "destructive" : "secondary"} role="status" className="font-normal">
+            {saveLabel}
+            {status === "error" && (
+              <button type="button" onClick={onRetrySave} className="ml-1.5 cursor-pointer underline">
+                Retry
+              </button>
+            )}
+          </Badge>
+        )}
+        {editMode && (
+          <>
+            <Button size="sm" onClick={onAddWidget} className="gap-1.5 cursor-pointer">
+              <Plus className="h-4 w-4" />
+              Add widget
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" variant="outline" className="gap-1.5 cursor-pointer">
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  Reset
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reset layout to defaults?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This restores the default widgets and positions for this board. Your custom edits will be removed.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={onReset}>Reset board</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
+        )}
+        <Button size="sm" variant="outline" onClick={onRefresh} className="gap-1.5 cursor-pointer" title={`Last synced: ${lastSyncedAt.toLocaleTimeString()}`}>
+          <RefreshCw className="h-3.5 w-3.5" />
+          Refresh
+        </Button>
+        <Button size="sm" variant={editMode ? "default" : "outline"} onClick={onToggleEdit} className="gap-1.5 cursor-pointer" disabled={!hasState}>
+          {editMode ? <Check className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
+          {editMode ? "Done" : "Customize"}
+        </Button>
+      </div>
+    </header>
+  );
+}
+
+export default function CustomBoard({ boardKey, title, subtitle, defaults, embedded = false }: Props) {
   const { state, status, loadFailed, retrySave, setLayout, addWidget, updateWidget, removeWidget, reset } = useBoardState(boardKey, defaults);
   const { triggerManualSync, lastSyncedAt } = useCeoRealtimeStream();
 
@@ -56,81 +160,63 @@ export default function CustomBoard({ boardKey, title, subtitle, defaults }: Pro
     setPanelOpen(true);
   };
   const handleSave = (w: WidgetConfig) => (panelIsNew ? addWidget(w) : updateWidget(w));
-
   const handleLayoutChange = (_current: Layout[], all: Partial<Record<string, Layout[]>>) => {
-    // Only the desktop layout is stored; smaller screens re-flow from it.
     if (all.lg && canArrange) setLayout(all.lg);
   };
 
   const saveLabel =
-    status === "saving" ? "Saving…" : status === "saved" ? "Saved to your account" : status === "error" ? "Couldn't save your changes" : loadFailed ? "Showing defaults" : "";
+    status === "saving" ? "Saving…" : status === "saved" ? "Saved" : status === "error" ? "Couldn't save" : loadFailed ? "Showing defaults" : "";
+
+  const wrapperClass = embedded
+    ? "flex w-full flex-col gap-4"
+    : "mx-auto flex w-full max-w-[1600px] flex-col gap-4 bg-background p-4 pb-12 sm:gap-6 sm:p-6 lg:p-8";
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-[1600px] flex-col gap-4 bg-background p-4 sm:gap-6 sm:p-6 lg:p-8">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0 space-y-1">
-          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-foreground">
-            <LayoutGrid className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-            {title}
-          </h1>
-          <p className="text-sm text-muted-foreground">{subtitle}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {saveLabel && (
-            <span role="status" className={`mr-1 text-xs ${status === "error" ? "text-rose-600" : "text-muted-foreground"}`}>
-              {saveLabel}
-              {status === "error" && (
-                <button type="button" onClick={retrySave} className="ml-1 cursor-pointer underline">Retry</button>
-              )}
-            </span>
-          )}
-          {editMode && (
-            <>
-              <Button size="sm" onClick={openNew} className="h-10 cursor-pointer gap-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 sm:h-9">
-                <Plus className="h-4 w-4" /> Add widget
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => { if (window.confirm("Reset this page to its default layout? Your changes will be removed.")) void reset(); }}
-                className="h-10 cursor-pointer gap-2 rounded-xl sm:h-9"
-              >
-                <RotateCcw className="h-3.5 w-3.5" /> Reset
-              </Button>
-            </>
-          )}
-          <Button size="sm" variant="outline" onClick={triggerManualSync} className="h-10 cursor-pointer gap-2 rounded-xl sm:h-9" title={`Last synced: ${lastSyncedAt.toLocaleTimeString()}`}>
-            <RefreshCw className="h-3.5 w-3.5" /> Refresh
-          </Button>
-          <Button size="sm" variant={editMode ? "default" : "outline"} onClick={() => setEditMode((v) => !v)} className="h-10 cursor-pointer gap-2 rounded-xl sm:h-9" disabled={!state}>
-            {editMode ? <Check className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
-            {editMode ? "Done" : "Customize"}
-          </Button>
-        </div>
-      </header>
+    <div className={wrapperClass}>
+      <BoardHeader
+        title={title}
+        subtitle={subtitle}
+        embedded={embedded}
+        saveLabel={saveLabel}
+        status={status}
+        editMode={editMode}
+        hasState={Boolean(state)}
+        lastSyncedAt={lastSyncedAt}
+        onRetrySave={retrySave}
+        onAddWidget={openNew}
+        onReset={() => void reset()}
+        onRefresh={triggerManualSync}
+        onToggleEdit={() => setEditMode((v) => !v)}
+      />
 
       {editMode && (
-        <p className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs text-indigo-800 dark:border-indigo-900/60 dark:bg-indigo-950/30 dark:text-indigo-200">
-          {canArrange
-            ? "Drag a widget by its handle to move it, or pull its bottom-right corner to resize. Use the pencil to change what it shows."
-            : "Add, edit and delete widgets here. Moving and resizing are available on larger screens."}
-        </p>
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription className="text-xs">
+            {canArrange
+              ? "Drag a widget by its grip handle to move it, pull the bottom-right corner to resize, or click the pencil to configure."
+              : "Add, edit and delete widgets here. Dragging and resizing are available on larger screens."}
+          </AlertDescription>
+        </Alert>
       )}
 
       {!state ? (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-busy="true" aria-label="Loading your layout">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-28 overflow-hidden rounded-2xl border border-border bg-card"><WidgetSkeleton kind="kpi" /></div>
+            <Card key={i} className="h-28 p-0"><WidgetSkeleton kind="kpi" /></Card>
           ))}
-          <div className="col-span-2 h-72 overflow-hidden rounded-2xl border border-border bg-card"><WidgetSkeleton kind="bar" /></div>
-          <div className="col-span-2 h-72 overflow-hidden rounded-2xl border border-border bg-card"><WidgetSkeleton kind="pie" /></div>
-          <div className="col-span-2 h-64 overflow-hidden rounded-2xl border border-border bg-card lg:col-span-4"><WidgetSkeleton kind="table" /></div>
+          <Card className="col-span-2 h-72 p-0"><WidgetSkeleton kind="bar" /></Card>
+          <Card className="col-span-2 h-72 p-0"><WidgetSkeleton kind="pie" /></Card>
+          <Card className="col-span-2 h-64 p-0 lg:col-span-4"><WidgetSkeleton kind="table" /></Card>
         </div>
       ) : state.widgets.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border p-12 text-center">
-          <p className="text-sm text-muted-foreground">This page is empty. Add your first widget to get started.</p>
-          <Button onClick={() => { setEditMode(true); openNew(); }} className="cursor-pointer gap-2"><Plus className="h-4 w-4" /> Add widget</Button>
-        </div>
+        <Card className="flex flex-1 flex-col items-center justify-center gap-3 border-dashed p-12 text-center shadow-none">
+          <p className="text-sm text-muted-foreground">This board is empty. Add your first widget to get started.</p>
+          <Button onClick={() => { setEditMode(true); openNew(); }} className="cursor-pointer gap-2">
+            <Plus className="h-4 w-4" />
+            Add widget
+          </Button>
+        </Card>
       ) : (
         <GridLayout
           className="layout"
@@ -148,19 +234,21 @@ export default function CustomBoard({ boardKey, title, subtitle, defaults }: Pro
           {state.widgets.map((w) => {
             const tag = filterTag(w);
             return (
-              <div key={w.id} className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xs">
-                <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-                  {canArrange && <GripVertical className="widget-drag-handle h-4 w-4 shrink-0 cursor-grab text-muted-foreground active:cursor-grabbing" aria-label="Drag to move" />}
-                  <h2 className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{w.title}</h2>
-                  {tag && <span className="hidden max-w-[40%] shrink-0 truncate rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground sm:inline">{tag}</span>}
-                  {editMode && (
-                    <div className="flex shrink-0 items-center">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer" onClick={() => openEdit(w)} aria-label={`Edit ${w.title}`}><Pencil className="h-3.5 w-3.5" /></Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer text-rose-600" onClick={() => removeWidget(w.id)} aria-label={`Delete ${w.title}`}><Trash2 className="h-3.5 w-3.5" /></Button>
-                    </div>
-                  )}
-                </div>
-                <div className="min-h-0 flex-1"><WidgetRenderer widget={w} /></div>
+              <div key={w.id} className="h-full w-full">
+                <Card className="h-full w-full flex flex-col gap-0 py-0 overflow-hidden">
+                  <div className="flex items-center gap-2 border-b border-border px-3.5 py-2.5">
+                    {canArrange && <GripVertical className="widget-drag-handle h-4 w-4 shrink-0 cursor-grab text-muted-foreground active:cursor-grabbing" aria-label="Drag to move" />}
+                    <h2 className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{w.title}</h2>
+                    {tag && <Badge variant="secondary" className="hidden max-w-[40%] shrink-0 truncate text-[11px] font-normal sm:inline-flex">{tag}</Badge>}
+                    {editMode && (
+                      <div className="flex shrink-0 items-center gap-0.5">
+                        <Button variant="ghost" size="icon-xs" className="cursor-pointer" onClick={() => openEdit(w)} aria-label={`Edit ${w.title}`}><Pencil className="h-3.5 w-3.5" /></Button>
+                        <Button variant="ghost" size="icon-xs" className="cursor-pointer text-destructive hover:text-destructive" onClick={() => removeWidget(w.id)} aria-label={`Delete ${w.title}`}><Trash2 className="h-3.5 w-3.5" /></Button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-h-0 flex-1"><WidgetRenderer widget={w} /></div>
+                </Card>
               </div>
             );
           })}

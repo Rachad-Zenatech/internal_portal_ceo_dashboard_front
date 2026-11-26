@@ -20,11 +20,11 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `FinancialPositionProps` (type) L6
 - `FinancialPosition` (export function) L10
 
-## src/components/Dashboard/KpiCard.tsx (67 lines) - Secondary line under the value (amount, status, hint).
+## src/components/Dashboard/KpiCard.tsx (68 lines) - Secondary line under the value (amount, status, hint).
 - `KpiTone` (export type) L6
-- `KpiCardProps` (interface) L15
-- `formatMoney` (export function) L27
-- `KpiCard` (export function) L31
+- `KpiCardProps` (interface) L16
+- `formatMoney` (export function) L28
+- `KpiCard` (export function) L32
 
 ## src/components/Dashboard/RecentTransactionsTable.tsx (157 lines) - recent transactions table (components  dashboard)
 - `RecentTransactionsTableProps` (type) L16

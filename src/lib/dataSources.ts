@@ -175,6 +175,113 @@ export const DATA_SOURCES: DataSourceDef[] = [
     toRows: (raw) => breakdownRows(raw, "tasks_by_priority"),
   },
   {
+    id: "compliance_approved_content",
+    label: "Approved social content",
+    module: "compliance",
+    description: "Approved marketing posts and campaigns from Social Media Compliance.",
+    endpoint: "/api/v1/ceo/compliance/approved-content",
+    queryNamespace: "socialCompliance",
+    columns: [
+      dim("reference_code", "Reference"),
+      dim("title", "Title"),
+      dim("brand_name", "Brand"),
+      dim("content_type", "Type"),
+      dim("created_by_name", "Creator"),
+      num("latest_score", "Compliance score"),
+      date("publish_at", "Publish date"),
+      date("updated_at", "Updated"),
+    ],
+    toRows: (raw) => asRows((raw as { data?: { items?: unknown[] } } | null)?.data?.items),
+  },
+  {
+    id: "compliance_public_mood",
+    label: "Public mood trends",
+    module: "compliance",
+    description: "Live social listening sentiment topics across Financial ZenaTech and Today's Posts.",
+    endpoint: "/api/v1/ceo/compliance/public-mood",
+    queryNamespace: "socialCompliance",
+    columns: [
+      dim("name", "Topic"),
+      dim("recommendation", "Recommendation"),
+      dim("scrape_track", "Track"),
+      num("net_sentiment", "Net sentiment"),
+      num("positive_pct", "Positive %"),
+      num("negative_pct", "Negative %"),
+      num("volume", "Mentions"),
+    ],
+    toRows: (raw) => {
+      const data = (raw as { data?: { financial_zenatech?: { trends?: DataRow[] }; today_posts?: { trends?: DataRow[] } } } | null)?.data;
+      const fin = (data?.financial_zenatech?.trends ?? []).map((t) => ({ ...t, scrape_track: "Financial ZenaTech" }));
+      const today = (data?.today_posts?.trends ?? []).map((t) => ({ ...t, scrape_track: "Today's Posts" }));
+      return [...fin, ...today];
+    },
+  },
+  {
+    id: "real_estate_properties",
+    label: "Real Estate properties",
+    module: "real_estate",
+    description: "All properties, locations, unit specs, and building management details from Real Estate.",
+    endpoint: "/api/v1/ceo/real-estate/properties?limit=1000",
+    queryNamespace: "real-estate",
+    columns: [
+      dim("property_name", "Property name"),
+      dim("property_reference", "Reference"),
+      dim("record_status", "Status"),
+      dim("property_type", "Property type"),
+      dim("holding_type", "Holding type"),
+      dim("city", "City"),
+      dim("state_province_region", "State / region"),
+      dim("country_code", "Country"),
+      dim("postal_code", "Postal code"),
+      dim("building_name", "Building"),
+      dim("building_management", "Building management"),
+      dim("furnished_status", "Furnished"),
+      dim("address_formatted", "Formatted address"),
+      num("bedrooms", "Bedrooms"),
+      num("full_bathrooms", "Full bathrooms"),
+      num("half_bathrooms", "Half bathrooms"),
+      num("unit_area", "Unit area"),
+      num("land_area", "Land area"),
+      num("parking_spaces", "Parking spaces"),
+      num("building_total_floors", "Total floors"),
+      num("year_built", "Year built"),
+      num("document_count", "Attachments"),
+      date("created_at", "Created"),
+      date("updated_at", "Updated"),
+    ],
+    toRows: (raw) => asRows((raw as { data?: { items?: unknown[] } } | null)?.data?.items),
+  },
+  {
+    id: "real_estate_by_city",
+    label: "Properties by city",
+    module: "real_estate",
+    description: "Property count, bedrooms, and unit area grouped by city.",
+    endpoint: "/api/v1/ceo/real-estate/properties?limit=1000",
+    queryNamespace: "real-estate",
+    columns: [
+      dim("city", "City"),
+      dim("country_code", "Country"),
+      num("count", "Properties"),
+      num("total_bedrooms", "Total bedrooms"),
+      num("total_area", "Total unit area"),
+    ],
+    toRows: (raw) => {
+      const items = asRows((raw as { data?: { items?: unknown[] } } | null)?.data?.items);
+      const groups = new Map<string, { city: string; country_code: string; count: number; total_bedrooms: number; total_area: number }>();
+      for (const item of items) {
+        const city = String(item.city || "Unspecified").trim() || "Unspecified";
+        const country = String(item.country_code || "—").trim() || "—";
+        const key = `${city}::${country}`;
+        const cur = groups.get(key) ?? { city, country_code: country, count: 0, total_bedrooms: 0, total_area: 0 };
+        cur.count += 1;
+        cur.total_bedrooms += Number(item.bedrooms) || 0;
+        cur.total_area += Number(item.unit_area) || 0;
+        groups.set(key, cur);
+      }
+      return Array.from(groups.values());
+    },
+  },
+  {
     id: "ceo_audit_logs",
     label: "Audit log",
     module: "system",
@@ -208,6 +315,8 @@ export const MODULE_LABELS: Record<string, string> = {
   dashboard: "Finance",
   admin: "Administration",
   ma: "Mergers & Acquisitions",
+  compliance: "Social Media Compliance",
+  real_estate: "Real Estate",
   system: "System",
 };
 

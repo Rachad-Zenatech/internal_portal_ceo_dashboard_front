@@ -4,6 +4,12 @@
 
 Each symbol shows its start line (`L<n>`); read from there to the next symbol's line, not the whole file.
 
+## src/pages/Dashboard/ConnectedPlatformsHub.tsx (171 lines) - connected platforms hub (pages  dashboard)
+- `PlatformMeta` (interface) L28
+- `loadInitialExpanded` (function) L53
+- `PlatformTile` (function) L62
+- `ConnectedPlatformsHub` (export function) L104
+
 ## src/pages/Dashboard/Dashboard.native.tsx (3816 lines) - dashboard.native (pages  dashboard)
 - `PortalStatus` (interface) L28
 - `PurchaseRequestLineItem` (interface) L39
@@ -27,9 +33,17 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
     - `handleLogoutPress` (fn) L424
     - `navigateToTab` (fn) L432
 
-## src/pages/Dashboard/Dashboard.tsx (364 lines) - dashboard (pages  dashboard)
-- `SummaryData` (interface) L37
-- `PurchaseRequest` (interface) L44
-- `CeoEvent` (interface) L55
-- `AuditLog` (interface) L64
-- `Dashboard` (export function) L76
+## src/pages/Dashboard/Dashboard.tsx (180 lines) - dashboard (pages  dashboard)
+- `loadPrefs` (function) L26
+- `Dashboard` (export function) L35
+
+## src/pages/Dashboard/ExecutiveHeroBanner.tsx (105 lines) - executive hero banner (pages  dashboard)
+- `DashboardVisibilityPrefs` (export interface) L13
+- `Props` (interface) L19
+- `ExecutiveHeroBanner` (export function) L31
+
+## src/pages/Dashboard/PlatformPulseCards.tsx (138 lines) - platform pulse cards (pages  dashboard)
+- `Props` (interface) L7
+- `PulseCardProps` (interface) L26
+- `PulseCard` (function) L35
+- `PlatformPulseCards` (export function) L73

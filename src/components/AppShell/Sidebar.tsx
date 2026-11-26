@@ -87,7 +87,7 @@ export default function Sidebar({
                 const Icon = item.icon;
 
                 if (item.subItems) {
-                  const isExpanded = expandedItems[item.label];
+                  const isExpanded = expandedItems[item.label] ?? item.subItems.some((sub) => location.pathname === sub.path);
                   return (
                     <div key={item.label} className="flex flex-col">
                       <button
@@ -120,7 +120,7 @@ export default function Sidebar({
                         }`}
                       >
                         {item.subItems.map((sub) => {
-                          const isSubActive = location.pathname === sub.path || location.pathname.startsWith(sub.path + "/");
+                          const isSubActive = location.pathname === sub.path;
                           return (
                             <Link
                               key={sub.path}

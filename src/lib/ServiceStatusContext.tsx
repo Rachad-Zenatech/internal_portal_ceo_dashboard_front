@@ -35,6 +35,7 @@ export function normalizeServiceName(name: string): string {
   if (lower.includes("ma") || lower.includes("m&a") || lower.includes("m7a") || lower.includes("merger")) return "ma";
   if (lower.includes("ceo")) return "ceo";
   if (lower.includes("finance") || lower.includes("accounting") || lower.includes("gl")) return "finance";
+  if (lower.includes("real_estate") || lower.includes("real-estate") || lower.includes("real estate")) return "real-estate";
   return lower;
 }
 
@@ -60,6 +61,8 @@ function notifyServiceTransition(serviceName: string, status: ServiceStatus, pre
     : serviceName === "ma"
     ? "M&A System"
     : serviceName.toUpperCase();
+
+  if (typeof document === "undefined") return;
 
   if (status === "offline") {
     toast.error(`${displayName} is currently offline`, {
@@ -149,6 +152,12 @@ export function ServiceStatusProvider({ children }: { children: React.ReactNode 
       }
     }
 
+    if (eventType.includes("AUDIT_LOG")) {
+      qc.invalidateQueries({ queryKey: ["auditLogs"] });
+      qc.invalidateQueries({ queryKey: ["auditLogs-native"] });
+      qc.invalidateQueries({ queryKey: ["ceoAuditLogs"] });
+    }
+
     if (service === "admin" || eventType.startsWith("PURCHASE_") || eventType.includes("APPROVAL")) {
       qc.invalidateQueries({ queryKey: ["admin"] });
       qc.invalidateQueries({ queryKey: ["pendingApprovals"] });
@@ -160,6 +169,8 @@ export function ServiceStatusProvider({ children }: { children: React.ReactNode 
       qc.invalidateQueries({ queryKey: ["unreadNotificationsCount"] });
       qc.invalidateQueries({ queryKey: ["ceoEvents"] });
       qc.invalidateQueries({ queryKey: ["ceoAuditLogs"] });
+      qc.invalidateQueries({ queryKey: ["auditLogs"] });
+      qc.invalidateQueries({ queryKey: ["auditLogs-native"] });
     } else if (service === "ma" || eventType.startsWith("MA_") || eventType.includes("LOI") || eventType.includes("DEAL")) {
       qc.invalidateQueries({ queryKey: ["ma"] });
       qc.invalidateQueries({ queryKey: ["ma-summary"] });
@@ -171,6 +182,8 @@ export function ServiceStatusProvider({ children }: { children: React.ReactNode 
       qc.invalidateQueries({ queryKey: ["unreadNotificationsCount"] });
       qc.invalidateQueries({ queryKey: ["ceoEvents"] });
       qc.invalidateQueries({ queryKey: ["ceoAuditLogs"] });
+    } else if (service === "real-estate" || eventType.startsWith("REAL_ESTATE_")) {
+      qc.invalidateQueries({ queryKey: ["real-estate"] });
     } else if (service) {
       qc.invalidateQueries({ queryKey: [service] });
       qc.invalidateQueries({ queryKey: ["notifications"] });
@@ -178,7 +191,7 @@ export function ServiceStatusProvider({ children }: { children: React.ReactNode 
     }
   }, []);
 
-  const connectWebSocket = useCallback(() => {
+  const connectWebSocket = useCallback(async () => {
     if (globalWs && (globalWs.readyState === WebSocket.OPEN || globalWs.readyState === WebSocket.CONNECTING)) {
       return;
     }
@@ -190,7 +203,7 @@ export function ServiceStatusProvider({ children }: { children: React.ReactNode 
 
     try {
       let wsUrl = BASE_URL.replace(/^http(s)?:\/\//, (_, s) => (s ? "wss://" : "ws://"));
-      const token = appStorage.getItem("token");
+      const token = await Promise.resolve(appStorage.getItem("token"));
       const tokenParam = token ? `?token=${encodeURIComponent(token)}` : "";
       const endpoint = `${wsUrl}/ws/service-status${tokenParam}`;
 
@@ -229,12 +242,6 @@ export function ServiceStatusProvider({ children }: { children: React.ReactNode 
       ws.onclose = () => {
         setWsConnected(false);
         globalWs = null;
-        // Mark remote services as unknown on disconnect
-        setServiceStatuses((prev) => ({
-          ...prev,
-          admin: "unknown",
-          ma: "unknown",
-        }));
         scheduleReconnect();
       };
 
@@ -263,33 +270,44 @@ export function ServiceStatusProvider({ children }: { children: React.ReactNode 
     }, delay);
   }, [connectWebSocket]);
 
-  // Initial Snapshot Fetch via REST (once on startup)
-  useEffect(() => {
-    let isMounted = true;
-    apiClient.get<any>("/service-status")
-      .then((res) => {
-        if (!isMounted || !res?.services) return;
-        const initialMap: ServiceStatusMap = {};
-        const initialTimes: Record<string, string> = {};
-        for (const [k, v] of Object.entries(res.services)) {
-          const norm = normalizeServiceName(k);
-          const val = v as { status: ServiceStatus; updatedAt?: string };
-          initialMap[norm] = val.status || "unknown";
-          if (val.updatedAt) initialTimes[norm] = val.updatedAt;
-        }
+  const fetchSnapshot = useCallback(async () => {
+    try {
+      const res = await apiClient.get<any>("/service-status");
+      const servicesObj = res?.services && typeof res.services === "object" ? res.services : res;
+      if (!servicesObj || typeof servicesObj !== "object") return;
+      const initialMap: ServiceStatusMap = {};
+      const initialTimes: Record<string, string> = {};
+      for (const [k, v] of Object.entries(servicesObj)) {
+        if (!v || typeof v !== "object" || !("status" in v)) continue;
+        const norm = normalizeServiceName(k);
+        const val = v as { status: ServiceStatus; updatedAt?: string };
+        initialMap[norm] = val.status || "unknown";
+        if (val.updatedAt) initialTimes[norm] = val.updatedAt;
+      }
+      if (Object.keys(initialMap).length > 0) {
         setServiceStatuses((prev) => ({ ...prev, ...initialMap }));
         setLastUpdated((prev) => ({ ...prev, ...initialTimes }));
-      })
-      .catch(() => {
-        // ignore initial fetch error; ws will update
-      });
+      }
+    } catch {
+      // ignore snapshot fetch error; ws or next poll will update
+    }
+  }, []);
 
+  // Initial Snapshot Fetch via REST + WS connection + fallback REST polling when WS is down
+  useEffect(() => {
+    void fetchSnapshot();
     connectWebSocket();
 
+    const interval = setInterval(() => {
+      if (!globalWs || globalWs.readyState !== WebSocket.OPEN) {
+        void fetchSnapshot();
+      }
+    }, 15000);
+
     return () => {
-      isMounted = false;
+      clearInterval(interval);
     };
-  }, [connectWebSocket]);
+  }, [fetchSnapshot, connectWebSocket]);
 
   const isOnline = useCallback((serviceName: string) => {
     const norm = normalizeServiceName(serviceName);
@@ -315,8 +333,9 @@ export function ServiceStatusProvider({ children }: { children: React.ReactNode 
       }
       globalWs = null;
     }
+    void fetchSnapshot();
     connectWebSocket();
-  }, [connectWebSocket]);
+  }, [fetchSnapshot, connectWebSocket]);
 
   const value: ServiceStatusContextValue = {
     serviceStatuses,

@@ -83,8 +83,45 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `HubConnectedServer` (export interface) L19
 - `MessageHubStatusResponse` (export interface) L35
 
+## src/types/realEstate.ts (245 lines) - real estate (types)
+- `RecordStatus` (export type) L1
+- `AreaUnit` (export type) L2
+- `Property` (export interface) L4
+- `PropertyDocument` (export interface) L56
+- `PropertyUnit` (export interface) L66
+- `WallMeshPolygon` (export interface) L82
+- `WallMeshData` (export interface) L87
+- `FloorMapRender` (export interface) L94
+- `FloorMapProject` (export interface) L109
+- `IntegrationStatus` (export type) L122
+- `RealEstatePropertiesResponse` (export interface) L124
+- `RealEstatePropertyDetailData` (export interface) L134
+- `RealEstatePropertyDetailResponse` (export interface) L142
+- `RealEstateProjectResponse` (export interface) L149
+- `formatPropertyAddress` (export function) L164
+- `formatArea` (export function) L173
+- `formatBytes` (export function) L179
+- `isWallMesh` (export function) L186
+- `parseAmenities` (export function) L196
+- `formatBathrooms` (export function) L221
+- `STATUS_STYLES` (export const) L228
+
 ## src/types/search.ts (8 lines) - search (types)
 - `SearchResult` (export type) L1
+
+## src/types/socialCompliance.ts (119 lines) - social compliance (types)
+- `ComplianceBrand` (export interface) L1
+- `ApprovedContentItem` (export interface) L6
+- `ApprovedContentPayload` (export interface) L33
+- `ApprovedContentResponse` (export interface) L39
+- `PublicMoodScrapeScope` (export type) L46
+- `PublishingRecommendation` (export type) L47
+- `PublicMoodListeningPost` (export interface) L49
+- `PublicMoodTrend` (export interface) L60
+- `PublicMoodTodayPost` (export interface) L84
+- `PublicMoodTrack` (export interface) L93
+- `PublicMoodOverview` (export interface) L104
+- `PublicMoodApiResponse` (export interface) L113
 
 ## src/types/uploadArchive.ts (26 lines) - upload archive (types)
 - `UploadType` (export type) L1

@@ -32,6 +32,8 @@ export function useCeoRealtimeStream(): RealtimeSyncState {
     queryClient.invalidateQueries({ queryKey: ["summaryMetrics"] });
     queryClient.invalidateQueries({ queryKey: ["notifications"] });
     queryClient.invalidateQueries({ queryKey: ["portalsStatus"] });
+    queryClient.invalidateQueries({ queryKey: ["real-estate"] });
+    queryClient.invalidateQueries({ queryKey: ["socialCompliance"] });
     reconnect();
   }, [queryClient, reconnect]);
 
