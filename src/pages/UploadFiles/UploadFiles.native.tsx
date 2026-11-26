@@ -8,7 +8,6 @@ import {
   NativeCard,
   NativeCardContent,
   NativeBadge,
-  SafeAreaView,
 } from "@/components/native";
 import {
   Modal,
@@ -19,9 +18,9 @@ import {
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigation } from "@react-navigation/native";
 import { uploadArchiveService } from "@/services/uploadArchiveService";
 import type { ArchivedUpload, UploadType } from "@/types/uploadArchive";
+import MobileShell from "@/components/AppShell/MobileShell.native";
 
 const PAGE_SIZE = 50;
 
@@ -34,7 +33,6 @@ function formatBytes(bytes: number): string {
 }
 
 export default function UploadFiles() {
-  const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
   const [selectedType, setSelectedType] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -140,31 +138,12 @@ export default function UploadFiles() {
   }, [files]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* Top Navigation Bar */}
-      <View style={styles.navBar}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.navigate("Dashboard")}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="arrow-back" size={24} color="#0f172a" />
-        </TouchableOpacity>
-
-        <View style={styles.navTitleContainer}>
-          <Text style={styles.navTitle}>File Ingestion</Text>
-          <Text style={styles.navSubtitle}>Archive & Document Context</Text>
-        </View>
-
-        <TouchableOpacity
-          style={styles.refreshButton}
-          onPress={onRefresh}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="refresh" size={20} color="#2563eb" />
-        </TouchableOpacity>
-      </View>
-
+    <MobileShell
+      title="Upload Files"
+      subtitle="Archive & Document Context"
+      onRefresh={onRefresh}
+      isRefreshing={refreshing}
+    >
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
@@ -488,7 +467,7 @@ export default function UploadFiles() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </MobileShell>
   );
 }
 

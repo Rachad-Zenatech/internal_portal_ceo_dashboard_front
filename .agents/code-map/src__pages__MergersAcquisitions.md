@@ -4,18 +4,13 @@
 
 Each symbol shows its start line (`L<n>`); read from there to the next symbol's line, not the whole file.
 
-## src/pages/MergersAcquisitions/MergersAcquisitions.native.tsx (1075 lines) - mergers acquisitions.native (pages  mergers acquisitions)
-- `PipelineSummary` (interface) L26
-- `PipelineTask` (interface) L41
-- `CeoEvent` (interface) L61
-- `formatRevenue` (function) L77
-- `formatSingleRev` (function) L89
-- `MergersAcquisitions` (export function) L98
-    - `onRefresh` (fn) L142
-    - `totalAcceptedRevenueNum` (fn) L149 - Compute total revenue of accepted deals
-    - `filteredTasks` (fn) L164 - Filter LOI Accepted tasks based on search query for seamless endless scrolling
-    - `loadMore` (fn) L179
-    - `handleScroll` (fn) L182 - Reveal the next 10 deals when the user scrolls near the bottom of the Deals tab.
+## src/pages/MergersAcquisitions/MergersAcquisitions.native.tsx (1023 lines) - mergers acquisitions.native (pages  mergers acquisitions)
+- `MergersAcquisitions` (export function) L31
+    - `onRefresh` (fn) L74
+    - `totalAcceptedRevenueNum` (fn) L81 - Compute total revenue of accepted deals
+    - `filteredTasks` (fn) L96 - Filter LOI Accepted tasks based on search query for seamless endless scrolling
+    - `loadMore` (fn) L111
+    - `handleScroll` (fn) L114 - Reveal the next 10 deals when the user scrolls near the bottom of the Deals tab.
 
 ## src/pages/MergersAcquisitions/MergersAcquisitions.tsx (553 lines) - mergers acquisitions (pages  mergers acquisitions)
 - `PipelineSummary` (interface) L38
@@ -27,3 +22,10 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
     - `loiAcceptedDeals` (fn) L161
     - `filteredDeals` (fn) L163
     - `loadMore` (fn) L179
+
+## src/pages/MergersAcquisitions/maNativeHelpers.ts (74 lines) - ma native helpers (pages  mergers acquisitions)
+- `PipelineSummary` (export interface) L1
+- `PipelineTask` (export interface) L18
+- `CeoEvent` (export interface) L38
+- `formatSingleRev` (export function) L54
+- `formatRevenue` (export function) L63

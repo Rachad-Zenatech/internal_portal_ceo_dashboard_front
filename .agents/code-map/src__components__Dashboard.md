@@ -20,11 +20,23 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `FinancialPositionProps` (type) L6
 - `FinancialPosition` (export function) L10
 
+## src/components/Dashboard/FinancialWidgets.native.tsx (423 lines) - financial widgets.native (components  dashboard)
+- `NativeRevenueExpenseCard` (export function) L27
+- `NativeBankBalancesCard` (export function) L101
+- `NativeAccountDistributionCard` (export function) L145
+- `NativeRecentTransactionsCard` (export function) L190
+
 ## src/components/Dashboard/KpiCard.tsx (68 lines) - Secondary line under the value (amount, status, hint).
 - `KpiTone` (export type) L6
 - `KpiCardProps` (interface) L16
 - `formatMoney` (export function) L28
 - `KpiCard` (export function) L32
+
+## src/components/Dashboard/NativeSystemsStrip.native.tsx (117 lines) - native systems strip.native (components  dashboard)
+- `formatMoney` (export function) L5
+- `formatCompactMoney` (export function) L9
+- `SystemServerItem` (export interface) L18
+- `NativeSystemsStrip` (export function) L24
 
 ## src/components/Dashboard/RecentTransactionsTable.tsx (157 lines) - recent transactions table (components  dashboard)
 - `RecentTransactionsTableProps` (type) L16

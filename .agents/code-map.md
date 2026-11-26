@@ -11,12 +11,12 @@ to find the right file.
 | --- | --- | --- |
 | .agents/code-map/_root.md | 1 | 1 KB |
 | .agents/code-map/scripts.md | 2 | 1 KB |
-| .agents/code-map/src.md | 4 | 1 KB |
+| .agents/code-map/src.md | 2 | 1 KB |
 | .agents/code-map/src__components__Administration.md | 1 | 2 KB |
 | .agents/code-map/src__components__AppShell.md | 13 | 3 KB |
 | .agents/code-map/src__components__common.md | 4 | 1 KB |
 | .agents/code-map/src__components__Customize.md | 8 | 2 KB |
-| .agents/code-map/src__components__Dashboard.md | 8 | 2 KB |
+| .agents/code-map/src__components__Dashboard.md | 10 | 3 KB |
 | .agents/code-map/src__components__native.md | 1 | 2 KB |
 | .agents/code-map/src__components__ui.md | 34 | 8 KB |
 | .agents/code-map/src__hooks.md | 16 | 6 KB |
@@ -29,10 +29,10 @@ to find the right file.
 | .agents/code-map/src__pages__Dashboard.md | 5 | 2 KB |
 | .agents/code-map/src__pages__Finance.md | 2 | 1 KB |
 | .agents/code-map/src__pages__Log.md | 8 | 2 KB |
-| .agents/code-map/src__pages__MergersAcquisitions.md | 2 | 1 KB |
+| .agents/code-map/src__pages__MergersAcquisitions.md | 3 | 2 KB |
 | .agents/code-map/src__pages__RealEstate.md | 9 | 3 KB |
 | .agents/code-map/src__pages__Reports.md | 1 | 1 KB |
-| .agents/code-map/src__pages__Settings.md | 1 | 1 KB |
+| .agents/code-map/src__pages__Settings.md | 2 | 1 KB |
 | .agents/code-map/src__pages__SocialMediaCompliance.md | 9 | 2 KB |
 | .agents/code-map/src__pages__UploadFiles.md | 2 | 2 KB |
 | .agents/code-map/src__services.md | 7 | 1 KB |

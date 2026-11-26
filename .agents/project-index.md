@@ -7,9 +7,7 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 
 - scripts/reload-android.js (86 lines) - Check ANDROID_HOME or ANDROID_SDK_ROOT first
 - scripts/start-android.js (196 lines) - Check ANDROID_HOME or ANDROID_SDK_ROOT environment variables first
-- src/App.native.tsx (121 lines) - app.native
-- src/App.tsx (138 lines) - Customizable boards pull in the grid/drag library, so load them on demand.
-- src/App.tsx (138 lines) - Customizable boards pull in the grid/drag library, so load them on demand.
+- src/App.native.tsx (136 lines) - app.native
 - src/App.tsx (138 lines) - Customizable boards pull in the grid/drag library, so load them on demand.
 - src/components/Administration/AssignApproversModal.tsx (1844 lines) - assign approvers modal (components  administration)
 - src/components/AppShell/AppShell.tsx (80 lines) - app shell (components  app shell)
@@ -18,8 +16,8 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/components/AppShell/ConnectionStatusLight.tsx (262 lines) - connection status light (components  app shell)
 - src/components/AppShell/FloatingChat.tsx (527 lines) - floating chat (components  app shell)
 - src/components/AppShell/MessageHubStatusDropdown.tsx (325 lines) - message hub status dropdown (components  app shell)
-- src/components/AppShell/Navigation.tsx (152 lines) - navigation (components  app shell)
-- src/components/AppShell/Navigation.tsx (152 lines) - navigation (components  app shell)
+- src/components/AppShell/MobileShell.native.tsx (165 lines) - mobile shell.native (components  app shell)
+- src/components/AppShell/MobileShellDrawer.native.tsx (207 lines) - mobile shell drawer.native (components  app shell)
 - src/components/AppShell/Navigation.tsx (152 lines) - navigation (components  app shell)
 - src/components/AppShell/SessionTimeout.tsx (4 lines) - session timeout (components  app shell)
 - src/components/AppShell/Sidebar.tsx (191 lines) - sidebar (components  app shell)
@@ -36,7 +34,9 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/components/Dashboard/AccountTypeDonut.tsx (137 lines) - account type donut (components  dashboard)
 - src/components/Dashboard/BankBalancesChart.tsx (160 lines) - bank balances chart (components  dashboard)
 - src/components/Dashboard/FinancialPosition.tsx (121 lines) - financial position (components  dashboard)
+- src/components/Dashboard/FinancialWidgets.native.tsx (423 lines) - financial widgets.native (components  dashboard)
 - src/components/Dashboard/KpiCard.tsx (68 lines) - Secondary line under the value (amount, status, hint).
+- src/components/Dashboard/NativeSystemsStrip.native.tsx (117 lines) - native systems strip.native (components  dashboard)
 - src/components/Dashboard/RecentTransactionsTable.tsx (157 lines) - recent transactions table (components  dashboard)
 - src/components/Dashboard/RevenueExpenseChart.tsx (170 lines) - revenue expense chart (components  dashboard)
 - src/components/Dashboard/SummaryCards.tsx (155 lines) - Simple SVG sparklines matching the mockup aesthetics
@@ -130,7 +130,7 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/pages/Customization/CustomizeMA.tsx (14 lines) - customize m a (pages  customization)
 - src/pages/Customization/CustomizeRealEstate.tsx (14 lines) - customize real estate (pages  customization)
 - src/pages/Dashboard/ConnectedPlatformsHub.tsx (171 lines) - connected platforms hub (pages  dashboard)
-- src/pages/Dashboard/Dashboard.native.tsx (3816 lines) - dashboard.native (pages  dashboard)
+- src/pages/Dashboard/Dashboard.native.tsx (583 lines) - dashboard.native (pages  dashboard)
 - src/pages/Dashboard/Dashboard.tsx (180 lines) - dashboard (pages  dashboard)
 - src/pages/Dashboard/ExecutiveHeroBanner.tsx (105 lines) - executive hero banner (pages  dashboard)
 - src/pages/Dashboard/PlatformPulseCards.tsx (138 lines) - platform pulse cards (pages  dashboard)
@@ -144,8 +144,9 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/pages/Log/AuditLogTableSection.tsx (148 lines) - audit log table section (pages  log)
 - src/pages/Log/auditLogColumns.tsx (268 lines) - audit log columns (pages  log)
 - src/pages/Log/auditLogSources.ts (99 lines) - audit log sources (pages  log)
-- src/pages/MergersAcquisitions/MergersAcquisitions.native.tsx (1075 lines) - mergers acquisitions.native (pages  mergers acquisitions)
+- src/pages/MergersAcquisitions/MergersAcquisitions.native.tsx (1023 lines) - mergers acquisitions.native (pages  mergers acquisitions)
 - src/pages/MergersAcquisitions/MergersAcquisitions.tsx (553 lines) - mergers acquisitions (pages  mergers acquisitions)
+- src/pages/MergersAcquisitions/maNativeHelpers.ts (74 lines) - ma native helpers (pages  mergers acquisitions)
 - src/pages/RealEstate/InteractiveFloorPlan3D.tsx (246 lines) - interactive floor plan3 d (pages  real estate)
 - src/pages/RealEstate/PropertiesListComponents.tsx (285 lines) - properties list components (pages  real estate)
 - src/pages/RealEstate/PropertyDetailSections.tsx (418 lines) - property detail sections (pages  real estate)
@@ -156,6 +157,7 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/pages/RealEstate/RealEstatePage.native.tsx (85 lines) - real estate page.native (pages  real estate)
 - src/pages/RealEstate/RealEstatePage.tsx (224 lines) - real estate page (pages  real estate)
 - src/pages/Reports/Reports.tsx (96 lines) - src/pages/Reports.tsx
+- src/pages/Settings/Settings.native.tsx (189 lines) - settings.native (pages  settings)
 - src/pages/Settings/Settings.tsx (276 lines) - settings (pages  settings)
 - src/pages/SocialMediaCompliance/ApprovedContentDetailDialog.tsx (81 lines) - approved content detail dialog (pages  social media compliance)
 - src/pages/SocialMediaCompliance/ApprovedContentPage.native.tsx (111 lines) - approved content page.native (pages  social media compliance)
@@ -166,7 +168,7 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/pages/SocialMediaCompliance/PublicMoodPage.tsx (145 lines) - public mood page (pages  social media compliance)
 - src/pages/SocialMediaCompliance/PublicMoodTrackCard.tsx (55 lines) - public mood track card (pages  social media compliance)
 - src/pages/SocialMediaCompliance/PublicMoodTrendRow.tsx (139 lines) - public mood trend row (pages  social media compliance)
-- src/pages/UploadFiles/UploadFiles.native.tsx (884 lines) - upload files.native (pages  upload files)
+- src/pages/UploadFiles/UploadFiles.native.tsx (863 lines) - upload files.native (pages  upload files)
 - src/pages/UploadFiles/UploadFiles.tsx (631 lines) - upload files (pages  upload files)
 - src/services/api.ts (6 lines) - api (services)
 - src/services/apiClient.ts (167 lines) - In-flight GET request coalescing map to prevent duplicate burst requests

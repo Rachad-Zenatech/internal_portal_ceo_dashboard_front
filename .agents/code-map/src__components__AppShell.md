@@ -38,13 +38,17 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 ## src/components/AppShell/MessageHubStatusDropdown.tsx (325 lines) - message hub status dropdown (components  app shell)
 - `MessageHubStatusDropdown` (export function) L39
 
-## src/components/AppShell/Navigation.tsx (152 lines) - navigation (components  app shell)
-- `NavigationItem` (export interface) L16
-- `navigation` (export const) L29
+## src/components/AppShell/MobileShell.native.tsx (165 lines) - mobile shell.native (components  app shell)
+- `MobileShellProps` (export interface) L9
+- `MobileShell` (export function) L18
 
-## src/components/AppShell/Navigation.tsx (152 lines) - navigation (components  app shell)
-- `NavigationItem` (export interface) L16
-- `navigation` (export const) L29
+## src/components/AppShell/MobileShellDrawer.native.tsx (207 lines) - mobile shell drawer.native (components  app shell)
+- `MobileNavItem` (export interface) L5
+- `MOBILE_NAVIGATION` (export const) L13
+- `DrawerNavListProps` (interface) L25
+- `DrawerNavList` (function) L31
+- `MobileShellDrawerProps` (interface) L60
+- `MobileShellDrawer` (export function) L72
 
 ## src/components/AppShell/Navigation.tsx (152 lines) - navigation (components  app shell)
 - `NavigationItem` (export interface) L16

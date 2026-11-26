@@ -4,19 +4,19 @@
 
 Each symbol shows its start line (`L<n>`); read from there to the next symbol's line, not the whole file.
 
-## src/pages/UploadFiles/UploadFiles.native.tsx (884 lines) - upload files.native (pages  upload files)
-- `formatBytes` (function) L28
-- `UploadFiles` (export function) L36
-    - `queryClient` (fn) L38
-    - `onRefresh` (fn) L58
-    - `deleteMutation` (fn) L65 - Delete Mutation
-    - `bulkDeleteMutation` (fn) L78 - Bulk Delete Mutation
-    - `handleDeletePress` (fn) L90
-    - `handleBulkDeletePress` (fn) L101
-    - `toggleSelectRow` (fn) L117
-    - `paginatedFiles` (fn) L126
-    - `start` (fn) L127
-    - `totals` (fn) L131
+## src/pages/UploadFiles/UploadFiles.native.tsx (863 lines) - upload files.native (pages  upload files)
+- `formatBytes` (function) L27
+- `UploadFiles` (export function) L35
+    - `queryClient` (fn) L36
+    - `onRefresh` (fn) L56
+    - `deleteMutation` (fn) L63 - Delete Mutation
+    - `bulkDeleteMutation` (fn) L76 - Bulk Delete Mutation
+    - `handleDeletePress` (fn) L88
+    - `handleBulkDeletePress` (fn) L99
+    - `toggleSelectRow` (fn) L115
+    - `paginatedFiles` (fn) L124
+    - `start` (fn) L125
+    - `totals` (fn) L129
 
 ## src/pages/UploadFiles/UploadFiles.tsx (631 lines) - upload files (pages  upload files)
 - `FilterValue` (type) L42

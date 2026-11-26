@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider, initialWindowMetrics } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
+import { ServiceStatusProvider } from "./lib/ServiceStatusContext";
 import { View, ActivityIndicator, StyleSheet } from "@/components/native";
 
 import Login from "./pages/Auth/Login.native";
@@ -12,6 +13,7 @@ import MergersAcquisitions from "./pages/MergersAcquisitions/MergersAcquisitions
 import UploadFiles from "./pages/UploadFiles/UploadFiles.native";
 import AuditLog from "./pages/Log/AuditLog.native";
 import Administration from "./pages/Administration/Administration.native";
+import Settings from "./pages/Settings/Settings.native";
 import Customization from "./pages/Customization/Customization";
 import CustomizeMA from "./pages/Customization/CustomizeMA";
 import CustomizeAdministration from "./pages/Customization/CustomizeAdministration";
@@ -21,7 +23,11 @@ const Stack = createNativeStackNavigator();
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,
+      staleTime: 0,
+      gcTime: 0,
+      refetchOnMount: "always",
+      refetchOnWindowFocus: "always",
+      refetchOnReconnect: "always",
       retry: false,
     },
   },
@@ -90,6 +96,13 @@ function NavigationContent() {
               headerShown: false,
             }}
           />
+          <Stack.Screen
+            name="Settings"
+            component={Settings}
+            options={{
+              headerShown: false,
+            }}
+          />
         </>
       )}
     </Stack.Navigator>
@@ -101,9 +114,11 @@ export default function App() {
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <NavigationContainer>
-            <NavigationContent />
-          </NavigationContainer>
+          <ServiceStatusProvider>
+            <NavigationContainer>
+              <NavigationContent />
+            </NavigationContainer>
+          </ServiceStatusProvider>
         </AuthProvider>
       </QueryClientProvider>
     </SafeAreaProvider>

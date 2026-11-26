@@ -4,6 +4,13 @@
 
 Each symbol shows its start line (`L<n>`); read from there to the next symbol's line, not the whole file.
 
+## src/pages/Settings/Settings.native.tsx (189 lines) - settings.native (pages  settings)
+- `PortalStatus` (interface) L10
+- `ExecutiveProfileCard` (function) L20
+- `NotificationsCard` (function) L47
+- `ConnectedPortalsCard` (function) L70
+- `Settings` (export function) L106
+
 ## src/pages/Settings/Settings.tsx (276 lines) - settings (pages  settings)
 - `PortalStatus` (interface) L19
 - `Settings` (export function) L30

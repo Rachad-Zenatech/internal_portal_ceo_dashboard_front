@@ -26,19 +26,19 @@
       "reason": "Over the limit when the check was introduced; split it when you next work on it."
     },
     "src/pages/Administration/Administration.tsx": {
-      "max_lines": 2032,
+      "max_lines": 2003,
       "reason": "Over the limit when the check was introduced; split it when you next work on it."
     },
     "src/pages/Dashboard/Dashboard.native.tsx": {
-      "max_lines": 3815,
+      "max_lines": 582,
       "reason": "Over the limit when the check was introduced; split it when you next work on it."
     },
     "src/pages/Log/AuditLog.native.tsx": {
-      "max_lines": 903,
+      "max_lines": 861,
       "reason": "Over the limit when the check was introduced; split it when you next work on it."
     },
     "src/pages/MergersAcquisitions/MergersAcquisitions.native.tsx": {
-      "max_lines": 1074,
+      "max_lines": 1022,
       "reason": "Over the limit when the check was introduced; split it when you next work on it."
     },
     "src/pages/MergersAcquisitions/MergersAcquisitions.tsx": {
@@ -46,7 +46,7 @@
       "reason": "Over the limit when the check was introduced; split it when you next work on it."
     },
     "src/pages/UploadFiles/UploadFiles.native.tsx": {
-      "max_lines": 883,
+      "max_lines": 862,
       "reason": "Over the limit when the check was introduced; split it when you next work on it."
     },
     "src/pages/UploadFiles/UploadFiles.tsx": {
@@ -55,10 +55,6 @@
     }
   },
   "blocks": {
-    "src/App.tsx#App": {
-      "max_lines": 103,
-      "kind": "jsx_return"
-    },
     "src/components/Administration/AssignApproversModal.tsx#AssignApproversModal": {
       "max_lines": 828,
       "kind": "jsx_return"
@@ -92,7 +88,7 @@
       "kind": "jsx_return"
     },
     "src/components/Customize/CustomBoard.tsx#CustomBoard": {
-      "max_lines": 105,
+      "max_lines": 87,
       "kind": "jsx_return"
     },
     "src/components/Customize/WidgetPanel.native.tsx#WidgetPanel": {
@@ -112,27 +108,19 @@
       "kind": "jsx_return"
     },
     "src/pages/Administration/Administration.tsx#Administration": {
-      "max_lines": 1152,
+      "max_lines": 1123,
       "kind": "jsx_return"
     },
     "src/pages/Dashboard/Dashboard.native.tsx#Dashboard": {
-      "max_lines": 1749,
-      "kind": "jsx_return"
-    },
-    "src/pages/Dashboard/Dashboard.tsx#Dashboard": {
-      "max_lines": 200,
-      "kind": "jsx_return"
-    },
-    "src/pages/Log/AuditLog.native.tsx#AuditLog": {
-      "max_lines": 392,
-      "kind": "jsx_return"
-    },
-    "src/pages/Log/AuditLog.tsx#AuditLog": {
       "max_lines": 205,
       "kind": "jsx_return"
     },
+    "src/pages/Log/AuditLog.native.tsx#AuditLog": {
+      "max_lines": 337,
+      "kind": "jsx_return"
+    },
     "src/pages/MergersAcquisitions/MergersAcquisitions.native.tsx#MergersAcquisitions": {
-      "max_lines": 393,
+      "max_lines": 388,
       "kind": "jsx_return"
     },
     "src/pages/MergersAcquisitions/MergersAcquisitions.tsx#MergersAcquisitions": {
@@ -144,7 +132,7 @@
       "kind": "jsx_return"
     },
     "src/pages/UploadFiles/UploadFiles.native.tsx#UploadFiles": {
-      "max_lines": 351,
+      "max_lines": 332,
       "kind": "jsx_return"
     },
     "src/pages/UploadFiles/UploadFiles.tsx#UploadFiles": {

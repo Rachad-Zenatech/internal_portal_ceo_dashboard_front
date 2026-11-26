@@ -8,7 +8,6 @@ import {
   NativeCard,
   NativeCardContent,
   NativeBadge,
-  SafeAreaView,
 } from "@/components/native";
 import {
   Modal,
@@ -21,82 +20,15 @@ import type { NativeScrollEvent, NativeSyntheticEvent } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/services/apiClient";
-import { useNavigation } from "@react-navigation/native";
-
-interface PipelineSummary {
-  status: string;
-  total_active_pipeline_tasks: number;
-  total_target_companies: number;
-  total_call_interactions: number;
-  total_pipeline_revenue?: string;
-  loi_sent_count?: number;
-  loi_accepted_count?: number;
-  loi_declined_count?: number;
-  total_loi_active_count?: number;
-  tasks_by_priority: Record<string, number>;
-  tasks_by_industry: Record<string, number>;
-  recent_tasks: PipelineTask[];
-}
-
-interface PipelineTask {
-  id: number;
-  company_name: string;
-  industry_name?: string;
-  state_code?: string;
-  state_name?: string;
-  country_code?: string;
-  country_name?: string;
-  revenue?: string | number | null;
-  name?: string;
-  email?: string;
-  phone?: string;
-  priority_name?: string;
-  priority_color?: string;
-  analyst_name?: string;
-  latest_note?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-interface CeoEvent {
-  id: string;
-  event_type: string;
-  source: string;
-  entity_id: string;
-  title?: string;
-  industry?: string;
-  state?: string;
-  revenue?: string | number | null;
-  priority?: string;
-  priority_color?: string;
-  analyst?: string;
-  note?: string;
-  created_at?: string;
-}
-
-function formatRevenue(rev: string | number | null | undefined): string {
-  if (!rev) return "-";
-  const str = String(rev).trim().replace("$", "").replace(",", "");
-  if (!str) return "-";
-
-  if (str.includes("-")) {
-    const parts = str.split("-").map((p) => formatSingleRev(p.trim()));
-    return parts.join(" - ");
-  }
-  return formatSingleRev(str);
-}
-
-function formatSingleRev(valStr: string): string {
-  const num = parseFloat(valStr);
-  if (isNaN(num)) return valStr;
-  if (num >= 1000) {
-    return `$${(num / 1000).toFixed(1)}M`;
-  }
-  return `$${Math.round(num)}K`;
-}
+import MobileShell from "@/components/AppShell/MobileShell.native";
+import {
+  formatRevenue,
+  type PipelineSummary,
+  type PipelineTask,
+  type CeoEvent,
+} from "./maNativeHelpers";
 
 export default function MergersAcquisitions() {
-  const navigation = useNavigation<any>();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTask, setSelectedTask] = useState<PipelineTask | null>(null);
   const [activeTab, setActiveTab] = useState<"deals" | "events">("deals");
@@ -111,9 +43,9 @@ export default function MergersAcquisitions() {
     isLoading: isSummaryLoading,
     refetch: refetchSummary,
   } = useQuery<PipelineSummary>({
-    queryKey: ["ma-summary-native"],
+    queryKey: ["ma", "summary"],
     queryFn: () => apiClient.get<PipelineSummary>("/api/v1/ceo/ma/summary"),
-    refetchInterval: false,
+    refetchOnMount: "always",
   });
 
   // 2. Fetch LOI Accepted Target Deals (matches Web portal)
@@ -122,10 +54,10 @@ export default function MergersAcquisitions() {
     isLoading: isTasksLoading,
     refetch: refetchTasks,
   } = useQuery<PipelineTask[]>({
-    queryKey: ["ma-pipeline-loi-accepted-native"],
+    queryKey: ["ma", "pipeline-loi-accepted-deals"],
     queryFn: () =>
       apiClient.get<PipelineTask[]>("/api/v1/ceo/ma/pipeline?limit=100&skip=0&loi_accepted_only=true"),
-    refetchInterval: false,
+    refetchOnMount: "always",
   });
 
   // 3. Fetch Recent M&A Events
@@ -158,7 +90,7 @@ export default function MergersAcquisitions() {
       ? `$${(totalAcceptedRevenueNum / 1000).toFixed(1)}M`
       : totalAcceptedRevenueNum > 0
       ? `$${Math.round(totalAcceptedRevenueNum)}K`
-      : "$18.8M";
+      : "$0";
 
   // Filter LOI Accepted tasks based on search query for seamless endless scrolling
   const filteredTasks = useMemo(() => {
@@ -186,31 +118,12 @@ export default function MergersAcquisitions() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* Top App Bar */}
-      <View style={styles.navBar}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.navigate("Dashboard")}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="arrow-back" size={24} color="#0f172a" />
-        </TouchableOpacity>
-
-        <View style={styles.navTitleContainer}>
-          <Text style={styles.navTitle}>M&A Pipeline</Text>
-          <Text style={styles.navSubtitle}>LOI Accepted Target Companies</Text>
-        </View>
-
-        <TouchableOpacity
-          style={styles.refreshButton}
-          onPress={onRefresh}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="refresh" size={20} color="#2563eb" />
-        </TouchableOpacity>
-      </View>
-
+    <MobileShell
+      title="M&A Pipeline"
+      subtitle="LOI Accepted Target Companies"
+      onRefresh={onRefresh}
+      isRefreshing={refreshing}
+    >
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
@@ -220,6 +133,20 @@ export default function MergersAcquisitions() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#2563eb"]} />
         }
       >
+        {summary?.data_source === "saved" && (
+          <View style={styles.savedBanner}>
+            <Ionicons name="cloud-offline-outline" size={18} color="#b45309" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.savedBannerTitle}>Showing saved M&A data</Text>
+              <Text style={styles.savedBannerSub}>
+                {summary.as_of
+                  ? `M&A service did not answer the live request. Showing saved copy from ${new Date(summary.as_of).toLocaleString()}.`
+                  : "M&A service did not answer the live request. Showing saved copy."}
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* KPI Metrics Grid */}
         <View style={styles.kpiGrid}>
           <NativeCard style={styles.kpiCard}>
@@ -228,7 +155,7 @@ export default function MergersAcquisitions() {
                 <MaterialCommunityIcons name="file-check" size={20} color="#10b981" />
               </View>
               <Text style={styles.kpiValue}>
-                {isSummaryLoading ? "-" : (summary?.loi_accepted_count || rawTasks.length || 10)}
+                {isSummaryLoading ? "-" : (summary?.loi_accepted_count ?? rawTasks.length)}
               </Text>
               <Text style={styles.kpiLabel}>LOI Accepted</Text>
             </NativeCardContent>
@@ -576,11 +503,32 @@ export default function MergersAcquisitions() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </MobileShell>
   );
 }
 
 const styles = StyleSheet.create({
+  savedBanner: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    backgroundColor: "#fffbeb",
+    borderWidth: 1,
+    borderColor: "#fde68a",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
+  },
+  savedBannerTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#92400e",
+  },
+  savedBannerSub: {
+    fontSize: 12,
+    color: "#b45309",
+    marginTop: 2,
+  },
   safeArea: {
     flex: 1,
     backgroundColor: "#ffffff",

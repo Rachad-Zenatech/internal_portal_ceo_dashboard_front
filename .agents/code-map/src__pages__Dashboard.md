@@ -10,28 +10,19 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `PlatformTile` (function) L62
 - `ConnectedPlatformsHub` (export function) L104
 
-## src/pages/Dashboard/Dashboard.native.tsx (3816 lines) - dashboard.native (pages  dashboard)
-- `PortalStatus` (interface) L28
-- `PurchaseRequestLineItem` (interface) L39
-- `PurchaseRequestAttachment` (interface) L47
-- `PurchaseRequest` (interface) L54
-- `CeoEvent` (interface) L69
-- `LoginActivity` (interface) L78
-- `TabType` (type) L88
-- `Dashboard` (export function) L90
-    - `queryClient` (fn) L93
-    - `handleToggleMic` (fn) L127
-    - `handleSendZenaBot` (fn) L131
-    - `query` (fn) L132
-    - `pendingApprovals` (fn) L208
-    - `approvedRequests` (fn) L214
-    - `actionMutation` (fn) L310 - Action Mutation
-    - `isActionable` (fn) L351
-    - `handleOpenAction` (fn) L378
-    - `handleConfirmAction` (fn) L395
-    - `onRefresh` (fn) L410
-    - `handleLogoutPress` (fn) L424
-    - `navigateToTab` (fn) L432
+## src/pages/Dashboard/Dashboard.native.tsx (583 lines) - dashboard.native (pages  dashboard)
+- `SummaryData` (interface) L28
+- `PurchaseRequest` (interface) L35
+- `CeoEvent` (interface) L47
+- `AuditLog` (interface) L55
+- `MessageHubStatusResponse` (interface) L66
+- `Dashboard` (export function) L71
+    - `pendingApprovals` (fn) L90
+    - `syncedApprovedRequests` (fn) L105
+    - `pendingSyncRequests` (fn) L109
+    - `totalPendingAmount` (fn) L149
+    - `totalApprovedAmount` (fn) L153
+    - `onRefresh` (fn) L158
 
 ## src/pages/Dashboard/Dashboard.tsx (180 lines) - dashboard (pages  dashboard)
 - `loadPrefs` (function) L26

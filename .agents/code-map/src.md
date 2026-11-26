@@ -4,24 +4,10 @@
 
 Each symbol shows its start line (`L<n>`); read from there to the next symbol's line, not the whole file.
 
-## src/App.native.tsx (121 lines) - app.native
-- `Stack` (const) L19
-- `NavigationContent` (function) L30
-- `App` (export function) L99
-
-## src/App.tsx (138 lines) - Customizable boards pull in the grid/drag library, so load them on demand.
-- `FallbackLoader` (function) L51
-- `ShellLayout` (function) L59
-- `guarded` (function) L69
-- `AppRoutes` (function) L73
-- `App` (function) L104
-
-## src/App.tsx (138 lines) - Customizable boards pull in the grid/drag library, so load them on demand.
-- `FallbackLoader` (function) L51
-- `ShellLayout` (function) L59
-- `guarded` (function) L69
-- `AppRoutes` (function) L73
-- `App` (function) L104
+## src/App.native.tsx (136 lines) - app.native
+- `Stack` (const) L21
+- `NavigationContent` (function) L36
+- `App` (export function) L112
 
 ## src/App.tsx (138 lines) - Customizable boards pull in the grid/drag library, so load them on demand.
 - `FallbackLoader` (function) L51
