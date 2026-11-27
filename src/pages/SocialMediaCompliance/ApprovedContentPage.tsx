@@ -12,6 +12,7 @@ import { ApprovedContentDetailDialog } from "./ApprovedContentDetailDialog";
 import { ComplianceOfflineBanner } from "./ComplianceOfflineBanner";
 
 const BATCH_SIZE = 50;
+const DEFAULT_BRAND_CODE = "CEO_THOUGHT_LEADERSHIP";
 
 function BrandFilterBar({
   brands,
@@ -45,7 +46,7 @@ function BrandFilterBar({
 }
 
 export default function ApprovedContentPage() {
-  const [selectedBrand, setSelectedBrand] = useState<string>("ALL");
+  const [selectedBrand, setSelectedBrand] = useState<string>(DEFAULT_BRAND_CODE);
   const [search, setSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
   const [selectedItem, setSelectedItem] = useState<ApprovedContentItem | null>(null);
@@ -83,6 +84,13 @@ export default function ApprovedContentPage() {
       );
     });
   }, [items, selectedBrand, search]);
+
+  useEffect(() => {
+    if (brands.length === 0 || selectedBrand === "ALL") return;
+    if (brands.some((b) => b.code.toUpperCase() === selectedBrand.toUpperCase())) return;
+    const fallback = brands.find((b) => b.name.toLowerCase().includes("thought leadership"));
+    setSelectedBrand(fallback ? fallback.code : "ALL");
+  }, [brands, selectedBrand]);
 
   useEffect(() => {
     setVisibleCount(BATCH_SIZE);

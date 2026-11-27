@@ -4,6 +4,12 @@
 
 Each symbol shows its start line (`L<n>`); read from there to the next symbol's line, not the whole file.
 
+## src/pages/UploadFiles/UploadFilePreviewDialog.tsx (142 lines) - upload file preview dialog (pages  upload files)
+- `isPreviewableFile` (export function) L16
+- `previewKind` (function) L28
+- `Props` (interface) L36
+- `UploadFilePreviewDialog` (export function) L42
+
 ## src/pages/UploadFiles/UploadFiles.native.tsx (863 lines) - upload files.native (pages  upload files)
 - `formatBytes` (function) L27
 - `UploadFiles` (export function) L35
@@ -18,28 +24,25 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
     - `start` (fn) L125
     - `totals` (fn) L129
 
-## src/pages/UploadFiles/UploadFiles.tsx (631 lines) - upload files (pages  upload files)
-- `FilterValue` (type) L42
-- `formatBytes` (function) L44
-- `formatDate` (function) L52
-- `isTextPreview` (function) L63
-- `FileTypeIcon` (function) L68
-- `getContext` (function) L76
-    - `companyId` (fn) L79
-    - `entityId` (fn) L80
-- `UploadFiles` (export function) L86
-    - `queryClient` (fn) L87
-    - `filteredFiles` (fn) L120 - Filter files by search term
-    - `paginatedFiles` (fn) L134 - Derive paginated files
-    - `startIdx` (fn) L135
-    - `totals` (fn) L142
-    - `compressionSavingsRatio` (fn) L153
-    - `filterOptions` (fn) L159
-    - `handleFilterChange` (fn) L164
-    - `handlePreview` (fn) L170
-    - `deleteMutation` (fn) L192 - React Query mutations
-    - `bulkDeleteMutation` (fn) L203
-    - `handleDelete` (fn) L215
-    - `handleBulkDelete` (fn) L221
-    - `handleSelectAll` (fn) L228
-    - `handleSelectRow` (fn) L238
+## src/pages/UploadFiles/UploadFiles.tsx (243 lines) - upload files (pages  upload files)
+- `FilterValue` (type) L27
+- `UploadFiles` (export function) L30
+
+## src/pages/UploadFiles/UploadFilesDialog.tsx (201 lines) - upload files dialog (pages  upload files)
+- `formatFileSize` (function) L21
+- `DropzoneProps` (interface) L27
+- `FileDropzone` (function) L33
+- `SelectedFileList` (function) L68
+- `Props` (interface) L88
+- `UploadFilesDialog` (export function) L96
+
+## src/pages/UploadFiles/UploadFilesTable.tsx (284 lines) - upload files table (pages  upload files)
+- `formatBytes` (export function) L24
+- `formatDate` (function) L31
+- `FileTypeIcon` (function) L42
+- `getContext` (function) L53
+- `Props` (interface) L62
+- `UploadRow` (function) L82
+- `EmptyUploadsRow` (function) L145
+- `TablePaginationBar` (function) L162
+- `UploadFilesTable` (export function) L192

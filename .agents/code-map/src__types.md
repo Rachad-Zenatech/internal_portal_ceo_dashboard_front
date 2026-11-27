@@ -123,8 +123,10 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `PublicMoodOverview` (export interface) L104
 - `PublicMoodApiResponse` (export interface) L113
 
-## src/types/uploadArchive.ts (26 lines) - upload archive (types)
+## src/types/uploadArchive.ts (44 lines) - upload archive (types)
 - `UploadType` (export type) L1
-- `UploadTypeOption` (export type) L3
-- `ArchivedUpload` (export type) L8
-- `UploadFilesResponse` (export type) L22
+- `UploadTypeOption` (export type) L8
+- `StorageStatus` (export type) L13
+- `ArchivedUpload` (export type) L19
+- `UploadFilesResponse` (export type) L33
+- `UploadCreateResponse` (export type) L40

@@ -30,5 +30,7 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 ## src/services/queryKeys.ts (26 lines) - All React Query cache keys live here so that invalidation calls in
 - `queryKeys` (export const) L10
 
-## src/services/uploadArchiveService.ts (22 lines) - upload archive service (services)
-- `uploadArchiveService` (export const) L4
+## src/services/uploadArchiveService.ts (62 lines) - upload archive service (services)
+- `getBinaryHeaders` (function) L5
+- `fetchBlob` (function) L10
+- `uploadArchiveService` (export const) L23

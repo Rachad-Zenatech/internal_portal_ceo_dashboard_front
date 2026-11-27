@@ -8,12 +8,12 @@ Each symbol shows its start line (`L<n>`); read from there to the next symbol's 
 - `Props` (interface) L5
 - `ApprovedContentDetailDialog` (export function) L10
 
-## src/pages/SocialMediaCompliance/ApprovedContentPage.native.tsx (111 lines) - approved content page.native (pages  social media compliance)
-- `ApprovedContentPageNative` (export function) L8
+## src/pages/SocialMediaCompliance/ApprovedContentPage.native.tsx (119 lines) - approved content page.native (pages  social media compliance)
+- `ApprovedContentPageNative` (export function) L9
 
-## src/pages/SocialMediaCompliance/ApprovedContentPage.tsx (167 lines) - approved content page (pages  social media compliance)
-- `BrandFilterBar` (function) L16
-- `ApprovedContentPage` (export function) L47
+## src/pages/SocialMediaCompliance/ApprovedContentPage.tsx (175 lines) - approved content page (pages  social media compliance)
+- `BrandFilterBar` (function) L17
+- `ApprovedContentPage` (export function) L48
 
 ## src/pages/SocialMediaCompliance/ApprovedContentTable.tsx (196 lines) - approved content table (pages  social media compliance)
 - `Props` (interface) L9

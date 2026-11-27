@@ -48,10 +48,6 @@
     "src/pages/UploadFiles/UploadFiles.native.tsx": {
       "max_lines": 862,
       "reason": "Over the limit when the check was introduced; split it when you next work on it."
-    },
-    "src/pages/UploadFiles/UploadFiles.tsx": {
-      "max_lines": 630,
-      "reason": "Over the limit when the check was introduced; split it when you next work on it."
     }
   },
   "blocks": {
@@ -136,7 +132,7 @@
       "kind": "jsx_return"
     },
     "src/pages/UploadFiles/UploadFiles.tsx#UploadFiles": {
-      "max_lines": 385,
+      "max_lines": 116,
       "kind": "jsx_return"
     }
   }

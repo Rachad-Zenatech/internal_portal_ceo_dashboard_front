@@ -4,9 +4,10 @@ import { SafeAreaView, NativeCard, NativeCardContent, NativeBadge, ActivityIndic
 import { useApprovedComplianceContent } from "@/hooks/useSocialCompliance";
 
 const BATCH_SIZE = 50;
+const DEFAULT_BRAND_CODE = "CEO_THOUGHT_LEADERSHIP";
 
 export default function ApprovedContentPageNative() {
-  const [selectedBrand, setSelectedBrand] = useState("ALL");
+  const [selectedBrand, setSelectedBrand] = useState(DEFAULT_BRAND_CODE);
   const [search, setSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
   const { data: response, isLoading } = useApprovedComplianceContent();
@@ -25,6 +26,13 @@ export default function ApprovedContentPageNative() {
       return item.title.toLowerCase().includes(q) || item.brand_name.toLowerCase().includes(q) || item.reference_code.toLowerCase().includes(q);
     });
   }, [items, selectedBrand, search]);
+
+  useEffect(() => {
+    if (brands.length === 0 || selectedBrand === "ALL") return;
+    if (brands.some((b) => b.code.toUpperCase() === selectedBrand.toUpperCase())) return;
+    const fallback = brands.find((b) => b.name.toLowerCase().includes("thought leadership"));
+    setSelectedBrand(fallback ? fallback.code : "ALL");
+  }, [brands, selectedBrand]);
 
   useEffect(() => {
     setVisibleCount(BATCH_SIZE);

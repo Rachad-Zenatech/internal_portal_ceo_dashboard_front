@@ -1,8 +1,19 @@
-export type UploadType = "general-ledger" | "bank-statement";
+export type UploadType =
+  | "general-ledger"
+  | "bank-statement"
+  | "financial-report"
+  | "executive-document"
+  | (string & {});
 
 export type UploadTypeOption = {
   value: UploadType;
   label: string;
+};
+
+export type StorageStatus = {
+  mode: "s3" | "local";
+  s3_configured: boolean;
+  bucket?: string | null;
 };
 
 export type ArchivedUpload = {
@@ -22,4 +33,11 @@ export type ArchivedUpload = {
 export type UploadFilesResponse = {
   upload_types: UploadTypeOption[];
   files: ArchivedUpload[];
+  storage_status?: StorageStatus;
+  storage_warning?: string | null;
+};
+
+export type UploadCreateResponse = {
+  uploaded: ArchivedUpload[];
+  count: number;
 };
