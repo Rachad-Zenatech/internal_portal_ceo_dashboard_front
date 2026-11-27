@@ -80,7 +80,7 @@ For function and route definitions with their line numbers, grep `.agents/code-m
 - src/components/ui/toggle-group.tsx (90 lines) - toggle group (components ui)
 - src/components/ui/toggle.tsx (46 lines) - toggle (components ui)
 - src/components/ui/tooltip.tsx (56 lines) - tooltip (components ui)
-- src/hooks/useAiOverview.ts (13 lines) - use ai overview (hooks)
+- src/hooks/useAiOverview.ts (76 lines) - use ai overview (hooks)
 - src/hooks/useApproverRoles.ts (101 lines) - use approver roles (hooks)
 - src/hooks/useBoardState.ts (185 lines) - Next free slot at the bottom of the grid for a new widget.
 - src/hooks/useCeoRealtimeStream.ts (51 lines) - Time the last query successfully received fresh data (not the render time).
